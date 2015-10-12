@@ -9,7 +9,7 @@ chosendate=((1995-styr)*12)+5	; should be June 1980
 chosenclim=5	; JUNE
 
 titleyear='1995'
-titlemonth='June'
+titlemonth='July'
 
 latlg=5.
 lonlg=5.
@@ -24,8 +24,10 @@ lons=(findgen(nlons)*lonlg)+stln
 
 
 indir='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/GRIDS/'
-infile='HadISDH.landT.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_cf'
-outfil='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/OTHER/HadISDH.landT.2.0.1.2014p_uncertainty'+titlemonth+titleyear+'_MAY2015.eps'
+;infile='HadISDH.landT.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_cf'
+infile='HadISDH.landq.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_cf'
+;outfil='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/OTHER/HadISDH.landT.2.0.1.2014p_uncertainty'+titlemonth+titleyear+'_MAY2015.eps'
+outfil='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/OTHER/HadISDH.landq.2.0.1.2014p_uncertainty'+titlemonth+titleyear+'_MAY2015.eps'
 
 
 mdi=-1e+30
@@ -36,10 +38,14 @@ filee=NCDF_OPEN(indir+infile+'.nc')
 timvarid=NCDF_VARID(filee,'time')
 longs_varid=NCDF_VARID(filee,'longitude')
 lats_varid=NCDF_VARID(filee,'latitude')
-qstid=NCDF_VARID(filee,'t_stationerr') 	; may become uncertainty fields
-qspid=NCDF_VARID(filee,'t_samplingerr') 	; may become uncertainty fields
-qcbid=NCDF_VARID(filee,'t_combinederr') 	; may become uncertainty fields
-qclim=NCDF_VARID(filee,'t_clims') 	; may become uncertainty fields
+;qstid=NCDF_VARID(filee,'t_stationerr') 	; may become uncertainty fields
+;qspid=NCDF_VARID(filee,'t_samplingerr') 	; may become uncertainty fields
+;qcbid=NCDF_VARID(filee,'t_combinederr') 	; may become uncertainty fields
+;qclim=NCDF_VARID(filee,'t_clims') 	; may become uncertainty fields
+qstid=NCDF_VARID(filee,'q_stationerr') 	; may become uncertainty fields
+qspid=NCDF_VARID(filee,'q_samplingerr') 	; may become uncertainty fields
+qcbid=NCDF_VARID(filee,'q_combinederr') 	; may become uncertainty fields
+qclim=NCDF_VARID(filee,'q_clims') 	; may become uncertainty fields
 NCDF_VARGET,filee,timvarid,times
 NCDF_VARGET,filee,qstid,q_sterr
 NCDF_VARGET,filee,qspid,q_sperr
@@ -169,7 +175,8 @@ PLOTS,[0,179.9],[-89.9,-89.9],color=0
 
 MAKE_KEY,0.87,0.68,0.02,0.29,0.03,-0.007,/NORMAL,COLORS=colsarrT,labels=labsarrT,$
          charsize=1.1,charthick=4,bcolor=0,orientation=1
-XYOUTS,0.97,0.82,'!Eo!N C',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
+;XYOUTS,0.97,0.82,'!Eo!N C',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
+XYOUTS,0.97,0.82,'g kg!E-1!N',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
 
 !P.Position=[xpos1,ypos1(1),xpos2,ypos2(1)]
 Map_set,/continents,color=0,/noborder,/noerase,/robinson,/grid, glinestyle=2
@@ -191,7 +198,8 @@ PLOTS,[0,179.9],[-89.9,-89.9],color=0
 
 MAKE_KEY,0.87,0.35,0.02,0.29,0.03,-0.007,/NORMAL,COLORS=colsarrT,labels=labsarrT,$
          charsize=1.1,charthick=4,bcolor=0,orientation=1
-XYOUTS,0.97,0.49,'!Eo!N C',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
+;XYOUTS,0.97,0.49,'!Eo!N C',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
+XYOUTS,0.97,0.49,'g kg!E-1!N',/normal,color=0,charsize=1.2,alignment=0.5,orientation=-90
 
 ;------------------------------------
 

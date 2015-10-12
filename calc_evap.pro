@@ -1,3 +1,56 @@
+; TIDL
+; 
+; Author: Kate Willett
+; Created: 1 February 2013
+; Last update: 15 January 2015
+; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
+; -----------------------
+; CODE PURPOSE AND OUTPUT
+; -----------------------
+; <brief summary of code purpose and main outputs>
+; 
+; <references to related published material, e.g. that describes data set>
+; 
+; -----------------------
+; LIST OF MODULES
+; -----------------------
+; <List of program modules required to run the code, or link to compiler/batch file>
+; 
+; -----------------------
+; DATA
+; -----------------------
+; <source data sets required for code; include data origin>
+; 
+; -----------------------
+; HOW TO RUN THE CODE
+; -----------------------
+; <step by step guide to running the code>
+; 
+; -----------------------
+; OUTPUT
+; -----------------------
+; <where this is written to and any other useful information about output>
+; 
+; -----------------------
+; VERSION/RELEASE NOTES
+; -----------------------
+; 
+; Version 1 (15 January 2015)
+; ---------
+;  
+; Enhancements
+;  
+; Changes
+;  
+; Bug fixes
+;  
+; -----------------------
+; OTHER INFORMATION
+; -----------------------
+;
+
+
 ; WHATS IN HERE?
 ; function calc_evap,t,P: VAPOUR PRESSURE WITH RESPECT TO WATER (IF dewpoint T is used) hPa, SATURATION VAPOUR PRESSURE WITH RESPECT TO WATER (IF T is used)
 ; function calc_evap_ice,t,P: VAPOUR PRESSURE WITH RESPECT TO ICE (IF dewpoint T is used) hPa, SATURATION VAPOUR PRESSURE WITH RESPECT TO ICE (IF T is used)
