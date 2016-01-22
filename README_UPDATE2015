@@ -207,22 +207,22 @@ reporting frequency or merging. Save to netCDF and ASCII and also as a .raw in
 PHA_2014.
 
 	Inputs:
-	/media/WD\ EXT\ HDD/HadISD.1.0.3.2014p/'		; QC'd HadISD stations
-	/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'	; full 6103 station list
+	/media/WD\ EXT\ HDD/HadISD.1.0.4.2015p/'		; QC'd HadISD stations
+	/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'	; full 6103 station list
 	/data/local/hadkw/HADCRUH2/OTHERDATA/'		;20CR SLP CR20Jan7605MSLP_yycompos.151.170.240.10.37.8....nc
 
 	Outputs:
-	/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/'	; directoriies for ASCII
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314q/monthly/raw/'	; directories for PHA
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314e/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314t/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314p/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314w/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314r/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HISTORY/'	; directory for history files
-	/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'	; directory for NetCDF files
-	/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/tooshortforHadISDH.<version>_JAN2015.txt'	; list of removed stations
-	/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.<version>_JAN2015.txt'		; list of kept stations
+	/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/'	; directoriies for ASCII
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315q/monthly/raw/'	; directories for PHA
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315e/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315t/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315p/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315w/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/pha_v52i/data/hadisdh/hadisdh7315r/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'	; directory for history files
+	/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'	; directory for NetCDF files
+	/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.<version>_JAN2016.txt'	; list of removed stations
+	/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.<version>_JAN2016.txt'		; list of kept stations
 
 ;******************************************************************
 run direct PHA FOR T and DPD : /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/
