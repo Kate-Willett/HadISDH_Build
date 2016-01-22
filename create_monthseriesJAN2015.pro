@@ -112,29 +112,29 @@ pro create_monthseriesJAN2015
 
 ;-------------------------------------------------------------------------
 
-newstart=292740   	    ;long(0)	; use this to restart the program at a specified place 
+newstart=long(0)   	    ;long(0)	; use this to restart the program at a specified place 
 nowmon='JAN'
-nowyear='2015'
-version='2.1.0.2014p'
+nowyear='2016'
+version='2.1.0.2015p'
 
 
-indir='/media/Kate1Ext3/HadISD.1.0.3.2014p/'
-inlists='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'
+indir='/media/Kate1Ext3/HadISD.1.0.4.2015p/'
+inlists='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'
 inSLP='/data/local/hadkw/HADCRUH2/OTHERDATA/'	;CR20Jan7605MSLP_yycompos.151.170.240.10.37.8....nc
-outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/'
-outdirRAWq='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314q/monthly/raw/'
-outdirRAWe='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314e/monthly/raw/'
-outdirRAWt='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314t/monthly/raw/'
-outdirRAWdpd='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314dpd/monthly/raw/'
-outdirRAWtd='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314td/monthly/raw/'
-outdirRAWtw='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314tw/monthly/raw/'
-outdirRAWrh='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314rh/monthly/raw/'
-outdirRAWws='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314ws/monthly/raw/'
-outdirRAWslp='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7314slp/monthly/raw/'
-outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HISTORY/'
-outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-keepfile='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/'
+outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315q/monthly/raw/'
+outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315e/monthly/raw/'
+outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315t/monthly/raw/'
+outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315dpd/monthly/raw/'
+outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315td/monthly/raw/'
+outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315tw/monthly/raw/'
+outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315rh/monthly/raw/'
+outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315ws/monthly/raw/'
+outdirRAWslp='/data/local/hadkw/HADCRUH2UPDATE2015//PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
+outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'
+outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+keepfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 
 ; variables
 mdi=-1e+30
@@ -148,7 +148,7 @@ styear=1973
 stday=1
 stmon=1
 stjul=JULDAY(stmon,stday,styear,0)
-edyear=2014 
+edyear=2015 
 edday=1
 edmon=1
 edjul=JULDAY(edmon,edday,edyear+1, 0)
@@ -180,7 +180,7 @@ fullslp_arr=make_array(ntims,/float,value=mdi)
 ; i.e., 1974 June 30th = 181st day Dec 31st = 365th day (184)
 ; i.e., 1975 June 30th = 181st day Dec 31st = 365th day (184)
 ; i.e., 1976 June 30th = 182nt day Dec 31st = 366th day (184)
-; leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008
+; leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012
 ; leap if divisible by four by not 100, unless also divisible by 400 i.e. 1600, 2000
 
 tots={structots,hd:[181,184]}
