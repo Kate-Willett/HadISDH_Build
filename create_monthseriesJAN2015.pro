@@ -2,40 +2,114 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
-; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+; Last update: 22 January 2016
+; Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
-; <brief summary of code purpose and main outputs>
-; 
+; Reads in hourly HadISD data, converts to humidity variables, caluclates monthly means and monthly mean anomalies, saves to ascii and netCDF.
+; Outputs to PHA folder: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/
+; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/
+; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/
+;
+; this program reads in every QC'd netcdf file and outputs a monthly mean anomaly, abs, clim and sd version
+; this uses T, Tdew and SLP from the netCDF but also needs to know elevation in order to calculate SLP if necessary.
+; this outputs T, Tdew, DPD, Twetbulb, vapour pressure, specific humidity and relative humidity using calc_evap.pro
+; Also outputs SLP and windspeed
+; May add heat indices in the future
+;
+; this also reads in source data and outputs a station history file
+; /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/ of the format:
+; /data/local/hadkw/HADCRUH2/PROGS/USHCN_v52d/src_codes/documentation/SHF_tob_inst.txt
+; some amendments:
+; SOURCE CODE 3=history created from raw data using: 
+;	- change in station source (composited stations) 
+; 	- change in ISD within file lat/lon (2012 onwards)
+;	- change in observing frequency 
+;	- change in observing times
+;	- change in recording resolution (2012 onwards?)
+; REMEMBER to convert lat/lon to degrees, minutes and seconds and elevation to feet (?)
+;
+; First, month hour averages are taken for each hour of the day - there must be at least 15 days present for each hour within the month
+; Then the month average is made from the month hour averages. There must be at least 4 month hour averages with at least 1 in each tercile )) to 07,
+; 08 to 15, 16 to 23
+; There must also be at least one year in each decade of climatology 76-85, 86-95, 96-05
+; There must be at least 15 years of T and Td (tests RH) within the 1976-2005 climatology period for each month present for the station to be kept
+;
 ; <references to related published material, e.g. that describes data set>
 ; 
 ; -----------------------
 ; LIST OF MODULES
 ; -----------------------
-; <List of program modules required to run the code, or link to compiler/batch file>
+; calc_evap.pro - written by kate Willett to calculate humidity variables
+; make_months_oddtimesJAN2015.pro - written by Kate Willett to calculate monthly means - spitting out stations with too few obs.
 ; 
 ; -----------------------
 ; DATA
 ; -----------------------
-; <source data sets required for code; include data origin>
-; 
+; reads in netCDF hourly station data from HadISD /media/Kate1Ext3/HadISD.1.0.4.2015p/
+; Old list of 6103 potential HadISD stations to include
+; inlists='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'
+; 20CR SLP data for making climatological SLP for humidity calculation
+; inSLP='/data/local/hadkw/HADCRUH2/OTHERDATA/'	;CR20Jan7605MSLP_yycompos.151.170.240.10.37.8....nc
+;
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
-; <step by step guide to running the code>
+; First make sure the source data are in the right place.
+; Make sure this year's directories are set up: makeHadISDHdirectories.sh
+; Make sure this year's PHA directories are set up: makePHAdirectories.sh
+; Update this file to work with new version number and latest year of data and file structure
+;
+; > tidl
+; > .compile make_months_oddtimesJAN2015.pro ; MUST BE FIRST!!!
+; > .compile calc_evap.pro
+; > .compile create_monthseriesJAN2015.pro
+; create_monthseriesJAN2015.pro
 ; 
+; if it fails and you need to re run
+; > retall
+; > close,/all
+; .compile etc...
 ; -----------------------
 ; OUTPUT
 ; -----------------------
-; <where this is written to and any other useful information about output>
+; ASCII monthly means and anomalies
+; outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/'
+; GHCNM style ASCII monthly means for PHA
+; outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315q/monthly/raw/'
+; outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315e/monthly/raw/'
+; outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315t/monthly/raw/'
+; outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315dpd/monthly/raw/'
+; outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315td/monthly/raw/'
+; outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315tw/monthly/raw/'
+; outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315rh/monthly/raw/'
+; outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315ws/monthly/raw/'
+; outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
+; outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'
+; outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+; A list of stations that are not carried forward because they do not contain enough months of data
+; ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; A list of stations that have enough months to be carried forward
+; keepfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 2 (22 January 2016)
+; ---------
+;  
+; Enhancements
+; Updated to deal with 2016
+; Added more detail to the header for code legacy
+;  
+; Changes
+;  
+; Bug fixes
+
+;
 ; Version 1 (15 January 2015)
 ; ---------
 ;  
@@ -49,29 +123,6 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-
-pro create_monthseriesJAN2015
-
-; this program reads in every QC'd netcdf file and outputs a monthly mean anomaly, abs, clim and sd version
-; this uses T, Tdew and SLP from the netCDF but also needs to know elevation in order to calculate SLP if necessary.
-; this outputs T, Tdew, DPD, Twetbulb, vapour pressure, specific humidity and relative humidity using calc_evap.pro
-
-; this also reads in source data and outputs a station history file of the format:
-; /data/local/hadkw/HADCRUH2/PROGS/USHCN_v52d/src_codes/documentation/SHF_tob_inst.txt
-; some amendments:
-; SOURCE CODE 3=history created from raw data using: 
-;	- change in station source (composited stations) 
-; 	- change in ISD within file lat/lon (2012 onwards)
-;	- change in observing frequency 
-;	- change in observing times
-;	- change in recording resolution (2012 onwards?)
-; REMEMBER to convert lat/lon to degrees, minutes and seconds and elevation to feet (?)
-
-;COMPILE:
-; .compile create_monthseriesJAN2015.pro
-; .compile make_months_oddtimesJAN2015.pro
-; .compile calc_evap.pro
-
 ;-------------------------------------------------------------------------
 ; JAN 2015
 ; updated to read in 2014
@@ -111,6 +162,7 @@ pro create_monthseriesJAN2015
 ; both use Eq. from Smithsonian Tables p268
 
 ;-------------------------------------------------------------------------
+pro create_monthseriesJAN2015
 
 newstart=long(0)   	    ;long(0)	; use this to restart the program at a specified place 
 nowmon='JAN'
@@ -130,7 +182,7 @@ outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/ph
 outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315tw/monthly/raw/'
 outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315rh/monthly/raw/'
 outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315ws/monthly/raw/'
-outdirRAWslp='/data/local/hadkw/HADCRUH2UPDATE2015//PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
+outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
 outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'
 outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
 ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'

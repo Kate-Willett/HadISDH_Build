@@ -26,6 +26,22 @@ change years in file where appropriate
 		-> ANALYSIS
 		-> OTHER
 	-> PROGS (will need some faffing with the git repositories)
+	 -> mkdir HADISDH_BUILD
+	 -> cd HADISDH_BUILD
+	 -> git init
+	 -> git remote add HADISDHOrigin git@github.com:Kate-Willett/HadISDH_Build.git
+	 -> git fetch HADISDHOrigin
+	 -> git checkout master
+	 -> cd ../
+	 -> git init
+	 -> git remote add ClimExpOrigin git@github.com:Kate-Willett/Climate_Explorer.git
+	 -> git fetch ClimExpOrigin
+	 -> git checkout master
+	 -> mkdir PHA_2015
+	 -> cd PHA_2015
+	 -> scp -r ../UPDATE2014/PHA_2014/.* .
+	  -> ./makePHAdirecotories.sh
+	  -> set up the .conf files, incl files
 	-> MONTHLIES 
 		-> ASCII -> TABS,TDABS,TWABS,QABS,EABS,RHABS,DPDABS,WSABS,SLPABS
 		            TANOMS,TDANOMS,TWANOMS,QABS,EANOMS,RHANOMS,DPDANOMS,
@@ -57,18 +73,12 @@ change years in file where appropriate
 
 ;------------------------------------------------------------------
 ORDER
-CREATE MONTHLY DATA FROM HOURLY HADISD
-create_monthseriesJAN2015.pro	(all variables inclusive)
-	-> make_months_oddtimesJAN2015.pro
-	-> calc_evap.pro
-	-> match.pro
-
-RUN DIRECT PHA FOR T and DPD (and all others to get corr files): 
-        /data/local/hadkw/HADCRUH2/PROGS/PHA_2013/
-	- set up directories:
+SET UP PHA DIRECTORIES
+        /data/local/hadkw/HADCRUH2/PROGS/PHA_2015/
+	- set up PHA directories:
 	-> makePHAdirectories.sh 
-	/data/local/hadkw/HADCRUH2/PHA_2013/pha_v52i/data/hadisdh/
-							-> hadisdh7313<var>
+	/data/local/hadkw/HADCRUH2/PHA_2015/pha_v52j/data/hadisdh/
+							-> hadisdh7315j<var>
 								-> meta
 								-> corr
 								-> output
@@ -77,6 +87,14 @@ RUN DIRECT PHA FOR T and DPD (and all others to get corr files):
 									-> WMs.r00
 									-> FLs.r00							
  	- set up /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh7314<var>.conf
+
+CREATE MONTHLY DATA FROM HOURLY HADISD
+create_monthseriesJAN2015.pro	(all variables inclusive)
+	-> make_months_oddtimesJAN2015.pro
+	-> calc_evap.pro
+	-> match.pro
+
+RUN DIRECT PHA FOR T and DPD (and all others to get corr files): 
 	- set up /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_src/phav52i/source_expand/
 	 	 parm_includes/inhomog.parm.MNTHLY.TEST.incl
 	- compile from /data/local/hadkw/HADCRUH2/PHA_2013/pha_src/phav52i/
