@@ -128,7 +128,7 @@ def MedianPairwise(TheData,TheMDI,TheSlope): # ,Lowee=Lowee,Highee=Highee):
         rankU=int(((DegofFree+1.96*weight)/2.)+1)
 
 # Checks to make sure the ranks are actually sensible
-        if (rankU >= len(PairwiseSlopes):
+        if (rankU >= len(PairwiseSlopes)):
 	    rankU=len(PairwiseSlopes)-1
         if (rankU < 0):
 	    rankU=0
