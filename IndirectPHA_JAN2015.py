@@ -3,41 +3,89 @@
 # 
 # Author: Kate Willett
 # Created: 11 October 2013
-# Last update: 24 January 2014
-# Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+# Last update: 29 January 2015
+# Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
 # CODE PURPOSE AND OUTPUT
 # -----------------------
-# <brief summary of code purpose and main outputs>
+# This code applies IDPHA: it homogenises T, q, e, RH and Tw by using the changepoint locations from DPD and T.
+# It reads in the PHA homogenised T and the raw q, RH, e and Tw monthly data. It reads in the changepoint locations 
+# the PHA output for T and DPD and uses these to apply changes to T, q, e, RH and Tw. It reads in the 40 highest correlating neighbours 
+# as deciphered from PHA (having previously run PHA on all variables). It lists stations with fewer than 7 neighbours - 
+# these cannot be homogenised and should be removed from further processing. It makes anomaly difference series between each
+# neighbour pair and looks at the mean differences between homogeneous subperiods. If the +/- 1SD of the 
+# differences are of the same sign then an adjustment is applied. Adjustment magnitude is stored as well as the 1SD as an 
+# uncertainty measure. Adjustment locations, amagnitudes and uncertainties are stored. Homogenised monthly data are 
+# output. Plots are created of raw and homogenised candidate verses raw neighbour annual average series for absolutes 
+# and anomalies.
 # 
-# <references to related published material, e.g. that describes data set>
+# Willett et al., 2014
+# Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., Jones, P. D., and Williams Jr., 
+# C. N.: HadISDH land surface multi-variable humidity and temperature record for climate monitoring, Clim. Past, 10, 
+# 1983-2006, doi:10.5194/cp-10-1983-2014, 2014. 
 # 
 # -----------------------
 # LIST OF MODULES
 # -----------------------
-# <List of program modules required to run the code, or link to compiler/batch file>
-# 
+# inbuilt:
+# import datetime as dt
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from matplotlib.dates import date2num,num2date
+# import sys, os
+# from scipy.optimize import curve_fit,fsolve,leastsq
+# from scipy import pi,sqrt,exp
+# from scipy.special import erf
+# import scipy.stats
+# from math import sqrt,pi
+# import struct
+#
+# Kates:
+# from LinearTrends import MedianPairwise - fits linear trend using Median Pairwise
+#
 # -----------------------
 # DATA
 # -----------------------
-# <source data sets required for code; include data origin>
+# Station list of all stations with the PHA no-neighbour stations for T and DPD removed
+# STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations (6)
+#
+# Break locations are taken from pha output for T and DPD
+# TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2016.log'
+# DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2016.log'
+#
+# Correlation matrix of each station with 40 highest correlating neighbours from PHA
+# CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315rh/corr/corr.log'
+# Raw monthly mean data in ASCII 
+# INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/RHABS/'
 # 
 # -----------------------
 # HOW TO RUN THE CODE
 # -----------------------
-# <step by step guide to running the code>
+# Go through everything in the 'Start' section to make sure dates, versions and filepaths are up to date
+# Choose param settings for the desired variable (also in 'Start' section)
+# This can take an hour or so to run through ~3800 stations so consider using screen, screen -d, screen -r
+# python2.7 IndirectPHA_JAN2015.py
 # 
 # -----------------------
 # OUTPUT
 # -----------------------
-# <where this is written to and any other useful information about output>
+# Output ASCII monthly mean data after IDPHA has been applied
+# OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/RHDIR/'
+# Log file of changepoint locations, adjustment magnitude and 1SD uncertainty actual and acumulated
+# BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+# A list of stations for which there are fewer than 7 neighbours that correlate greater than 0.0
+# NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+# Good stations list to carry on for further processing
+# GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
+# Plot showing raw and homogenised station with all raw neighbours - abs and anomalies, with linear trends (median pairwise)
+# OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/RHDIR/'
 # 
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
 # 
-# Version 1 (24 January 2014)
+# Version 1 (29 January 2015)
 # ---------
 #  
 # Enhancements
@@ -49,36 +97,6 @@
 # -----------------------
 # OTHER INFORMATION
 # -----------------------
-#
-
-
-#***************************************
-# 11 October 2013 KMW - v1
-# Indirect homogenisation of RH and Tw using breakpoints found in T and Td
-# Indirect homogenisation of e and q using breakpoints found in Td
-# Works on monthly mean values from HadISD  
-# 
-# 1. Establish where to source breaks Td or Td and T
-# 2. Find all break locations and homogeneous subperiods
-# 3. Read in station, find the neighbour network, read in all neighbours, make anomalies, make
-#    difference series for each pair
-# 4. Loop through breaks
-#	4.1 Get difference in medians between homogeneous subperiods for each
-#           difference series
-#       4.2 Get the mean, 1 st dev of differences
-#       4.3 If +/- 1SD are both of the same sign then GOOD (establish criteria)
-#       4.4 Apply mean adjustment, record alongside 1SD
-# 5. record accumulative adjustments and uncertainties
-# 6. add back climatology, save adjusted station to file 
-# 
-# 24 January 2014
-# Apply IDPHA to T using DPD changepoints
-# USE DPD changepoints instead of TD
-# Apply both T and DPD to all variables because:
-#	in most cases T will have been involved in calculation from original source
-#	DPD does not contain changepoints that co-occur in T and Td
-# Cope with new 2.0.0.2013p file structure
-# 
 #
 #************************************************************************
 #                                 START
@@ -108,80 +126,80 @@ from LinearTrends import MedianPairwise
 Restarter='------'				#'------'		#'681040'
 
 # Set up initial run choices
-param='tw'	# tw, q, e, rh, t
-param2='Tw'	# Tw, q, e, RH, T
-unit='deg C'	# 'deg C','g/kg','hPa','%'
+param='e'	# tw, q, e, rh, t
+param2='e'	# Tw, q, e, RH, T
+unit='hPa'	# 'degrees C','g/kg','hPa','%'
 nowmon='JAN'
-nowyear='2015'
-version='2.0.1.2014p'
+nowyear='2016'
+version='2.1.0.2015p'
 
 # Set up file locations
-STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations (6)
+STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations (6)
 
 # Break locations are taken from pha output
-TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2015.log'
-DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2015.log'
+TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2016.log'
+DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2016.log'
 
 STATSUFFIXOUT='_IDPHAadj.txt'
 
 if param == 'rh':
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314r/corr/corr.hadisdh7314r.tavg.r00.1502071231'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/RHABS/'
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315rh/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/RHABS/'
     STATSUFFIXIN='_RHmonthQCabs.raw'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/RHDIR/'
-    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/noneighbours_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/RHDIR/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/RHDIR/'
+    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/RHDIR/'
 
 elif param == 'q':
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314q/corr/corr.hadisdh7314q.tavg.r00.1502071125' 
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/QABS/'
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315q/corr/corr.log' 
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/QABS/'
     STATSUFFIXIN='_qmonthQCabs.raw'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
-    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/noneighbours_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+'.txt'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
+    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+'.txt'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
 
 elif param == 'tw':
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314w/corr/corr.hadisdh7314w.tavg.r00.1502071306'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/TWABS/'
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315tw/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/TWABS/'
     STATSUFFIXIN='_TwmonthQCabs.raw'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/TWDIR/'
-    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/noneighbours_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+'.txt'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TWDIR/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TWDIR/'
+    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+'.txt'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TWDIR/'
 
 elif param == 'e':
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314e/corr/corr.hadisdh7314e.tavg.r00.1502071159'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/EABS/'
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315e/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/EABS/'
     STATSUFFIXIN='_emonthQCabs.raw'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/EDIR/'
-    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/noneighbours_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+'.txt'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/EDIR/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/EDIR/'
+    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+'.txt'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/EDIR/'
 
 elif param == 't':
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314t/corr/corr.hadisdh7314t.tavg.r00.1502071016' 
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/TABS/'	# a different file name and format to read in
-    INPHA='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHAASCII/TDIR/'	# a different file name and format to read in
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315t/corr/corr.log' 
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/TABS/'	# a different file name and format to read in
+    INPHA='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/TDIR/'	# a different file name and format to read in
     STATSUFFIXIN='_TmonthQCabs.raw'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
-    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    BREAKSINFOMERGE='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/noneighbours_landT.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDIR/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
+    BREAKSINFO='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
+    BREAKSINFOMERGE='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.log'
+    NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landT.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDIR/'
 
 # Set up variables and arrays needed
 
 mdi=-99.99
 
 styr=1973
-edyr=2014
+edyr=2015
 DATASTART=dt.datetime(styr,1,1,0,0)
 DATAEND=dt.datetime(edyr,12,1,0,0)
 clmst=1976
@@ -1108,9 +1126,9 @@ for st in range(nstations):
 # PLOT CANDIDATE AND NEIGHBOURS UNHOMOG WITH HOMOG ON TOP - ABS, ANOMS with MedianPairwiseTrends
 # REZEROD HOMOG MAY MEAN ITS NOW OFFSET COMPARED TO ORIGINAL
 	if param != 't':
-	    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7312OCT2013abs'
+	    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
             PlotHomogTS(MyPlotFile,MyStation,NeighbourStations,MyHomogAbs,mdi,styr,nyrs,unit,'absolutes')
-            MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7312OCT2013anoms'
+            MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'anoms'
             PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,mdi,styr,nyrs,unit,'anomalies')
         else:
 	    MyStation=[]	# filled after reading in candidate station
@@ -1127,9 +1145,9 @@ for st in range(nstations):
                     MyStation=np.append(MyStation,moo[2:14])	# for some silly reason you subscript starting from 0th element to the nth rather than n-1th element
             MyStation=np.reshape(MyStation/100.,(1,len(MyStation)))	# now in proper units and an array not list
 	    
-	    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7312OCT2013abs'
+	    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
             PlotHomogTS(MyPlotFile,MyStation,NeighbourStations,MyHomogAbs,mdi,styr,nyrs,unit,'absolutes')
-            MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7312OCT2013anoms'
+            MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'anoms'
             PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,mdi,styr,nyrs,unit,'anomalies')
 	
 # print out homogenised station anomalies

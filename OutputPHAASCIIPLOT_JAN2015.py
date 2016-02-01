@@ -3,41 +3,103 @@
 # 
 # Author: Kate Willett
 # Created: 24 February 2014
-# Last update: 15 January 2015
-# Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+# Last update: 29 January 2016
+# Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
 # CODE PURPOSE AND OUTPUT
 # -----------------------
-# <brief summary of code purpose and main outputs>
+# This codes reads in the homogenised monthly mean data from PHA, outputs to ASCII, infilling
+# hte missing years with missing data indicators (entire missing years are not printed by PHA).
+# This code also plots the raw and homogenised station series alongside its raw neighbours with
+# the linear trend (median pairwise) shown, for abs and anomaly annual means. 
+# It can cope with PHA, IDPHA and PHADPD homogenised modes.
+# When run for Td in PHADPD mode it creates homogenised Td from IDPHAt minus PHAdpd and outputs
+# a merged log file which attempts to acumulate the changepoints appropriately.
+#
+# NB: In a few cases Td will not have neighbours to plot so prog will fail. Restart.
 # 
-# <references to related published material, e.g. that describes data set>
+# Willett et al., 2014
+# Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., Jones, P. D., and Williams Jr., 
+# C. N.: HadISDH land surface multi-variable humidity and temperature record for climate monitoring, Clim. Past, 10, 
+# 1983-2006, doi:10.5194/cp-10-1983-2014, 2014. 
 # 
 # -----------------------
 # LIST OF MODULES
 # -----------------------
-# <List of program modules required to run the code, or link to compiler/batch file>
+# Inbuilt:
+# import datetime as dt
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from matplotlib.dates import date2num,num2date
+# import sys, os
+# from scipy.optimize import curve_fit,fsolve,leastsq
+# from scipy import pi,sqrt,exp
+# from scipy.special import erf
+# import scipy.stats
+# from math import sqrt,pi
+# import struct
+#
+# Kates:
+# from LinearTrends import MedianPairwise - fits linear trend using median pairwise
 # 
 # -----------------------
 # DATA
 # -----------------------
-# <source data sets required for code; include data origin>
-# 
+# # The 40 nearest correlating neighbours from PHA    
+# CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315q/corr/corr.log'	
+# The raw monthly mean station data
+# INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/QABS/'
+# The PHA station list to work through
+# STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAq_'+thenmon+thenyear+'.txt'	
+# OR the IDPHA list to work through
+# STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+thenmon+thenyear+'.txt'	
+# Homogenised monthly mean station data from PHA
+# INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315q/monthly/WMs.r00/'
+# Homogenised monthly mean station data from IDPHA
+# INHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
+# For TdL
+# IDPHA homogenised monthly mean T for creating Td
+# INHOMT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
+# PHA homogenised monthly mean DPD for creating Td
+# INHOMDPD='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/DPDDIR/'
+# Log of changepoint locations and magnitudes and uncertainties for DPD to merge with T breaks
+# DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_'+thenmon+thenyear+'.log'
+# Log of changepoint locations and magnitudes and uncertainties for T to merge with DPD breaks
+# TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+thenmon+thenyear+'.log'
+#
 # -----------------------
 # HOW TO RUN THE CODE
 # -----------------------
-# <step by step guide to running the code>
+# Go through everything in the 'Start' section to make sure dates, versions and filepaths are up to date
+# Choose param settings for the desired variable (also in 'Start' section)
+# This can take an hour or so to run through ~3800 stations so consider using screen, screen -d, screen -r
+# python2.7 OutputPHAASCIIPLOT_JAN2015.py
+#
+# NB: In a few cases Td will not have neighbours to plot so prog will fail. Restart.
 # 
 # -----------------------
 # OUTPUT
 # -----------------------
-# <where this is written to and any other useful information about output>
-# 
+# # PHA Plot showing raw and homogenised candidate vs raw neighbours with linear trends for abs and anomly monthly means
+# OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/QDIR/'
+# or if IDPHA
+# OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
+# PHA only: Output monthly mean homogenised ASCII with missing years infilled with missing data indicator
+# OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/QDIR/'
+# For Derived Td mode (PHADPD)
+# Output log of merged T and DPD changepoints, adjustments, uncertainties that essentially went into Td (indirectly as Td is 
+# created from T - DPD
+# TDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_'+thenmon+thenyear+'.log'
+# Derived Td is stored as for IDPHA:
+# OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TDDIR/'
+# OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDDIR/'
+#
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
 # 
-# Version 1 (15 January 2015)
+# Version 1 (29 January 2016)
 # ---------
 #  
 # Enhancements
@@ -49,17 +111,6 @@
 # -----------------------
 # OTHER INFORMATION
 # -----------------------
-#
-
-#***************************************
-# 24 January 2014
-# read in homogenised monthlies from PHA
-# fill in missing years with mdi
-# output to ASCII in HOMOG
-# read in the raw time series
-# read in the raw neighbour time series
-# plot the raw vs homog vs neighbours with median_pairwise trends
-# STILL TO DO! Bring in bit from create_homogNCDF... to read in T (after ID) and DPD logs and merge the two
 #
 #************************************************************************
 #                                 START
@@ -86,7 +137,7 @@ import struct
 from LinearTrends import MedianPairwise
 
 # RESTART VALUE
-Restarter='919300'				#'------'		#'681040'
+Restarter='------'				#'------'		#'681040'
 Spin='TRUE'	#TRUE: loop through, FALSE: perform one stations only
 Plotonly='FALSE'	#TRUE or FALSE
 AddLetter='a)'		#'---'
@@ -96,10 +147,10 @@ param='td'	# tw, q, e, rh, t, td, dpd
 param2='Td'	# Tw, q, e, RH, T, Td, DPD
 unit='degrees C'	# 'deg C','g/kg','hPa', '%rh'
 nowmon='JAN'
-nowyear='2015'
+nowyear='2016'
 thenmon='JAN'
-thenyear='2015'
-version='2.0.1.2014p'
+thenyear='2016'
+version='2.1.0.2015p'
 homogtype='PHADPD'	#'PHA','IDPHA','PHADPD'
 
 # Set up file locations
@@ -107,87 +158,87 @@ homogtype='PHADPD'	#'PHA','IDPHA','PHADPD'
 STATSUFFIXOUT='_PHAadj.txt'
 
 if param == 'rh':
-    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_PHArh_'+thenmon+thenyear+'.txt'	
-    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313rh/corr/corr.hadisdh7313rh.tavg.r00.1401250809'	
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/ASCII/RHABS/'
+    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHArh_'+thenmon+thenyear+'.txt'	
+    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315rh/corr/corr.log'	
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/RHABS/'
     STATSUFFIXIN='_RHmonthQCabs.raw'
-    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313rh/monthly/WMs.r00/'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/PHAASCII/RHDIR/'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/RHDIR/'
+    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315rh/monthly/WMs.r00/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/RHDIR/'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/RHDIR/'
 
 elif param == 'q':
-    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313q/corr/corr.hadisdh7313q.tavg.r00.1401241645'	
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/ASCII/QABS/'
+    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315q/corr/corr.log'	
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/QABS/'
     STATSUFFIXIN='_qmonthQCabs.raw'
     if homogtype == 'PHA':
-        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_PHAq_'+thenmon+thenyear+'.txt'	
-        INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313q/monthly/WMs.r00/'
-        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/QDIR/'
-        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/PHAASCII/QDIR/'
+        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAq_'+thenmon+thenyear+'.txt'	
+        INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315q/monthly/WMs.r00/'
+        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/QDIR/'
+        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/QDIR/'
     elif homogtype =='IDPHA':
-        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+thenmon+thenyear+'.txt'	
-        INHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
-        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
+        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+thenmon+thenyear+'.txt'	
+        INHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
+        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
 
 elif param == 'tw':
-    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtw_'+thenmon+thenyear+'.txt'	
-    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313tw/corr/corr.hadisdh7313tw.tavg.r00.1401280853'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/ASCII/TWABS/'
+    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtw_'+thenmon+thenyear+'.txt'	
+    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315tw/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/TWABS/'
     STATSUFFIXIN='_TwmonthQCabs.raw'
-    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313tw/monthly/WMs.r00/'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/PHAASCII/TWDIR/'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TWDIR/'
+    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315tw/monthly/WMs.r00/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/TWDIR/'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TWDIR/'
 
 elif param == 'e':
-    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_PHAe_'+thenmon+thenyear+'.txt'	
-    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313e/corr/corr.hadisdh7313e.tavg.r00.1401250917'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/ASCII/EABS/'
+    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAe_'+thenmon+thenyear+'.txt'	
+    CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315e/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/EABS/'
     STATSUFFIXIN='_emonthQCabs.raw'
-    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313e/monthly/WMs.r00/'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/PHAASCII/EDIR/'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/EDIR/'
+    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315e/monthly/WMs.r00/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/EDIR/'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/EDIR/'
 
 elif param == 't':
-    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAt_'+thenmon+thenyear+'.txt'	
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314t/corr/corr.hadisdh7314t.tavg.r00.1502071016'	
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/TABS/'
+    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAt_'+thenmon+thenyear+'.txt'	
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315t/corr/corr.log'	
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/TABS/'
     STATSUFFIXIN='_TmonthQCabs.raw'
-    INHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314t/monthly/WMs.r00/'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHAASCII/TDIR/'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TDIR/'
+    INHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315t/monthly/WMs.r00/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/TDIR/'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TDIR/'
 
 elif param == 'dpd':
-    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+thenmon+thenyear+'.txt'	
-    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314p/corr/corr.hadisdh7314p.tavg.r00.1502071825'
-    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/DPDABS/'
+    STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+thenmon+thenyear+'.txt'	
+    CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315dpd/corr/corr.log'
+    INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/DPDABS/'
     STATSUFFIXIN='_DPDmonthQCabs.raw'
-    INHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314p/monthly/WMs.r00/'
-    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHAASCII/DPDDIR/'
-    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/DPDDIR/'
+    INHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315dpd/monthly/WMs.r00/'
+    OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/DPDDIR/'
+    OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/DPDDIR/'
 
 elif param == 'td':
     if homogtype == 'PHADPD':
-        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+thenmon+thenyear+'.txt'	
-        CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314d/corr/corr.hadisdh7314d.tavg.r00.1502071800'	
-        INRAW='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/ASCII/TDABS/'
+        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+thenmon+thenyear+'.txt'	
+        CORRFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315td/corr/corr.log'	
+        INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/TDABS/'
         STATSUFFIXIN='_TdmonthQCabs.raw'
-#    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313td/monthly/WMs.r00/'
-        INHOMT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
-        INHOMDPD='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHAASCII/DPDDIR/'
-        DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2015.log'
-        TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_JAN2015.log'
-        TDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_'+thenmon+thenyear+'.log'
-        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHAASCII/TDDIR/'
-        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDDIR/'
+#    INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/hadisdh7313td/monthly/WMs.r00/'
+        INHOMT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
+        INHOMDPD='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/DPDDIR/'
+        DPDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_'+thenmon+thenyear+'.log'
+        TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+thenmon+thenyear+'.log'
+        TDBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_'+thenmon+thenyear+'.log'
+        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHAASCII/TDDIR/'
+        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDDIR/'
     #NB: In a few cases Td will not have neighbours to plot so prog will fail. Restart.
     else:
-        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtd_'+thenmon+thenyear+'.txt'	
-        CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313td/corr/corr.hadisdh7313td.tavg.r00.1401270954'	
-        INRAW='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/ASCII/derivedTDABS/'
+        STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtd_'+thenmon+thenyear+'.txt'	
+        CORRFIL='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315td/corr/corr.log'	
+        INRAW='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/derivedTDABS/'
         STATSUFFIXIN='_deTdmonthQCabs.raw'
-        INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA_2013/pha_v52i/data/hadisdh/hadisdh7313td/monthly/WMs.r00/'
-        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/PHAASCII/TDDIR/'
-        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TDDIR/'
+        INHOM='/data/local/hadkw/HADCRUH2/PROGS/PHA2015/pha52jgo/data/hadisdh/7315td/monthly/WMs.r00/'
+        OUTHOM='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHAASCII/TDDIR/'
+        OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/TDDIR/'
         
 
 # Set up variables and arrays needed
@@ -195,7 +246,7 @@ elif param == 'td':
 mdi=-99.99
 
 styr=1973
-edyr=2014
+edyr=2015
 DATASTART=dt.datetime(styr,1,1,0,0)
 DATAEND=dt.datetime(edyr,12,1,0,0)
 clmst=1976
@@ -705,15 +756,15 @@ for st in range(nstations):
     MyDPDStation=[]
     MyRAWStation=[]
     MyClims=[]	# 12 element array of mean months 1976-2005
-#    MyAnomalies=[] # filled with anomalies after subtracting climatology
-#    MyHomogAnoms=[] # filled with homogenised anomalies
-#    MyHomogAbs=[]  # filled with climatology+homogenised anomalies
-#    MyClimMeanShift=[] # flat value across complete climatology period that the homogenised values differ from zero by - to rezero anoms and adjust clims/abs
+    MyAnomalies=[] # filled with anomalies after subtracting climatology
+    MyHomogAnoms=[] # filled with homogenised anomalies
+    MyHomogAbs=[]  # filled with climatology+homogenised anomalies
+    MyClimMeanShift=[] # flat value across complete climatology period that the homogenised values differ from zero by - to rezero anoms and adjust clims/abs
 
     NeighbourStations=[]	# nNstations by nmons array filled after reading in all neighbour stations
     NeighbourAnomsStations=[]	# nNstations by nmons array filled after anomalising all neighbour stations relative to climatology
-#    NeighbourClimsStations=[]	# nNstations by nmons array filled after anomalising all neighbour stations relative to climatology
-#    NeighbourDiffStations=[]	# nNstations by nmons array filled after creating candidate minus neighbour difference series
+    NeighbourClimsStations=[]	# nNstations by nmons array filled after anomalising all neighbour stations relative to climatology
+    NeighbourDiffStations=[]	# nNstations by nmons array filled after creating candidate minus neighbour difference series
 
 # read in the RAW station file
     MyFile=INRAW+StationListWMO[st]+"-"+StationListWBAN[st]+STATSUFFIXIN  
@@ -810,18 +861,19 @@ for st in range(nstations):
 						   STATSUFFIXIN,yrarr,NeighbourStations)
         print("Actual No. of Neighbours: ",nNstations)	# not including candidate but may have duplicate
 
-## convert all to anomalies (storing station climatology)
-#    MyAnomalies,MyClims=MakeAnomalies(MyStation,MyAnomalies,MyClims,nyrs,clmsty,clmedy,mdi)
-#	
-#    NeighbourAnomsStations,NeighbourClimsStations=MakeAnomalies(NeighbourStations,NeighbourAnomsStations,
-#	                                              NeighbourClimsStations,nyrs,clmsty,clmedy,mdi)
+# convert all to anomalies (storing station climatology)
+    MyAnomalies,MyClims=MakeAnomalies(MyStation,MyAnomalies,MyClims,nyrs,clmsty,clmedy,mdi)
+    MyHomogAnoms,MyClims=MakeAnomalies(MyRAWStation,MyHomogAnoms,MyClims,nyrs,clmsty,clmedy,mdi)
+	
+    NeighbourAnomsStations,NeighbourClimsStations=MakeAnomalies(NeighbourStations,NeighbourAnomsStations,
+	                                              NeighbourClimsStations,nyrs,clmsty,clmedy,mdi)
         
 # PLOT CANDIDATE AND NEIGHBOURS UNHOMOG WITH HOMOG ON TOP - ABS, ANOMS with MedianPairwiseTrends
 # REZEROD HOMOG MAY MEAN ITS NOW OFFSET COMPARED TO ORIGINAL
-    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7313'+nowmon+nowyear+'abs'
+    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
     PlotHomogTS(MyPlotFile,MyRAWStation,NeighbourStations,MyStation,nNstations,mdi,styr,nyrs,unit,'absolutes',AddLetter)
-#    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_7312OCT2013anoms'
-#    PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,mdi,styr,nyrs,unit,'anomalies')
+    MyPlotFile=OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'anoms'
+    PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,nNstations,mdi,styr,nyrs,unit,'anomalies',AddLetter)
 
 # print out homogenised station anomalies
     if Plotonly == 'FALSE':
