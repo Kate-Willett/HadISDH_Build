@@ -3,7 +3,7 @@
 ; Author: Kate Willett
 ; Created: 1 February 2013
 ; Last update: 15 January 2015
-; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+; Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
@@ -124,180 +124,180 @@ pro grid_HadISDHFLAT_JAN2015
 
 ;-----------------------------------------------------
 ; editables
-param='t'	;'dpd','td','t','tw','e','q','rh'
-param2='T'	;'DPD','Td','T','Tw','e','q','RH'
+param='tw'	;'dpd','td','t','tw','e','q','rh'
+param2='Tw'	;'DPD','Td','T','Tw','e','q','RH'
 nowmon='JAN'
-nowyear='2015'
-homogtype='RAW'	;'PHA','ID','DPD', 'RAW'
-version='2.0.1.2014p'
+nowyear='2016'
+homogtype='ID'	;'PHA','ID','DPD', 'RAW'
+version='2.1.0.2015p'
 
 ;; files and directories
 CASE param OF
   'dpd': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/DPDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/DPDDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridRAW'  
     ENDIF
   END
   'td': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAtd_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAtd_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/TDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtd_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtd_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TDDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTd.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/TDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHADPD'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TDDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHADPD'  
     ENDELSE
   END
   'tw': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAtw_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAtw_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/TWDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTw.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TWDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTw.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/TWDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landTw.'+version+'_FLATgridIDPHA'      
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TWDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridIDPHA'      
     ENDELSE
   END
   't': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAt_goodsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/TDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landT.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landT.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landT.'+version+'_FLATgridIDPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridIDPHA'  
     ENDELSE
   END
   'rh': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHArh_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHArh_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHArh_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/RHDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landRH.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/RHDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landRH.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/RHDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landRH.'+version+'_FLATgridIDPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/RHDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridIDPHA'  
     ENDELSE
   END
   'e': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAe_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAe_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAe_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/EDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.lande.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/EDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.lande.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/EDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.lande.'+version+'_FLATgridIDPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/EDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridIDPHA'  
     ENDELSE
   END
   'q': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAq_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAq_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogPHAq_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/PHANETCDF/QDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landq.'+version+'_FLATgridPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/QDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridPHA'  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landq.'+version+'_FLATgridRAW'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridRAW'  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2015.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2015.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2015.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/IDPHANETCDF/QDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/HadISDH.landq.'+version+'_FLATgridIDPHA'  
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
+      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2016.txt'
+      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
+      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/QDIR/'
+      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridIDPHA'  
     ENDELSE
   END
 ENDCASE
 
-outresults='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/GriddingResults_'+version+'_'+nowmon+nowyear+'.txt'
+outresults='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/GriddingResults_'+version+'_'+nowmon+nowyear+'.txt'
 ;--------------------------------------------------------
 ; variables and arrays
 mdi=-1e+30
 
-;number of stations still having 15+ months after homog.
+;number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
 CASE param OF
-  'dpd': nstations=3296	; 2015
-  'td': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3162	; 2015	
-  't': nstations=3561 	; 2015
-  'tw': nstations=2782		; 2015
-  'e': nstations=3572		; 2015
-  'q': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3572	; 2015
-  'rh': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3611 ; 2015
+  'dpd': nstations=3271	; 2016
+  'td': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3161	; 2016	
+  't': nstations=3560 	; 2016
+  'tw': nstations=2791		; 2016
+  'e': nstations=3553		; 2016
+  'q': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3557	; 2016
+  'rh': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3601 ; 2016
 ENDCASE
 
 ; subzeros
 CASE param OF
-  'dpd': nsubs=0	; 2015
-  'td': nsubs=0		; 2015
-  't': nsubs=0 		; 2015
-  'tw': nsubs=0		; 2015		
-  'e': nsubs=41		; 2015
-  'q': IF (homogtype EQ 'PHA') THEN nsubs=99 ELSE nsubs=39	; 2015
-  'rh': IF (homogtype EQ 'PHA') THEN nsubs=0 ELSE nsubs=0 	; 2015
+  'dpd': nsubs=0	; 2016
+  'td': nsubs=0		; 2016
+  't': nsubs=0 		; 2016
+  'tw': nsubs=0		; 2016		
+  'e': nsubs=54		; 2016
+  'q': IF (homogtype EQ 'PHA') THEN nsubs=99 ELSE nsubs=50	; 2016
+  'rh': IF (homogtype EQ 'PHA') THEN nsubs=0 ELSE nsubs=0 	; 2016
 ENDCASE
 
 ; supersats
 CASE param OF
-  'dpd': nsats=164 	; 2015
-  'td': IF (homogtype EQ 'PHA') THEN nsats=999 ELSE nsats=160	; 2015	
-  't': nsats=0 		; 2015
-  'tw': nsats=860	; 2015		
-  'e': nsats=29		; 2015
-  'q': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=29	; 2015
-  'rh': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=29 ; 2015
+  'dpd': nsats=171 	; 2016
+  'td': IF (homogtype EQ 'PHA') THEN nsats=999 ELSE nsats=166	; 2016	
+  't': nsats=0 		; 2016
+  'tw': nsats=847	; 2016		
+  'e': nsats=31		; 2016
+  'q': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=31	; 2016
+  'rh': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=32 ; 2016
 ENDCASE
 
 ;units
@@ -310,7 +310,7 @@ ENDCASE
 
 monarr=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 styr=1973
-edyr=2014
+edyr=2015
 nyrs=(edyr+1)-styr
 clst=1976-styr
 cled=2005-styr

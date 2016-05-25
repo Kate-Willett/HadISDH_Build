@@ -53,13 +53,63 @@
 
 pro plot_HadISDH_adjs_JAN2015
 
+; RESULTS 2016
+; q - ID 
+; 3.99 changepoints per station
+; ABS mean=0.26, st dev=0.30
+; Mean = -0.01, st dev=0.40
+; mean of diffs=-0.01, stdev=0.16
+
+; RH - ID 
+; 3.99 changepoints per station
+; ABS mean=2.88, st dev=2.19
+; Mean = 0.01, st dev=3.62
+; mean of diffs=0.03, stdev=1.01
+
+; e - ID
+; 3.99 changepoints per station
+; ABS mean=0.41, st dev=0.46
+; Mean = -0.01, st dev=0.62
+; mean of diffs=0.00, stdev=0.20
+
+; Tw - ID 
+; 3.99 changepoints per station
+; ABS mean=0.31, st dev=0.37
+; Mean = -0.01, st dev=0.48
+; mean of diffs=0.00, stdev=0.18
+
+; T - PHA+ID 
+; 3.81 changepoints per station
+; ABS mean=0.39, st dev=0.49
+; Mean = -0.02, st dev=0.62
+; mean of diffs=0.00, stdev=0.26
+
+; T - PHA 
+; 1.43 changepoints per station
+; ABS mean=0.75, st dev=0.63
+; Mean = -0.09, st dev=0.98
+; mean of diffs=0.00, stdev=0.19
+
+; DPD - PHA
+; 2.68 changepoints per station
+; ABS mean=0.99, st dev=0.70
+; Mean = -0.00, st dev=1.21
+; mean of diffs=-0.01, stdev=0.26
+
+; Td - PHADPD
+; 3.88 changepoints per station
+; ABS mean=0.78, st dev=0.69
+; Mean = -0.01, st dev=1.04
+; mean of diffs=-0.01, stdev=0.31
+
+;*****************************
 ; RESULTS 2015
 
 ; DPD - PHA
 ; 2.57 changepoints per station
-; ABS mean=0.99, st dev=0.70
+; ABS mean=0.75, st dev=0.63
 ; Mean = -0.00, st dev=1.22
-; mean of diffs=0.01, stdev=0.28
+; mean of diffs=-0.00, stdev=0.28
 
 ; T - PHA 
 ; 1.36 changepoints per station
@@ -176,84 +226,84 @@ pro plot_HadISDH_adjs_JAN2015
 !Except=2
 
 startee=' ' 	; fix as a station to restart
-homogtype='ID'	;'PHA' or 'ID' or 'DPD'
-param='tw'	;'dpd','rh','td','t','tw','e','q'
-param2='Tw'	;'DPD','RH','Td','T','Tw','e','q
+homogtype='DPD'	;'PHA' or 'ID' or 'DPD'
+param='td'	;'dpd','rh','td','t','tw','e','q'
+param2='Td'	;'DPD','RH','Td','T','Tw','e','q
 nowmon='JAN'
-nowyear='2015'
-version='2.0.1.2014p'
+nowyear='2016'
+version='2.1.0.2015p'
 plotonly='FALSE'	; TRUE or FALSE
 
 CASE param OF
 
   'dpd': BEGIN
-    inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_JAN2015.txt'
-    inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2015.log' 
-    outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landDPD.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
-    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landDPD.'+version+'_PHA_'+nowmon+nowyear+'.txt'  
+    inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_JAN2016.txt'
+    inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_JAN2016.log' 
+    outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landDPD.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
+    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landDPD.'+version+'_PHA_'+nowmon+nowyear+'.txt'  
   END
   'rh': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHArh_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landRH.'+version+'_PHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_PHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHArh_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landRH.'+version+'_PHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
     ENDELSE
   END
   'td': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtd_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landTd.'+version+'_PHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAtd_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTd.'+version+'_PHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHADPD_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHADPD_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHADPD_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHADPD_'+nowmon+nowyear+'.txt'
     ENDELSE
   END
   't': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAt_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landT.'+version+'_PHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAt_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landT.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_IDPHAMG_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_IDPHAMG_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.txt'
     ENDELSE
   END
   'tw': BEGIN
-    inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_JAN2015.txt'
-    inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_JAN2015.log' 
-    outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landTw.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
-    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_JAN2016.txt'
+    inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_JAN2016.log' 
+    outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landTw.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
+    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
   END
   'e': BEGIN
-    inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_JAN2015.txt'
-    inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_JAN2015.log' 
-    outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.lande.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
-    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+    inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_JAN2016.txt'
+    inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_JAN2016.log' 
+    outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.lande.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
+    outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
   END
   'q': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_PHAq_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landq.'+version+'_PHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landq.'+version+'_PHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHAq_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landq.'+version+'_PHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landq.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_JAN2015.txt'
-      inlog='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_JAN2015.log' 
-      outplots='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
-      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/Largest_Adjs_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_JAN2016.txt'
+      inlog='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_JAN2016.log' 
+      outplots='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
+      outadjs='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/Largest_Adjs_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
     ENDELSE
   END
 
@@ -265,17 +315,17 @@ ENDCASE
 mdi=-1e+30
 
 CASE param OF 
-  'dpd': nstations=3666							;3672
-  'rh': IF (homogtype EQ 'PHA') THEN nstations=3671 ELSE nstations=3656	;3662
-  'td': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3661	;3667
-  't': IF (homogtype EQ 'PHA') THEN nstations=3677 ELSE nstations=3662	;3668
-  'tw': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3659	;3665
-  'e': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3657	;3663
-  'q': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3657	;3663
+  'dpd': nstations=3671							
+  'rh': IF (homogtype EQ 'PHA') THEN nstations=3670 ELSE nstations=3657	
+  'td': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3666	
+  't': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3666	
+  'tw': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3663	
+  'e': IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
+  'q': IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
 ENDCASE
 
 styr=1973
-edyr=2014
+edyr=2015
 nyrs=(edyr+1)-styr
 nmons=nyrs*12
 int_mons=indgen(nmons)

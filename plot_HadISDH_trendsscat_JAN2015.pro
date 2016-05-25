@@ -60,159 +60,160 @@ pro plot_HadISDH_trendsscat_JAN2015
 ;-----------------------------------------------------
 !Except=2
 
-param='tw'	;'dpd','td','t','tw','e','q','rh'
-param2='Tw'	;'DPD','Td','T','Tw','e','q','RH'
+param='dpd'	;'dpd','td','t','tw','e','q','rh'
+param2='DPD'	;'DPD','Td','T','Tw','e','q','RH'
 nowmon='JAN'
-nowyear='2015'
-homogtype='ID'	;'PHA','ID','DPD', 'RAW'
-version='2.0.1.2014p'
-typee='OLD' ;'RAW' for PHA vs RAW or 'OLD' for 2014 vs 2013
-indir='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/'
-oldindir='/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/'
-odir='/data/local/hadkw/HADCRUH2/UPDATE2014/IMAGES/BUILD/'
+nowyear='2016'
+homogtype='PHA'	;'PHA','ID','DPD', 'RAW'
+version='2.1.0.2015p'
+oldversion='2.0.1.2014p'
+typee='OLD' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
+indir='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/'
+oldindir='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/'
+odir='/data/local/hadkw/HADCRUH2/UPDATE2015/IMAGES/BUILD/'
 
 CASE param OF
 
   'dpd': BEGIN
-    inhomogmp=indir+'TRENDS/HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-    inhomogts=indir+'TIMESERIES/HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-    inrawmp=indir+'TRENDS/HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-    inrawts=indir+'TIMESERIES/HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-    outfile=odir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-    inoldmp=oldindir+'HadISDH.landDPD.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-    inoldts=oldindir+'HadISDH.landDPD.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-    compoutfile=odir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+    inhomogmp=indir+'TRENDS/HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+    inhomogts=indir+'TIMESERIES/HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+    inrawmp=indir+'TRENDS/HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+    inrawts=indir+'TIMESERIES/HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+    outfile=odir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+    inoldmp=oldindir+'TRENDS/HadISDH.landDPD.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+    inoldts=oldindir+'TIMESERIES/HadISDH.landDPD.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+    compoutfile=odir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     variname='dew point depression'
   END
   'td': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landTd.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landTd.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landTd.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landTd.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'DPD') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landTd.2.0.0.2013p_FLATgridPHADPD5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landTd.2.0.0.2013p_FLATgridPHADPD5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landTd.2.0.1.2014p_FLATgridPHADPD5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landTd.2.0.1.2014p_FLATgridPHADPD5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='dew point temperature'
   END
   't': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landT.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landT.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landT.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landT.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landT.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landT.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landT.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landT.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='temperature'
   END
   'tw': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landTw.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landTw.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landTw.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landTw.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landTw.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landTw.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landTw.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landTw.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='wet bulb temperature'
   END
   'q': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landq.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landq.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landq.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landq.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landq.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landq.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landq.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landq.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='specific humidity'
  END
   'e': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.lande.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.lande.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.lande.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.lande.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.lande.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.lande.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.lande.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.lande.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='vapour pressure'
   END
   'rh': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landRH.2.0.0.2013p_FLATgridPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landRH.2.0.0.2013p_FLATgridPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landRH.2.0.1.2014p_FLATgridPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landRH.2.0.1.2014p_FLATgridPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
-      inrawmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2015_MPtrends_19732014.nc'
-      inhomogts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
-      inrawts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2015_areaTS_19732014.nc'
-      outfile=odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732014.eps'
-      inoldmp=oldindir+'HadISDH.landRH.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_MPtrends_19732013.nc'
-      inoldts=oldindir+'HadISDH.landRH.2.0.0.2013p_FLATgridIDPHA5by5_JAN2014_areaTS_19732013.nc'
-      compoutfile=odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_197320132014.eps'
+      inhomogmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inrawmp=indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2016_cf_MPtrends_19732015.nc'
+      inhomogts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2016_areaTS_19732015.nc'
+      inrawts=indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2016_areaTS_19732015.nc'
+      outfile=odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
+      inoldmp=oldindir+'TRENDS/HadISDH.landRH.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_MPtrends_19732014.nc'
+      inoldts=oldindir+'TIMESERIES/HadISDH.landRH.2.0.1.2014p_FLATgridIDPHA5by5_JAN2015_areaTS_19732014.nc'
+      compoutfile=odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_19732015.eps'
     ENDIF   
     variname='relative humidity'
   END
@@ -243,7 +244,7 @@ lats=(findgen(nlats)*latlg)+stlt
 lons=(findgen(nlons)*lonlg)+stln
 
 styr=1973
-edyr=2014
+edyr=2015
 nyrs=(edyr+1)-styr
 nmons=nyrs*12
 int_mons=indgen(nmons)
@@ -587,8 +588,7 @@ IF (typee EQ 'RAW') THEN BEGIN
   ;XYOUTS,0.24,0.95,'Homogenised-Raw',/normal,alignment=0.5,charsize=1.2
   XYOUTS,0.24,0.94,'Ratio of Raw to Homogenised',/normal,alignment=0.5,charsize=1.2
 ENDIF ELSE BEGIN
-  ;XYOUTS,0.24,0.95,version+'-v2.0.0.2013p',/normal,alignment=0.5,charsize=1.2
-  XYOUTS,0.24,0.94,'Ratio of v2.0.0.2013p to '+version,/normal,alignment=0.5,charsize=1.2
+  XYOUTS,0.24,0.94,'Ratio of '+oldversion+' to '+version,/normal,alignment=0.5,charsize=1.2
 ENDELSE
 
 PLOTS,[-179.9,0],[89.9,89.9],color=0
@@ -618,7 +618,7 @@ XYOUTS,0.01,0.93,'a)',/normal,color=0,charsize=1.2
     ytitlee='Raw trends ('+unitees+' decade!E-1!N)'
     xtitlee='Homogenised trends ('+unitees+' decade!E-1!N)'
   ENDIF ELSE BEGIN
-    ytitlee='2.0.0.2013p trends ('+unitees+' decade!E-1!N)'
+    ytitlee=oldversion+' trends ('+unitees+' decade!E-1!N)'
     xtitlee=version+' trends ('+unitees+' decade!E-1!N)'
   ENDELSE
   plot,q1_trend(gots),q2_trend(gots),min_value=-100,psym=8,symsize=0.8,yrange=[miny,maxy],xrange=[miny,maxy],ystyle=1,xstyle=1,$
@@ -671,7 +671,7 @@ XYOUTS,0.01,0.47,'b)',/normal,color=0,charsize=1.2
     XYOUTS,0.32,0.42,'Raw',/normal,color=15,charsize=1.
   ENDIF ELSE BEGIN
     XYOUTS,0.32,0.44,version,/normal,color=0,charsize=1.
-    XYOUTS,0.32,0.42,'2.0.0.2013p',/normal,color=15,charsize=1.
+    XYOUTS,0.32,0.42,oldversion,/normal,color=15,charsize=1.
   ENDELSE
   XYOUTS,0.26,0.47,'c)',/normal,color=0,charsize=1.2
 
@@ -717,7 +717,7 @@ CASE param OF
 ENDCASE
 yyrange=ymax-ymin
 
-allnames=['1975','1980','1985','1990','1995','2000','2005','2010']
+allnames=['1975','1980','1985','1990','1995','2000','2005','2010','2015']
 
 !P.Position=[0.57,0.735,0.99,0.96]
 plot,fulltims,zeros,min_value=-100,ystyle=1,xstyle=5,yrange=[ymin,ymax],ythick=4,charsize=0.9,$
@@ -744,7 +744,7 @@ IF (typee EQ 'RAW') THEN BEGIN
   XYOUTS,0.58,0.915,'Raw (dotted)',/normal,color=15,charsize=1.
 ENDIF ELSE BEGIN
   XYOUTS,0.58,0.935,version,/normal,color=0,charsize=1.
-  XYOUTS,0.58,0.915,'2.0.0.2013p (dotted)',/normal,color=15,charsize=1.
+  XYOUTS,0.58,0.915,oldversion+' (dotted)',/normal,color=15,charsize=1.
 ENDELSE
 trend=median_pairwise(homogarr(0,*),mdi,se,lc,uc)
 XYOUTS,0.58,0.765,string(trend*10.,format='(f5.2)')+' '+unitees+' decade!E-1!N ('+string(lc*10.,format='(f5.2)')+$

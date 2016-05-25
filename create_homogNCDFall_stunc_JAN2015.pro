@@ -163,29 +163,29 @@ startee=' ' 	; fix as a station to restart
 
 ; T first, RH, DPD, q, e, td, tw
 
-homogtype='PHADPD'		;'t','td','q','e','rh','tw','dpd'
-param='td'
-param2='Td'		;'T','Td','q','e','RH','Tw','DPD'
+homogtype='ID'		;'ID','PHA - req for DPD or PHA versions of q and RH only'
+param='tw'
+param2='Tw'		;'T','Td','q','e','RH','Tw','DPD'
 nowmon='JAN'
-nowyear='2015'
-version='2.0.1.2014p'
+nowyear='2016'
+version='2.1.0.2015p'
 
 ; files and directories
-dirlist='/data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/'
-dirhomog='/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/HOMOG/'
+dirlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/'
+dirhomog='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/'
 
 CASE param OF
   'td': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_PHAtd_JAN2015.txt'
+      inlist=	dirlist+'goodforHadISDH.'+version+'_PHAtd_JAN2016.txt'
       inhom=	dirhomog+'PHAASCII/TDDIR/'	    ;***
       ; unhomogenised files for working out uncertainties (could use homogenised now???)
-      instp=	'/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/' ; for temperature and station P
+      instp=	'/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/' ; for temperature and station P
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
       ; For Td, Tw, q and e just use homogenised T if < Td (RH>100)
       ; RH (derived from T and Td) cannot be < 0 unless forced to be so by adjustment
       insat=	dirhomog+'IDHOMNETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
-      inlog=	dirlist+'HadISDH.landTd.'+version+'_PHA_JAN2015.log'     ;***
+      inlog=	dirlist+'HadISDH.landTd.'+version+'_PHA_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogPHAtd_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       ; For T - no subzeros or sats necessary, for Td no subzeros
       outfunniesZ=dirlist+'PosthomogPHAtd_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -194,15 +194,15 @@ CASE param OF
       outdat=	dirhomog+'PHANETCDF/TDDIR/'
       outplots=	dirhomog+'STAT_PLOTS/UNCPLOTS/TDPHADIR/'
     ENDIF ELSE BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_PHADPDtd_JAN2015.txt'
-      inlistS=	dirlist+'PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2015.txt'	;need to use these to remove stations from 'goods' - and copy
-      inlistB=	dirlist+'PosthomogPHAdpd_badsHadISDH.'+version+'_JAN2015.txt'	;need to use these to remove stations from 'goods' - and copy
+      inlist=	dirlist+'goodforHadISDH.'+version+'_PHADPDtd_JAN2016.txt'
+      inlistS=	dirlist+'PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2016.txt'	;need to use these to remove stations from 'goods' - and copy
+      inlistB=	dirlist+'PosthomogPHAdpd_badsHadISDH.'+version+'_JAN2016.txt'	;need to use these to remove stations from 'goods' - and copy
       inhom=	dirhomog+'IDPHAASCII/TDDIR/'	    ;***
-      instp=	'/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/' ; for temperature and station P
+      instp=	'/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/' ; for temperature and station P
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
       insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
-      tmpsuffix='_homogJAN2015.nc'
-      inlog=	dirlist+'HadISDH.landTd.'+version+'_PHADPD_JAN2015.log'     ;***
+      tmpsuffix='_homogJAN2016.nc'
+      inlog=	dirlist+'HadISDH.landTd.'+version+'_PHADPD_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogPHADPDtd_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesT=dirlist+'PosthomogPHADPDtd_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outbads=	dirlist+'PosthomogPHADPDtd_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -217,9 +217,9 @@ CASE param OF
   END
   
   't': BEGIN
-    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAt_JAN2015.txt'
+    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAt_JAN2016.txt'
     inhom=	dirhomog+'IDPHAASCII/TDIR/'	    ;***
-    inlog=	dirlist+'HadISDH.landT.'+version+'_IDPHAMG_JAN2015.log'     ;***
+    inlog=	dirlist+'HadISDH.landT.'+version+'_IDPHAMG_JAN2016.log'     ;***
     outlist=	dirlist+'PosthomogIDPHAt_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outbads=	dirlist+'PosthomogIDPHAt_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outdat=	dirhomog+'IDPHANETCDF/TDIR/'
@@ -227,11 +227,11 @@ CASE param OF
   END
 
   'dpd': BEGIN
-    inlist=	dirlist+'goodforHadISDH.'+version+'_PHAdpd_JAN2015.txt'
+    inlist=	dirlist+'goodforHadISDH.'+version+'_PHAdpd_JAN2016.txt'
     inhom=	dirhomog+'PHAASCII/DPDDIR/'	    ;***
     ; can find sats from negative DPD
-    inlog=	dirlist+'HadISDH.landDPD.'+version+'_PHA_JAN2015.log'     ;***
-    instp=	'/data/local/hadkw/HADCRUH2/UPDATE2014/MONTHLIES/NETCDF/' ; for temperature and station P
+    inlog=	dirlist+'HadISDH.landDPD.'+version+'_PHA_JAN2016.log'     ;***
+    instp=	'/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/' ; for temperature and station P
     intmp=	dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
     intdp=	dirhomog+'IDPHANETCDF/TDDIR/' ; for calculating Td
     insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
@@ -243,12 +243,12 @@ CASE param OF
   END
   
   'tw': BEGIN
-    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAtw_JAN2015.txt'
+    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAtw_JAN2016.txt'
     inhom=	dirhomog+'IDPHAASCII/TWDIR/'	    ;***
     ; no subzeros from q and sats from homogenised T if < Tw
     insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
     intmp=	dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
-    inlog=	dirlist+'HadISDH.landTw.'+version+'_IDPHA_JAN2015.log'     ;***
+    inlog=	dirlist+'HadISDH.landTw.'+version+'_IDPHA_JAN2016.log'     ;***
     outlist=	dirlist+'PosthomogIDPHAtw_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outfunniesT=dirlist+'PosthomogIDPHAtw_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outbads=	dirlist+'PosthomogIDPHAtw_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -258,12 +258,12 @@ CASE param OF
   
   'q': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAq_JAN2015.txt'
+      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAq_JAN2016.txt'
       inhom=	dirhomog+'PHAASCII/QDIR/'	    ;***
       ; can find subzeros from q and sats from homogenised RH > 100%
       insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' 
-      inlog=	dirlist+'HadISDH.landq.'+version+'_PHA_JAN2015.log'     ;***
+      inlog=	dirlist+'HadISDH.landq.'+version+'_PHA_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogPHAq_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesZ=dirlist+'PosthomogPHAq_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesT=dirlist+'PosthomogPHAq_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -271,12 +271,12 @@ CASE param OF
       outdat=	dirhomog+'PHANETCDF/QDIR/'
       outplots=	dirhomog+'STAT_PLOTS/UNCPLOTS/QPHADIR/'    
     ENDIF ELSE BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAq_JAN2015.txt'
+      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAq_JAN2016.txt'
       inhom=	dirhomog+'IDPHAASCII/QDIR/'	    ;***
       ; can find subzeros from q and sats from homogenised RH > 100%
       insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' 
-      inlog=	dirlist+'HadISDH.landq.'+version+'_IDPHA_JAN2015.log'     ;***
+      inlog=	dirlist+'HadISDH.landq.'+version+'_IDPHA_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogIDPHAq_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesZ=dirlist+'PosthomogIDPHAq_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesT=dirlist+'PosthomogIDPHAq_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -288,11 +288,11 @@ CASE param OF
 
   'rh': BEGIN
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHArh_JAN2015.txt'
+      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHArh_JAN2016.txt'
       inhom=	dirhomog+'PHAASCII/RHDIR/'	    ;***
       ; can find subzeros from RH<0 and sats from RH > 100%
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' 
-      inlog=	dirlist+'HadISDH.landRH.'+version+'_PHA_JAN2015.log'     ;***
+      inlog=	dirlist+'HadISDH.landRH.'+version+'_PHA_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogPHArh_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesZ=dirlist+'PosthomogPHArh_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesT=dirlist+'PosthomogPHArh_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -300,11 +300,11 @@ CASE param OF
       outdat=	dirhomog+'PHANETCDF/RHDIR/'
       outplots=	dirhomog+'STAT_PLOTS/UNCPLOTS/RHPHADIR/'
     ENDIF ELSE BEGIN
-      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHArh_JAN2015.txt'
+      inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHArh_JAN2016.txt'
       inhom=	dirhomog+'IDPHAASCII/RHDIR/'	    ;***
       ; can find subzeros from RH<0 and sats from RH > 100%
       intmp=	dirhomog+'IDPHANETCDF/TDIR/' 
-      inlog=	dirlist+'HadISDH.landRH.'+version+'_IDPHA_JAN2015.log'     ;***
+      inlog=	dirlist+'HadISDH.landRH.'+version+'_IDPHA_JAN2016.log'     ;***
       outlist=	dirlist+'PosthomogIDPHArh_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesZ=dirlist+'PosthomogIDPHArh_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outfunniesT=dirlist+'PosthomogIDPHArh_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -315,12 +315,12 @@ CASE param OF
   END
 
   'e': BEGIN
-    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAe_JAN2015.txt'
+    inlist=	dirlist+'goodforHadISDH.'+version+'_IDPHAe_JAN2016.txt'
     inhom=	dirhomog+'IDPHAASCII/EDIR/'	    ;***
     ; can find subzeros from e and sats from homogenised RH > 100%
     insat=	dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
     intmp=	dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
-    inlog=	dirlist+'HadISDH.lande.'+version+'_IDPHA_JAN2015.log'     ;***
+    inlog=	dirlist+'HadISDH.lande.'+version+'_IDPHA_JAN2016.log'     ;***
     outlist=	dirlist+'PosthomogIDPHAe_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outfunniesZ=dirlist+'PosthomogIDPHAe_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outfunniesT=dirlist+'PosthomogIDPHAe_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -335,13 +335,13 @@ ENDCASE
 mdi=-1e+30
 
 CASE param OF 
-  'dpd': nstations=3666							;3672
-  'rh': IF (homogtype EQ 'PHA') THEN nstations=3671 ELSE nstations=3656	;3662
-  'td': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3661	;3667
-  't': IF (homogtype EQ 'PHA') THEN nstations=3677 ELSE nstations=3662	;3668
-  'tw': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3659	;3665
-  'e': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3657	;3663
-  'q': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3657	;3663
+  'dpd': nstations=3671							
+  'rh': IF (homogtype EQ 'PHA') THEN nstations=3670 ELSE nstations=3657	
+  'td': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3666	
+  't': IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3666	
+  'tw': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3663	
+  'e': IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
+  'q': IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
 ENDCASE
 
 CASE param OF
@@ -353,7 +353,7 @@ ENDCASE
 
 monarr=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 styr=1973
-edyr=2014
+edyr=2015
 clst=1976-1973
 cled=2005-1973
 nyrs=(edyr+1)-styr
@@ -377,13 +377,13 @@ stop
 missadjerr=0.4 ;this is 1 sigma so needs to be multiplied by 1.65 to match adj_err
 ; this was 0.15 but is now 0.15
 CASE param OF 
-  'dpd': missadjerr=0.28 	; 2015 PHA
-  'rh': IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=0.99 ; 2015 ID
-  'td': missadjerr=0.26		; 2015
-  't': missadjerr=0.25 		; 2015 IDPHA, for PHA only is 0.18		
-  'tw': missadjerr=0.17		; 2015
-  'e': missadjerr=0.19 		; 2015
-  'q': IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.14 ; 2015 ID
+  'dpd': missadjerr=0.26 	; PHA 2016
+  'rh': IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=1.01 ; 2016 ID
+  'td': missadjerr=0.31		; 2016 PHADPD
+  't': missadjerr=0.26 		; 2016 ID		
+  'tw': missadjerr=0.18		; 2015
+  'e': missadjerr=0.120		; 2015
+  'q': IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.16 ; 2015 ID
 ENDCASE
 
 stat_abs=make_array(nmons,/float,value=mdi)

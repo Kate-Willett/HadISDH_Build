@@ -37,8 +37,8 @@ change years in file where appropriate
 	 -> git remote add ClimExpOrigin git@github.com:Kate-Willett/Climate_Explorer.git
 	 -> git fetch ClimExpOrigin
 	 -> git checkout master
-	 -> mkdir PHA_2015
-	 -> cd PHA_2015
+	 -> mkdir PHA2015
+	 -> cd PHA2015
 	 -> scp -r ../UPDATE2014/PHA_2014/.* .
 	  -> ./makePHAdirecotories.sh
 	  -> set up the .conf files, incl files
@@ -110,10 +110,10 @@ RUN DIRECT PHA FOR T and DPD (and all others to get corr files):
 	nohup ./testv52i-pha.sh hadisdh7314<var> tavg raw 0 0 P > runlogs/hadisdh7314<var>.log &
 	
 	- AFTER THIS YOU WILL NEED TO REMOVE A FEW STATIONS FROM THE LIST goodforHadCRUH_JAN2015 THAT 
-	DID NOT MAKE IT THROUGH PHA (no neighbours?) - create: goodforHadISDH<version>_PHA<var>_JAN2015.txt
+	DID NOT MAKE IT THROUGH PHA (no neighbours?) - create: goodforHadISDH<version>_PHA<var>_JAN2016.txt
 	THESE ARE STORED HERE:
-	/data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/hadisdh/hadisdh7314<var>/corr/
-	meta.hadisdh7312<var>.tavg.r00.<tiemdate>.1.input_nopt_stnlist
+	/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/pha52jgo/data/hadisdh/7315<var>/corr/
+	meta.hadisdh7315<var>.tavg.r00.<tiemdate>.1.input_nopt_stnlist
 	
 	Also remove DPD and T missing from: T, q, e, RH, Td and Tw
 	
@@ -122,9 +122,14 @@ RUN DIRECT PHA FOR T and DPD (and all others to get corr files):
 	- create a station list with only those that pass through T AND DPD: 
 		goodforHadISDH<version>_IDPHAall_JAN2014.txt
 	- copy goodforHadISDH<version>_IDPHAall_JAN2014.txt to /data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/ 
+
+	- in /corr/ copy corr.* to corr.log for ease of read later 
+	>cp corr* corr.log
 	
 	- copy 'Adj write...' lines from /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA_2014/pha_v52i/data/
 	       hadisdh/hadisdh7314<var>/output/PHAv52i... to a new file HadISDH.land<var>.<version>_JAN2015.log
+	>grep -a ^'Adj write:' PHAv52j.FAST.MLY.TEST.1601290828.tavg.7315dpd.r00.out > HadISDH.landDPD.2.1.0.2015p_PHA_JAN2016.log
+
 	- copy HadISDH.land<var>.<version>_PHA_JAN2015.log to /data/local/hadkw/HADCRUH2/UPDATE2014/LISTS_DOCS/
 
 NOTE: 
@@ -146,6 +151,10 @@ diff f1 f2 > diff - tested all and they're all different so that's good.
 
 INFIL MDIs for MISSING YEARS, SAVE TO HOMOG ASCII DIRECTORY, PLOT RAW vs HOMOG with NEIGHBOURS, FOR T and DPD
 OutputPHAASCIIPLOT_JAN2015.py
+THIS ONLY NEEDS TO BE DONE FOR T, DPD and Td (after IDPHA)	
+DONE DPD
+DONE T
+DONE Td
 	
 RUN INDIRECT PHA FOR T (merge adjustment log), q, e, RH and Tw
 IndirectPHA_JAN2015.py	(all variables seperately)
@@ -153,6 +162,11 @@ IndirectPHA_JAN2015.py	(all variables seperately)
 	- create goodforHadISDH<version>_PHADPDtd_JAN2015.txt by removing T noneighbours... stations from
 	goodforHadISDH<version>_IDPHAall_JAN2015.txt and also Td PHA corr fails.
 	- input station counts for q, e, Tw, RH, T and Td to plot_HadISDH_adjs_JAN2015.pro 
+DONE q
+DONE RH
+DONE T
+DONE Tw
+DONE e
 
 DERIVE Td (and merge adjustment log), SAVE TO HOMOG ASCII DIRECTORY, PLOT RAW vs HOMOG with NEIGHBOURS, FOR Td
 OutputPHAASCIIPLOT_JAN2014.py
@@ -168,16 +182,16 @@ plot_HadISDH_adjs_JAN2015.pro (all variables seperately)
 	- Record missed adjustment uncertainty from plot and changepoint frequency/magnitude stats in program header
 	- iterate to find histogram size that looks optimal - tweak 'pseudomax'
 	- find all T(IDPHAMG) adjustments greater than 5 and remove those stations from all variable lists (bad
-	merges):	goodforHadISDH<version>_PHAdpd_JAN2014.txt
-			goodforHadISDH<version>_IDPHAt_JAN2014.txt
-			goodforHadISDH<version>_IDPHAq_JAN2014.txt
-			goodforHadISDH<version>_IDPHArh_JAN2014.txt
-			goodforHadISDH<version>_IDPHAe_JAN2014.txt
-			goodforHadISDH<version>_IDPHAtw_JAN2014.txt
-			goodforHadISDH<version>_PHADPDtd_JAN2014.txt
-	- put missed adjustment uncertainties into create_homogNCDFall_stunc_JAN2014.pro
+	merges):	goodforHadISDH<version>_PHAdpd_JAN2016.txt
+			goodforHadISDH<version>_IDPHAt_JAN2016.txt
+			goodforHadISDH<version>_IDPHAq_JAN2016.txt
+			goodforHadISDH<version>_IDPHArh_JAN2016.txt
+			goodforHadISDH<version>_IDPHAe_JAN2016.txt
+			goodforHadISDH<version>_IDPHAtw_JAN2016.txt
+			goodforHadISDH<version>_PHADPDtd_JAN2016.txt
+	- put missed adjustment uncertainties into create_homogNCDFall_stunc_JAN2016.pro
 
-Remove all stations with T adj > 5 deg from Largest_Adjs_landT.2.0.1.2014p_IDPHAMG_JAN2015.txt
+Remove all stations with T adj > 5 deg from Largest_Adjs_landT.2.0.1.2014p_IDPHAMG_JAN2016.txt
 	I can look at old time series of known issues here: /data/local/hadkw/HADCRUH2/IMAGES/TESTCREATE
 	Prog used: test_create_monthseries_MAY2012.pro, can be assessed using: check_HadCRUHstationsMAY2012.pro
 	Red line = change of source
@@ -197,7 +211,7 @@ create_homogNCDFall_stunc_JAN2014.pro (all variables seperately)
 GRID ALL HOMOGENISED STATIONS (AND RAW FOR COMPARISON)
 	- now made it all CF compliant and added an ascii grid print out
 grid_HadISDHFLAT_JAN2015.pro
-	-> calc_samplingwerrorJUL2012_nofill.pro
+	-> calc_samplingerrorJUL2012_nofill.pro
 
 CREATE RAW AND HOMOGENISED DECADAL TREND GRIDBOX FIELDS 
 make_MP_trends.pro
@@ -209,10 +223,16 @@ make_area_avg_ts.pro
 
 PLOT RAW VS HOMOGENISED GRIDBOX AND AREA AVERAGE TREND STATS (2013 vs 2014 too)
 plot_HadISDH_MPtrendsscat_JAN2014.pro
+	-> median_pairwise.pro
+	-> plotsym.pro
+	-> boxfill.pro
+	-> make_key.pro
 
 PLOT DECADAL TRENDS FOR THE GRIDBOX
 plot_HadISDH_MPdectrends_JAN2014.pro
-	
+	-> boxfill.pro
+	-> make_key.pro
+Can also use PlotTrendMap_JAN2015.py in UPDATE2015/PROGS/PYTHON/	
 
 ;------------------------------------------------------------------
 DETAILS

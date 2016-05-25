@@ -67,38 +67,38 @@ pro make_MP_trends
 
 ;---------------------------------------------------
 ; set up directories and filenames
-param='t'	;'dpd','td','t','tw','e','q','rh'
-param2='T'	;'DPD','Td','T','Tw','e','q','RH'
-nowmon='MAR'
-nowyear='2015'
-homogtype='OTHER'	;'PHA','ID','DPD', 'RAW','OTHER'
-version='2.0.1.2014p'
+param='dpd'	;'dpd','td','t','tw','e','q','rh'
+param2='DPD'	;'DPD','Td','T','Tw','e','q','RH'
+nowmon='JAN'
+nowyear='2016'
+homogtype='PHA'	;'PHA','ID','DPD', 'RAW','OTHER'
+version='2.1.0.2015p'
 
 styr=1973	; 1973
-edyr=2014
+edyr=2015
 sttrd=1973  	; years over which to calculate trends
-edtrd=2014  	;
+edtrd=2015  	;
 nyrs=(edyr+1)-styr
 nmons=nyrs*12
 int_mons=indgen(nmons)
 
-dir='/data/local/hadkw/HADCRUH2/UPDATE2014/STATISTICS/'
+dir='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/'
 IF (homogtype EQ 'OTHER') THEN $
-    dir='/data/local/hadkw/HADCRUH2/UPDATE2014/OTHERDATA/'
+    dir='/data/local/hadkw/HADCRUH2/UPDATE2015/OTHERDATA/'
 
 CASE param OF
   'dpd': BEGIN
-    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landDPD.'+version+'_FLATgridPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landDPD.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   'td': BEGIN
-    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'DPD') THEN infile='HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landTd.'+version+'_FLATgridPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'DPD') THEN infile='HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landTd.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   't': BEGIN
-    IF (homogtype EQ 'ID') THEN infile='HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2015_cf'
+    IF (homogtype EQ 'ID') THEN infile='HadISDH.landT.'+version+'_FLATgridIDPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landT.'+version+'_FLATgridRAW5by5_JAN2016_cf'
     IF (homogtype EQ 'OTHER') THEN infile='GISS_T_5by519762005clim_anoms_19732014'
 ;    IF (homogtype EQ 'OTHER') THEN infile='BERKELEY_T_5by519762005clim_anoms_19732014'
 ;    IF (homogtype EQ 'OTHER') THEN infile='CRUTEM.4.3.0.0.anomalies'
@@ -106,22 +106,22 @@ CASE param OF
 ;    IF (homogtype EQ 'OTHER') THEN infile='GHCNM_18802014'
   END
   'tw': BEGIN
-    IF (homogtype EQ 'ID') THEN infile='HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'ID') THEN infile='HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landTw.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   'q': BEGIN
-    IF (homogtype EQ 'ID') THEN infile='HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'ID') THEN infile='HadISDH.landq.'+version+'_FLATgridIDPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landq.'+version+'_FLATgridPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landq.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   'e': BEGIN
-    IF (homogtype EQ 'ID') THEN infile='HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'ID') THEN infile='HadISDH.lande.'+version+'_FLATgridIDPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.lande.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   'rh': BEGIN
-    IF (homogtype EQ 'ID') THEN infile='HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2015_cf'
-    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2015'
+    IF (homogtype EQ 'ID') THEN infile='HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'PHA') THEN infile='HadISDH.landRH.'+version+'_FLATgridPHA5by5_JAN2016_cf'
+    IF (homogtype EQ 'RAW') THEN infile='HadISDH.landRH.'+version+'_FLATgridRAW5by5_JAN2016'
   END
   
 ENDCASE
@@ -173,15 +173,15 @@ boottrendvalsL=make_array(nlons,nlats,nboots,/float,value=mdi)
 IF (homogtype EQ 'OTHER') THEN filee=NCDF_OPEN(dir+infile+'.nc') $
     ELSE filee=NCDF_OPEN(dir+'GRIDS/'+infile+'.nc')
 timvarid=NCDF_VARID(filee,'time')
-;longs_varid=NCDF_VARID(filee,'longitude')
-;lats_varid=NCDF_VARID(filee,'latitude')
-longs_varid=NCDF_VARID(filee,'lon')
-lats_varid=NCDF_VARID(filee,'lat')
 
 IF (homogtype EQ 'OTHER') THEN BEGIN
   ;qvarid=NCDF_VARID(filee,'temperature_anomaly')
   qvarid=NCDF_VARID(filee,'anomalies')
+  longs_varid=NCDF_VARID(filee,'lon')
+  lats_varid=NCDF_VARID(filee,'lat')
 ENDIF ELSE BEGIN
+  longs_varid=NCDF_VARID(filee,'longitude')
+  lats_varid=NCDF_VARID(filee,'latitude')
 
   CASE param OF
     'dpd': qvarid=NCDF_VARID(filee,'dpd_anoms')
