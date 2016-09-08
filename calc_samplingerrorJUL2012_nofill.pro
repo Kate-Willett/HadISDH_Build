@@ -36,6 +36,20 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 1 (7 September 2016)
+; ---------
+;  
+; Enhancements
+;  
+; Changes
+;  
+; Bug fixes
+; Changed cled to work with cllms(1)+1 rather than cllms(1) - to include the last 12 months of the final year.
+; This was wrong previously - the sampling error (and gridbox variance) and hence total uncertainty is now slightly wider range for some
+; e.g. q v2.1.0.2015p anoms7605 0.0440257-3.59143 compared to OLD 0.0442797-3.59118
+; and similar but shifted for others
+; e.g. RH v2.1.0.2015p anoms7605 0.322419029.0441 compared to OLD 0.323116-29.0480
+;
 ; Version 1 (15 January 2015)
 ; ---------
 ;  
@@ -149,7 +163,7 @@ GBdists=make_array(nlns,nlts,/float,value=mdi)
 
 ;convert clim pointers to months not years
 clst=cllms(0)*12
-cled=cllms(1)*12
+cled=(cllms(1)+1)*12 ; +1 to capture all 12 months of last year BUG FIX SEPTEMBER 2016
 
 inLSmask='/data/local/hadkw/HADCRUH2/OTHERDATA/new_coverpercentjul08.nc'
 ; lat goes from 87.5 to -87.5 so flip array to match input data

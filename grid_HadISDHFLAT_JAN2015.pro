@@ -8,9 +8,22 @@
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
-; <brief summary of code purpose and main outputs>
-; 
-; <references to related published material, e.g. that describes data set>
+; For selected variable:
+; Read in list of goods, bads, subzeros and supersats
+; - IF RAW: Read in raw netCDF of abs, anoms, clims.
+; - IF PHA/IDPHA/DPD: Read in homogenised netCDF of abs, anoms, err, adjE, obsE, clmE, clims and sds.
+
+; move from gridbox to gridbox starting with -177.5W, 87.5S
+; if there is a station then begin
+; find all stations in GB - store lat, lon, elev
+; calc GB mean (abs, anoms, clims), standard deviation (sds of abs), RMSE of errors for each month
+
+; Call calc_samplingerrorJUL2012_nofill to compute gridbox sampling error due to missing data and incomplete spatial sampling.
+
+; Write out to netCDF, ascii (abs, anoms, uncertainty)
+
+; Write out gridding results min/max of each var
+
 ; 
 ; -----------------------
 ; LIST OF MODULES
@@ -36,6 +49,20 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 2 (7 September 2017)
+; ---------
+;  
+; Enhancements
+; General tidy up and reframe of tweakable variables to make the file/data batching easier for each variable/climatology choice etc.
+; Can now work with different anomaly periods 7605 or 8110 which have to be created by create_homogNCDFall_stunc_JAN2015.pro
+;  
+; Changes
+;  
+; Bug fixes
+; Fixed bug in sampling error which was only using first 29 years of the 30 year climatology period (missing +1)
+; This fix is actually in the calc_samplingerrorJUL2012_nofill.pro.
+
+;
 ; Version 1 (15 January 2015)
 ; ---------
 ;  
@@ -124,253 +151,347 @@ pro grid_HadISDHFLAT_JAN2015
 
 ;-----------------------------------------------------
 ; editables
-param='tw'	;'dpd','td','t','tw','e','q','rh'
-param2='Tw'	;'DPD','Td','T','Tw','e','q','RH'
-nowmon='JAN'
-nowyear='2016'
-homogtype='ID'	;'PHA','ID','DPD', 'RAW'
-version='2.1.0.2015p'
+param =      'tw'	;'dpd','td','t','tw','e','q','rh'
+nowmon =     'JAN'
+nowyear =    '2016'
+thenmon =    'JAN'
+thenyear =   '2016'
+homogtype =  'ID'	;'PHA','ID','DPD', 'RAW'
+version =    '2.1.0.2015p'
+workingdir = 'UPDATE2015'
+
+MYstyr =     1973
+MYedyr =     2015
+MYclst =     1981	; could be 1976 or 1981
+MYcled =     2010	; could be 2005 or 2010
+CLMlab =     strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/remove_all),2,2)
+climchoice = 'anoms'+CLMlab ; 'anoms7605','anoms8110'
+
+MYlatlg = 5.
+MYlonlg = 5.
+grid =    strcompress(ROUND(MYlatlg),/remove_all)+'by'+strcompress(ROUND(MYlonlg),/remove_all)
+
+;JAN2016 stats
+; number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
+; number of subzero stations to remove
+; number of supersaturated stations to remove
+dpdstats = {stato,nstations:[3271,3289, 9999,9999, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,  0,   0,0, 0,0, 0,0],$
+		  nsats:[171,169, 0,0, 0,0, 0,0]}
+tdstats =  {stato,nstations:[9999,9999, 9999,9999, 3161,3175, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
+		  nsats:[0,0, 0,0, 166,163, 0,0]}
+tstats =   {stato,nstations:[9999,9999, 3560,3519, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 0,0, 0,0, 0,0],$
+		  nsats:[0,0, 0,0, 0,0, 0,0]}
+twstats =  {stato,nstations:[9999,9999, 2791,2773, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
+		  nsats:[0,0, 847,831, 0,0, 0,0]}  
+estats =   {stato,nstations:[9999,9999, 3553,3520, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 54,53, 0,0, 0,0],$
+		  nsats:[0,0, 31,31, 0,0, 0,0]}
+qstats =   {stato,nstations:[9999,9999, 3557,3524, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 50,49, 0,0, 0,0],$
+		  nsats:[0,0, 31,31, 0,0, 0,0]}
+rhstats =  {stato,nstations:[9999,9999, 3601,3567, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 1, 1,  0,0, 0,0],$
+		  nsats:[0,0, 31,31, 0,0, 0,0]}		  
 
 ;; files and directories
+
+dirlist =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/LISTS_DOCS/'
+dirdat =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/MONTHLIES/'
+dirstat =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/GRIDS/'
+
 CASE param OF
   'dpd': BEGIN
+    param2 =     'DPD'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/DPDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHAdpd_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAdpd_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/DPDDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landDPD.'+version+'_FLATgridPHA'+grid+'_'+climchoice
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAdpd_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landDPD.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogPHAdpd_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAdpd_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.landDPD.'+version+'_FLATgridRAW'+grid+'_'+climchoice
     ENDIF
+    statstats = dpdstats
   END
   'td': BEGIN
+    param2 =     'Td'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtd_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtd_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHAtd_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAtd_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/TDDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landTd.'+version+'_FLATgridPHA'+grid+'_'+climchoice
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogPHADPDtd_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHADPDtd_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.landTd.'+version+'_FLATgridRAW'+grid+'_'+climchoice 
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHADPDtd_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TDDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTd.'+version+'_FLATgridPHADPD'  
+      inlist =  dirlist+'PosthomogPHADPDtd_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHADPDtd_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/IDPHANETCDF/TDDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landTd.'+version+'_FLATgridPHADPD'+grid+'_'+climchoice
     ENDELSE
+    statstats = tdstats
   END
   'tw': BEGIN
+    param2 =     'Tw'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TWDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHAtw_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAtw_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/TWDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landTw.'+version+'_FLATgridPHA'+grid+'_'+climchoice  
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogIDPHAtw_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAtw_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.landTw.'+version+'_FLATgridRAW'+grid+'_'+climchoice  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAtw_satsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TWDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landTw.'+version+'_FLATgridIDPHA'      
+      inlist =  dirlist+'PosthomogIDPHAtw_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAtw_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/IDPHANETCDF/TWDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landTw.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice      
     ENDELSE
+    statstats = twstats
   END
   't': BEGIN
+    param2 =     'T'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/TDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridPHA'  
+      inlist = dirlist+'PosthomogPHAt_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =  dirdat+'HOMOG/PHANETCDF/TDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat = dirstat+'HadISDH.landT.'+version+'_FLATgridPHA'+grid+'_'+climchoice 
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridRAW'  
+      inlist = dirlist+'PosthomogIDPHAt_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =  dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat = dirstat+'HadISDH.landT.'+version+'_FLATgridRAW'+grid+'_'+climchoice 
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAt_goodsHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landT.'+version+'_FLATgridIDPHA'  
+      inlist = dirlist+'PosthomogIDPHAt_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =  dirdat+'HOMOG/IDPHANETCDF/TDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat = dirstat+'HadISDH.landT.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice  
     ENDELSE
+    statstats = tstats
   END
   'rh': BEGIN
+    param2 =     'RH'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/RHDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHArh_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHArh_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogPHArh_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/RHDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landRH.'+version+'_FLATgridPHA'+grid+'_'+climchoice
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogIDPHArh_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHArh_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHArh_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.landRH.'+version+'_FLATgridRAW'+grid+'_'+climchoice
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHArh_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/RHDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landRH.'+version+'_FLATgridIDPHA'  
+      inlist =  dirlist+'PosthomogIDPHArh_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHArh_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHArh_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/IDPHANETCDF/RHDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landRH.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice
     ENDELSE
+    statstats = rhstats
   END
   'e': BEGIN
+    param2 =     'e'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/EDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHAe_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAe_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogPHAe_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/EDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat=dirstat+'HadISDH.lande.'+version+'_FLATgridPHA'+grid+'_'+climchoice
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogIDPHAe_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAe_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHAe_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.lande.'+version+'_FLATgridRAW'+grid+'_'+climchoice  
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAe_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/EDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.lande.'+version+'_FLATgridIDPHA'  
+      inlist =  dirlist+'PosthomogIDPHAe_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAe_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHAe_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/IDPHANETCDF/EDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.lande.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice 
     ENDELSE
+    statstats = estats
   END
   'q': BEGIN
+    param2 =     'q'	
     IF (homogtype EQ 'PHA') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/PHANETCDF/QDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridPHA'  
+      inlist =  dirlist+'PosthomogPHAq_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogPHAq_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogPHAq_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/PHANETCDF/QDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landq.'+version+'_FLATgridPHA'+grid+'_'+climchoice 
     ENDIF ELSE IF (homogtype EQ 'RAW') THEN BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridRAW'  
+      inlist =  dirlist+'PosthomogIDPHAq_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAq_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHAq_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'NETCDF/'
+      infilend = '_hummonthQC.nc'
+      outdat =  dirstat+'HadISDH.landq.'+version+'_FLATgridRAW'+grid+'_'+climchoice
     ENDIF ELSE BEGIN
-      inlist='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_goodsHadISDH.'+version+'_JAN2016.txt'
-      inlistT='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_satsHadISDH.'+version+'_JAN2016.txt'
-      inlistZ='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/PosthomogIDPHAq_subzerosHadISDH.'+version+'_JAN2016.txt'
-      indat='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/IDPHANETCDF/QDIR/'
-      outdat='/data/local/hadkw/HADCRUH2/UPDATE2015/STATISTICS/HadISDH.landq.'+version+'_FLATgridIDPHA'  
+      inlist =  dirlist+'PosthomogIDPHAq_'+climchoice+'_goodsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistT = dirlist+'PosthomogIDPHAq_'+climchoice+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      inlistZ = dirlist+'PosthomogIDPHAq_'+climchoice+'_subzerosHadISDH.'+version+'_'+thenmon+thenyear+'.txt'
+      indat =   dirdat+'HOMOG/IDPHANETCDF/QDIR/'
+      infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
+      outdat =  dirstat+'HadISDH.landq.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice 
     ENDELSE
+    statstats = qstats
   END
 ENDCASE
 
-outresults='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/GriddingResults_'+version+'_'+nowmon+nowyear+'.txt'
+outresults = dirlist+'GriddingResults_'+version+'_'+climchoice+'_'+nowmon+nowyear+'.txt'
 ;--------------------------------------------------------
 ; variables and arrays
 mdi=-1e+30
 
-;number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
-CASE param OF
-  'dpd': nstations=3271	; 2016
-  'td': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3161	; 2016	
-  't': nstations=3560 	; 2016
-  'tw': nstations=2791		; 2016
-  'e': nstations=3553		; 2016
-  'q': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3557	; 2016
-  'rh': IF (homogtype EQ 'PHA') THEN nstations=9999 ELSE nstations=3601 ; 2016
-ENDCASE
-
-; subzeros
-CASE param OF
-  'dpd': nsubs=0	; 2016
-  'td': nsubs=0		; 2016
-  't': nsubs=0 		; 2016
-  'tw': nsubs=0		; 2016		
-  'e': nsubs=54		; 2016
-  'q': IF (homogtype EQ 'PHA') THEN nsubs=99 ELSE nsubs=50	; 2016
-  'rh': IF (homogtype EQ 'PHA') THEN nsubs=0 ELSE nsubs=0 	; 2016
-ENDCASE
-
-; supersats
-CASE param OF
-  'dpd': nsats=171 	; 2016
-  'td': IF (homogtype EQ 'PHA') THEN nsats=999 ELSE nsats=166	; 2016	
-  't': nsats=0 		; 2016
-  'tw': nsats=847	; 2016		
-  'e': nsats=31		; 2016
-  'q': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=31	; 2016
-  'rh': IF (homogtype EQ 'PHA') THEN nsats=99 ELSE nsats=32 ; 2016
-ENDCASE
 
 ;units
 CASE param OF
-  'q': unitees='g/kg'
-  'rh': unitees='%rh'
-  'e': unitees='hPa'
-  ELSE: unitees='deg C'
+  'q':  unitees = 'g/kg'
+  'rh': unitees = '%rh'
+  'e':  unitees = 'hPa'
+  ELSE: unitees = 'deg C'
 ENDCASE
 
-monarr=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-styr=1973
-edyr=2015
-nyrs=(edyr+1)-styr
-clst=1976-styr
-cled=2005-styr
-nmons=nyrs*12
-int_mons=indgen(nmons)
-dayssince=findgen(nmons)
-stpoint=JULDAY(1,1,1973)
+monarr =    ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+styr =      MYstyr
+edyr =      MYedyr
+nyrs =      (edyr+1)-styr
+clst =      MYclst-styr
+cled =      MYcled-styr
+print,'CLIMATOLOGY: ',MYclst,MYcled, clst,cled
+nmons =     nyrs*12
+int_mons =  indgen(nmons)
+dayssince = findgen(nmons)
+stpoint =   JULDAY(1,1,styr)
 ; array of months in days since Jan 1st 1973 including Jan 2015 (nmons+1)
-monthies=TIMEGEN(nmons+1,START=(stpoint),UNITS="Months")-stpoint ; an array of floats describing each month in days since Jan 1st 1973
-monthies=ROUND(monthies*100.)/100.	; nicer numbers
+monthies =  TIMEGEN(nmons+1,START=(stpoint),UNITS="Months")-stpoint ; an array of floats describing each month in days since Jan 1st 1973
+monthies =  ROUND(monthies*100.)/100.	; nicer numbers
 ; Now need to use the mid-point of each month.
-FOR mm=0,nmons-1 DO BEGIN
+FOR mm = 0,nmons-1 DO BEGIN
   dayssince(mm)=monthies(mm)+(monthies(mm+1)-monthies(mm))/2.
 ENDFOR
-latlg=5.
-lonlg=5.
-stlt=-90+(latlg/2.)
-stln=-180+(lonlg/2.)
-nlats=180/latlg
-nlons=360/lonlg
-nbox=LONG(nlats*nlons)
-inrad=(latlg/2.)*100	;250km for 5 by 5 gridbox
-grid=strcompress(ROUND(latlg),/remove_all)+'by'+strcompress(ROUND(lonlg),/remove_all)
+latlg =     MYlatlg
+lonlg =     MYlonlg
+stlt =      -90+(latlg/2.)
+stln =      -180+(lonlg/2.)
+nlats =     180/latlg
+nlons =     360/lonlg
+nbox =      LONG(nlats*nlons)
+inrad =     (latlg/2.)*100	;250km for 5 by 5 gridbox
 
-lats=(findgen(nlats)*latlg)+stlt
-lons=(findgen(nlons)*lonlg)+stln
+lats =      (findgen(nlats)*latlg)+stlt
+lons =      (findgen(nlons)*lonlg)+stln
 
-inGBstats={GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:fltarr(100),$
+inGBstats = {GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:fltarr(100),$
              dists:fltarr(100),weights:fltarr(100),nums:0}
 
-; number of stations to ignore because they go below zero (q) or above 100 (RH)
-IF (nsubs GT 0) THEN info_arrZ={infoz,statid:strarr(nsubs)}
-; number of stations to ignore because they go below zero (q) or above 100 (RH)
-IF (nsats GT 0) THEN info_arrT={infot,statid:strarr(nsats)}
+; sort out station counts
+CASE homogtype OF
+  'PHA': BEGIN
+           IF (climchoice EQ 'anoms7605') THEN BEGIN
+	     nstations = statstats.nstations(0)
+	     nsubs = statstats.nsubs(0)
+	     nsats = statstats.nsats(0)
+	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+	     nstations = statstats.nstations(1)
+	     nsubs = statstats.nsubs(1)
+	     nsats = statstats.nsats(1)
+	   ENDIF
+         END
+  'ID': BEGIN
+           IF (climchoice EQ 'anoms7605') THEN BEGIN
+	     nstations = statstats.nstations(2)
+	     nsubs = statstats.nsubs(2)
+	     nsats = statstats.nsats(2)
+	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+	     nstations = statstats.nstations(3)
+	     nsubs = statstats.nsubs(3)
+	     nsats = statstats.nsats(3)
+	   ENDIF
+         END
+  'DPD': BEGIN
+           IF (climchoice EQ 'anoms7605') THEN BEGIN
+	     nstations = statstats.nstations(4)
+	     nsubs = statstats.nsubs(4)
+	     nsats = statstats.nsats(4)
+	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+	     nstations = statstats.nstations(5)
+	     nsubs = statstats.nsubs(5)
+	     nsats = statstats.nsats(5)
+	   ENDIF
+         END
+  'PHA': BEGIN
+           IF (climchoice EQ 'anoms7605') THEN BEGIN
+	     nstations = statstats.nstations(6)
+	     nsubs = statstats.nsubs(6)
+	     nsats = statstats.nsats(6)
+	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+	     nstations = statstats.nstations(7)
+	     nsubs = statstats.nsubs(7)
+	     nsats = statstats.nsats(7)
+	   ENDIF
+         END
+ENDCASE
 
-GBelvs=make_array(nlons,nlats,/float,value=mdi)
-stat_id={stationinfo,wmoids:strarr(nstations),lats:fltarr(nstations),lons:fltarr(nstations),elevs:fltarr(nstations)}
-stat_abs=make_array(nstations,nmons,/float,value=mdi)
-stat_anoms=make_array(nstations,nmons,/float,value=mdi)
-stat_err=make_array(nstations,nmons,/float,value=mdi)
-stat_adjE=make_array(nstations,nmons,/float,value=mdi)
-stat_obsE=make_array(nstations,nmons,/float,value=mdi)
-stat_clmE=make_array(nstations,nmons,/float,value=mdi)
-stat_clims=make_array(nstations,12,/float,value=mdi)
-stat_sds=make_array(nstations,12,/float,value=mdi)
+; number of stations to ignore because they go below zero (q) or above 100 (RH)
+IF (nsubs GT 0) THEN info_arrZ = {infoz,statid:strarr(nsubs)}
+; number of stations to ignore because they go below zero (q) or above 100 (RH)
+IF (nsats GT 0) THEN info_arrT = {infot,statid:strarr(nsats)}
 
-q_anoms=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_abs=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_staterr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_obserr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_clmerr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_adjerr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_samperr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_rbar=make_array(nlons,nlats,/float,value=mdi)
-q_sbarSQ=make_array(nlons,nlats,/float,value=mdi)
-q_comberr=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_stddevs=make_array(nlons,nlats,nmons,/float,value=mdi)
-q_clims=make_array(nlons,nlats,12,/float,value=mdi)
-GB_counts=make_array(nlons,nlats,/float,value=mdi)	;0=in GB only
-station_counts=make_array(nlons,nlats,nmons,/integer,value=0) ; actual gridbox station counts over time
+GBelvs =     make_array(nlons,nlats,/float,value=mdi)
+stat_id =    {stationinfo,wmoids:strarr(nstations),lats:fltarr(nstations),lons:fltarr(nstations),elevs:fltarr(nstations)}
+stat_abs =   make_array(nstations,nmons,/float,value=mdi)
+stat_anoms = make_array(nstations,nmons,/float,value=mdi)
+stat_err =   make_array(nstations,nmons,/float,value=mdi)
+stat_adjE =  make_array(nstations,nmons,/float,value=mdi)
+stat_obsE =  make_array(nstations,nmons,/float,value=mdi)
+stat_clmE =  make_array(nstations,nmons,/float,value=mdi)
+stat_clims = make_array(nstations,12,/float,value=mdi)
+stat_sds =   make_array(nstations,12,/float,value=mdi)
+
+q_anoms =        make_array(nlons,nlats,nmons,/float,value=mdi)
+q_abs =          make_array(nlons,nlats,nmons,/float,value=mdi)
+q_staterr =      make_array(nlons,nlats,nmons,/float,value=mdi)
+q_obserr =       make_array(nlons,nlats,nmons,/float,value=mdi)
+q_clmerr =       make_array(nlons,nlats,nmons,/float,value=mdi)
+q_adjerr =       make_array(nlons,nlats,nmons,/float,value=mdi)
+q_samperr =      make_array(nlons,nlats,nmons,/float,value=mdi)
+q_rbar =         make_array(nlons,nlats,/float,value=mdi)
+q_sbarSQ =       make_array(nlons,nlats,/float,value=mdi)
+q_comberr =      make_array(nlons,nlats,nmons,/float,value=mdi)
+q_stddevs =      make_array(nlons,nlats,nmons,/float,value=mdi)
+q_clims =        make_array(nlons,nlats,12,/float,value=mdi)
+GB_counts =      make_array(nlons,nlats,/float,value=mdi)	;0=in GB only
+station_counts = make_array(nlons,nlats,nmons,/integer,value=0) ; actual gridbox station counts over time
 ;---------------------------------------------------------
 ; open station file
 ; move from gridbox to gridbox starting with -177.5W, 87.5S
@@ -383,26 +504,26 @@ station_counts=make_array(nlons,nlats,nmons,/integer,value=0) ; actual gridbox s
 
 IF (nsubs GT 0) THEN BEGIN
   openr,42,inlistZ
-  counter=0
+  counter = 0
   WHILE NOT EOF(42) DO BEGIN
-    id=''
-    mush=''
-    readf,42,id,mush,format='(a11,a24)'
-    info_arrZ.statid(counter)=id
-    counter=counter+1
+    id =                        ''
+    mush =                      ''
+    readf,42,id,mush,format =   '(a11,a24)'
+    info_arrZ.statid(counter) = id
+    counter =                   counter+1
     print,counter
   ENDWHILE
   close,42
 ENDIF
 IF (nsats GT 0) THEN BEGIN
   openr,42,inlistT
-  counter=0
+  counter = 0
   WHILE NOT EOF(42) DO BEGIN
-    id=''
-    mush=''
-    readf,42,id,mush,format='(a11,a24)'
-    info_arrT.statid(counter)=id
-    counter=counter+1
+    id =                        ''
+    mush =                      ''
+    readf,42,id,mush,format =   '(a11,a24)'
+    info_arrT.statid(counter) = id
+    counter =                   counter+1
     print,counter
   ENDWHILE
   close,42
@@ -411,16 +532,16 @@ ENDIF
 
 ; read in all station info
 openr,5,inlist
-counter=0
-countbad=0
+counter =  0
+countbad = 0
 WHILE NOT EOF(5) DO BEGIN
-  wmo=''
-  lat=0.
-  lon=0.
-  elv=0.
-  cid=''
-  namoo=''
-  readf,5,wmo,lat,lon,elv,cid,namoo,format='(a11,f9.4,f10.4,f7.1,x,a2,x,a29,x)'  
+  wmo =                                      ''
+  lat =                                      0.
+  lon =                                      0.
+  elv =                                      0.
+  cid =                                      ''
+  namoo =                                    ''
+  readf,5,wmo,lat,lon,elv,cid,namoo,format = '(a11,f9.4,f10.4,f7.1,x,a2,x,a29,x)'  
   print,counter,' ',wmo
 ; remove subzeros  and sats stations 
   IF (nsubs GT 0) THEN BEGIN
@@ -436,125 +557,125 @@ WHILE NOT EOF(5) DO BEGIN
     IF (count GT 0) THEN goto,endloop
   ENDIF  
 
-  stat_id.wmoids(counter)=wmo 
-  stat_id.lats(counter)=lat 
-  stat_id.lons(counter)=lon 
-  stat_id.elevs(counter)=elv 
+  stat_id.wmoids(counter) = wmo 
+  stat_id.lats(counter) =   lat 
+  stat_id.lons(counter) =   lon 
+  stat_id.elevs(counter) =  elv 
 
  ; find file and read in to array 
-  filee=FILE_SEARCH(indat+strmid(wmo,0,5)+'*',count=count)
+  filee = FILE_SEARCH(indat+strmid(wmo,0,5)+'*'+infilend,count=count)
   print,filee
   IF (count GT 0) THEN BEGIN
     inn=NCDF_OPEN(filee(0))
     IF (homogtype EQ'RAW') THEN BEGIN
       CASE param OF
         'dpd': BEGIN
-          anmid=NCDF_VARID(inn,'ddep_anoms')	; not perfect as actually used de_ddep_abs but anoms not saved
-          absid=NCDF_VARID(inn,'ddep_abs')
-          clmid=NCDF_VARID(inn,'ddep_clims')
+          anmid = NCDF_VARID(inn,'ddep_anoms')	; not perfect as actually used de_ddep_abs but anoms not saved
+          absid = NCDF_VARID(inn,'ddep_abs')
+          clmid = NCDF_VARID(inn,'ddep_clims')
         END
         'td': BEGIN
-          anmid=NCDF_VARID(inn,'dewp_anoms')
-          absid=NCDF_VARID(inn,'dewp_abs')
-          clmid=NCDF_VARID(inn,'dewp_clims')
+          anmid = NCDF_VARID(inn,'dewp_anoms')
+          absid = NCDF_VARID(inn,'dewp_abs')
+          clmid = NCDF_VARID(inn,'dewp_clims')
         END
         't': BEGIN
-          anmid=NCDF_VARID(inn,'temp_anoms')
-          absid=NCDF_VARID(inn,'temp_abs')
-          clmid=NCDF_VARID(inn,'temp_clims')
+          anmid = NCDF_VARID(inn,'temp_anoms')
+          absid = NCDF_VARID(inn,'temp_abs')
+          clmid = NCDF_VARID(inn,'temp_clims')
         END
         'tw': BEGIN
-          anmid=NCDF_VARID(inn,'twet_anoms')
-          absid=NCDF_VARID(inn,'twet_abs')
-          clmid=NCDF_VARID(inn,'twet_clims')
+          anmid = NCDF_VARID(inn,'twet_anoms')
+          absid = NCDF_VARID(inn,'twet_abs')
+          clmid = NCDF_VARID(inn,'twet_clims')
          END
         'q': BEGIN
-          anmid=NCDF_VARID(inn,'qhum_anoms')
-          absid=NCDF_VARID(inn,'qhum_abs')
-          clmid=NCDF_VARID(inn,'qhum_clims')
+          anmid = NCDF_VARID(inn,'qhum_anoms')
+          absid = NCDF_VARID(inn,'qhum_abs')
+          clmid = NCDF_VARID(inn,'qhum_clims')
          END
         'e': BEGIN
-          anmid=NCDF_VARID(inn,'evap_anoms')
-          absid=NCDF_VARID(inn,'evap_abs')
-          clmid=NCDF_VARID(inn,'evap_clims')
+          anmid = NCDF_VARID(inn,'evap_anoms')
+          absid = NCDF_VARID(inn,'evap_abs')
+          clmid = NCDF_VARID(inn,'evap_clims')
         END
         'rh': BEGIN
-          anmid=NCDF_VARID(inn,'rhum_anoms')
-          absid=NCDF_VARID(inn,'rhum_abs')
-          clmid=NCDF_VARID(inn,'rhum_clims')
+          anmid = NCDF_VARID(inn,'rhum_anoms')
+          absid = NCDF_VARID(inn,'rhum_abs')
+          clmid = NCDF_VARID(inn,'rhum_clims')
         END
       ENDCASE
     ENDIF ELSE BEGIN
       CASE param OF
         'dpd': BEGIN
-          anmid=NCDF_VARID(inn,'dpd_anoms')
-          absid=NCDF_VARID(inn,'dpd_abs')
-          clmid=NCDF_VARID(inn,'dpd_clims')
-          stdid=NCDF_VARID(inn,'dpd_stds')
-          uncid=NCDF_VARID(inn,'dpd_uncertainty')
-          obEid=NCDF_VARID(inn,'dpd_obserr')
-          cmEid=NCDF_VARID(inn,'dpd_clmerr')
-          ajEid=NCDF_VARID(inn,'dpd_adjerr')
+          anmid = NCDF_VARID(inn,'dpd_anoms')
+          absid = NCDF_VARID(inn,'dpd_abs')
+          clmid = NCDF_VARID(inn,'dpd_clims')
+          stdid = NCDF_VARID(inn,'dpd_stds')
+          uncid = NCDF_VARID(inn,'dpd_uncertainty')
+          obEid = NCDF_VARID(inn,'dpd_obserr')
+          cmEid = NCDF_VARID(inn,'dpd_clmerr')
+          ajEid = NCDF_VARID(inn,'dpd_adjerr')
         END
         'td': BEGIN
-          anmid=NCDF_VARID(inn,'td_anoms')
-          absid=NCDF_VARID(inn,'td_abs')
-          clmid=NCDF_VARID(inn,'td_clims')
-          stdid=NCDF_VARID(inn,'td_stds')
-          uncid=NCDF_VARID(inn,'td_uncertainty')
-          obEid=NCDF_VARID(inn,'td_obserr')
-          cmEid=NCDF_VARID(inn,'td_clmerr')
-          ajEid=NCDF_VARID(inn,'td_adjerr')
+          anmid = NCDF_VARID(inn,'td_anoms')
+          absid = NCDF_VARID(inn,'td_abs')
+          clmid = NCDF_VARID(inn,'td_clims')
+          stdid = NCDF_VARID(inn,'td_stds')
+          uncid = NCDF_VARID(inn,'td_uncertainty')
+          obEid = NCDF_VARID(inn,'td_obserr')
+          cmEid = NCDF_VARID(inn,'td_clmerr')
+          ajEid = NCDF_VARID(inn,'td_adjerr')
         END
         't': BEGIN
-          anmid=NCDF_VARID(inn,'t_anoms')
-          absid=NCDF_VARID(inn,'t_abs')
-          clmid=NCDF_VARID(inn,'t_clims')
-          stdid=NCDF_VARID(inn,'t_stds')
-          uncid=NCDF_VARID(inn,'t_uncertainty')
-          obEid=NCDF_VARID(inn,'t_obserr')
-          cmEid=NCDF_VARID(inn,'t_clmerr')
-          ajEid=NCDF_VARID(inn,'t_adjerr')
+          anmid = NCDF_VARID(inn,'t_anoms')
+          absid = NCDF_VARID(inn,'t_abs')
+          clmid = NCDF_VARID(inn,'t_clims')
+          stdid = NCDF_VARID(inn,'t_stds')
+          uncid = NCDF_VARID(inn,'t_uncertainty')
+          obEid = NCDF_VARID(inn,'t_obserr')
+          cmEid = NCDF_VARID(inn,'t_clmerr')
+          ajEid = NCDF_VARID(inn,'t_adjerr')
         END
         'tw': BEGIN
-          anmid=NCDF_VARID(inn,'tw_anoms')
-          absid=NCDF_VARID(inn,'tw_abs')
-          clmid=NCDF_VARID(inn,'tw_clims')
-          stdid=NCDF_VARID(inn,'tw_stds')
-          uncid=NCDF_VARID(inn,'tw_uncertainty')
-          obEid=NCDF_VARID(inn,'tw_obserr')
-          cmEid=NCDF_VARID(inn,'tw_clmerr')
-          ajEid=NCDF_VARID(inn,'tw_adjerr')
+          anmid = NCDF_VARID(inn,'tw_anoms')
+          absid = NCDF_VARID(inn,'tw_abs')
+          clmid = NCDF_VARID(inn,'tw_clims')
+          stdid = NCDF_VARID(inn,'tw_stds')
+          uncid = NCDF_VARID(inn,'tw_uncertainty')
+          obEid = NCDF_VARID(inn,'tw_obserr')
+          cmEid = NCDF_VARID(inn,'tw_clmerr')
+          ajEid = NCDF_VARID(inn,'tw_adjerr')
         END
         'q': BEGIN
-          anmid=NCDF_VARID(inn,'q_anoms')
-          absid=NCDF_VARID(inn,'q_abs')
-          clmid=NCDF_VARID(inn,'q_clims')
-          stdid=NCDF_VARID(inn,'q_stds')
-          uncid=NCDF_VARID(inn,'q_uncertainty')
-          obEid=NCDF_VARID(inn,'q_obserr')
-          cmEid=NCDF_VARID(inn,'q_clmerr')
-          ajEid=NCDF_VARID(inn,'q_adjerr')
+          anmid = NCDF_VARID(inn,'q_anoms')
+          absid = NCDF_VARID(inn,'q_abs')
+          clmid = NCDF_VARID(inn,'q_clims')
+          stdid = NCDF_VARID(inn,'q_stds')
+          uncid = NCDF_VARID(inn,'q_uncertainty')
+          obEid = NCDF_VARID(inn,'q_obserr')
+          cmEid = NCDF_VARID(inn,'q_clmerr')
+          ajEid = NCDF_VARID(inn,'q_adjerr')
         END
         'e': BEGIN
-          anmid=NCDF_VARID(inn,'e_anoms')
-          absid=NCDF_VARID(inn,'e_abs')
-          clmid=NCDF_VARID(inn,'e_clims')
-          stdid=NCDF_VARID(inn,'e_stds')
-          uncid=NCDF_VARID(inn,'e_uncertainty')
-          obEid=NCDF_VARID(inn,'e_obserr')
-          cmEid=NCDF_VARID(inn,'e_clmerr')
-          ajEid=NCDF_VARID(inn,'e_adjerr')
+          anmid = NCDF_VARID(inn,'e_anoms')
+          absid = NCDF_VARID(inn,'e_abs')
+          clmid = NCDF_VARID(inn,'e_clims')
+          stdid = NCDF_VARID(inn,'e_stds')
+          uncid = NCDF_VARID(inn,'e_uncertainty')
+          obEid = NCDF_VARID(inn,'e_obserr')
+          cmEid = NCDF_VARID(inn,'e_clmerr')
+          ajEid = NCDF_VARID(inn,'e_adjerr')
         END
         'rh': BEGIN
-          anmid=NCDF_VARID(inn,'rh_anoms')
-          absid=NCDF_VARID(inn,'rh_abs')
-          clmid=NCDF_VARID(inn,'rh_clims')
-          stdid=NCDF_VARID(inn,'rh_stds')
-          uncid=NCDF_VARID(inn,'rh_uncertainty')
-          obEid=NCDF_VARID(inn,'rh_obserr')
-          cmEid=NCDF_VARID(inn,'rh_clmerr')
-          ajEid=NCDF_VARID(inn,'rh_adjerr')
+          anmid = NCDF_VARID(inn,'rh_anoms')
+          absid = NCDF_VARID(inn,'rh_abs')
+          clmid = NCDF_VARID(inn,'rh_clims')
+          stdid = NCDF_VARID(inn,'rh_stds')
+          uncid = NCDF_VARID(inn,'rh_uncertainty')
+          obEid = NCDF_VARID(inn,'rh_obserr')
+          cmEid = NCDF_VARID(inn,'rh_clmerr')
+          ajEid = NCDF_VARID(inn,'rh_adjerr')
         END
       ENDCASE
     ENDELSE
@@ -571,21 +692,21 @@ WHILE NOT EOF(5) DO BEGIN
     ENDIF
     NCDF_CLOSE,inn
     
-    stat_abs(counter,*)=absols
-    stat_clims(counter,*)=clims
-    stat_anoms(counter,*)=anoms
+    stat_abs(counter,*) =    absols
+    stat_clims(counter,*) =  clims
+    stat_anoms(counter,*) =  anoms
     IF (homogtype NE 'RAW') THEN BEGIN
-      stat_sds(counter,*)=stds
-      stat_err(counter,*)=uncs
-      stat_adjE(counter,*)=adjE
-      stat_clmE(counter,*)=clmE
-      stat_obsE(counter,*)=obsE
+      stat_sds(counter,*) =  stds
+      stat_err(counter,*) =  uncs
+      stat_adjE(counter,*) = adjE
+      stat_clmE(counter,*) = clmE
+      stat_obsE(counter,*) = obsE
     ENDIF
   ENDIF ELSE stop,'CANT FIND FILE'
-  counter=counter+1
+  counter = counter+1
   
   IF (homogtype NE 'RAW') THEN BEGIN
-    mahoos=WHERE(stat_obsE GT 1000,countM)
+    mahoos = WHERE(stat_obsE GT 1000,countM)
     IF (countM GT 0) THEN stop,'MAHOOSIVE OBS ERROR'
   ENDIF
   endloop:
@@ -593,103 +714,103 @@ ENDWHILE
 close,5
 
 ; loop through gridboxes
-counter=0L
-actcount=0L
-FOR ltt=0,nlats-1 DO BEGIN
-  FOR lnn=0,nlons-1 DO BEGIN    
-    inGBstats={GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:fltarr(100),$
+counter = 0L
+actcount = 0L
+FOR ltt = 0,nlats-1 DO BEGIN
+  FOR lnn = 0,nlons-1 DO BEGIN    
+    inGBstats = {GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:fltarr(100),$
              dists:fltarr(100),weights:fltarr(100),nums:0}
 
-    gbpos=[lons(lnn)-(lonlg/2.),lats(ltt)-(latlg/2.),lons(lnn)+(lonlg/2.),lats(ltt)+(latlg/2.)]
+    gbpos = [lons(lnn)-(lonlg/2.),lats(ltt)-(latlg/2.),lons(lnn)+(lonlg/2.),lats(ltt)+(latlg/2.)]
     ; find inGB stations
-    gots=WHERE(stat_id.lons GE gbpos(0) AND stat_id.lons LT gbpos(2) AND $
-               stat_id.lats GE gbpos(1) AND stat_id.lats LT gbpos(3),count)
-    inGBstats.nums=count
+    gots = WHERE(stat_id.lons GE gbpos(0) AND stat_id.lons LT gbpos(2) AND $
+          stat_id.lats GE gbpos(1) AND stat_id.lats LT gbpos(3),count)
+    inGBstats.nums = count
     IF (count GT 0) THEN BEGIN
       print,'GB: ',count,counter,actcount,gbpos
      ; IF THERE IS A STATION IN THE GRIDBOX THEN CARRY ON
-      inGBstats.wmo(0:count-1)=REFORM(stat_id.wmoids(gots),count)
-      inGBstats.lats(0:count-1)=REFORM(stat_id.lats(gots),count)
-      inGBstats.lons(0:count-1)=REFORM(stat_id.lons(gots),count)
-      inGBstats.elvs(0:count-1)=REFORM(stat_id.elevs(gots),count)
+      inGBstats.wmo(0:count-1) =  REFORM(stat_id.wmoids(gots),count)
+      inGBstats.lats(0:count-1) = REFORM(stat_id.lats(gots),count)
+      inGBstats.lons(0:count-1) = REFORM(stat_id.lons(gots),count)
+      inGBstats.elvs(0:count-1) = REFORM(stat_id.elevs(gots),count)
     ENDIF ELSE BEGIN
 ;      print,'NO STATIONS!'
-      counter=counter+1
+      counter = counter+1
       continue
     ENDELSE
    ; create weighted gridbox average for means, anoms, clims and get stdev for each month (non-weighted)
-    sterrsum=make_array(nmons,/float,value=0.)
-    stcmEsum=make_array(nmons,/float,value=0.)
-    stobEsum=make_array(nmons,/float,value=0.)
-    stajEsum=make_array(nmons,/float,value=0.)
-    abssum=make_array(nmons,/float,value=0.)
-    absweight=make_array(nmons,/float,value=0.)
-    anmsum=make_array(nmons,/float,value=0.)
-    anmweight=make_array(nmons,/float,value=0.)
-    clmsum=make_array(12,/float,value=0.)
-    clmweight=make_array(12,/float,value=0.)
-    stdvals=make_array(300,nmons,/float,value=mdi)
-    stcount=0
-    incount=0
-    outcount=0
-    FOR st=0,inGBstats.nums-1 DO BEGIN
-      findit=WHERE(stat_id.wmoids EQ inGBstats.wmo(st),count)
+    sterrsum =  make_array(nmons,/float,value=0.)
+    stcmEsum =  make_array(nmons,/float,value=0.)
+    stobEsum =  make_array(nmons,/float,value=0.)
+    stajEsum =  make_array(nmons,/float,value=0.)
+    abssum =    make_array(nmons,/float,value=0.)
+    absweight = make_array(nmons,/float,value=0.)
+    anmsum =    make_array(nmons,/float,value=0.)
+    anmweight = make_array(nmons,/float,value=0.)
+    clmsum =    make_array(12,/float,value=0.)
+    clmweight = make_array(12,/float,value=0.)
+    stdvals =   make_array(300,nmons,/float,value=mdi)
+    stcount =   0
+    incount =   0
+    outcount =  0
+    FOR st = 0,inGBstats.nums-1 DO BEGIN
+      findit = WHERE(stat_id.wmoids EQ inGBstats.wmo(st),count)
       IF (count EQ 0) THEN stop,'CANNOT FIND STATION!'
-      gots=WHERE(stat_abs(findit(0),*) NE mdi,count)
-      IF (homogtype EQ 'RAW') THEN gotsANMS=WHERE(stat_anoms(findit(0),*) NE mdi,count)
-      mons=WHERE(stat_clims(findit(0),*) NE mdi,count)
+      gots = WHERE(stat_abs(findit(0),*) NE mdi,count)
+      IF (homogtype EQ 'RAW') THEN gotsANMS = WHERE(stat_anoms(findit(0),*) NE mdi,count)
+      mons = WHERE(stat_clims(findit(0),*) NE mdi,count)
       IF (count GT 0) THEN BEGIN
 ; switch off if raw - here we're getting the Root mean square of the errors.
-        sterrsum(gots)=sterrsum(gots)+(stat_err(findit(0),gots)^2)
-        stcmEsum(gots)=stcmEsum(gots)+(stat_clmE(findit(0),gots)^2)
-        stobEsum(gots)=stobEsum(gots)+(stat_obsE(findit(0),gots)^2)
-        stajEsum(gots)=stajEsum(gots)+(stat_adjE(findit(0),gots)^2)
-        abssum(gots)=abssum(gots)+stat_abs(findit(0),gots)
-	absweight(gots)=absweight(gots)+1
+        sterrsum(gots) =  sterrsum(gots)+(stat_err(findit(0),gots)^2)
+        stcmEsum(gots) =  stcmEsum(gots)+(stat_clmE(findit(0),gots)^2)
+        stobEsum(gots) =  stobEsum(gots)+(stat_obsE(findit(0),gots)^2)
+        stajEsum(gots) =  stajEsum(gots)+(stat_adjE(findit(0),gots)^2)
+        abssum(gots) =    abssum(gots)+stat_abs(findit(0),gots)
+	absweight(gots) = absweight(gots)+1
         IF (homogtype NE 'RAW') THEN BEGIN
-	  anmsum(gots)=anmsum(gots)+stat_anoms(findit(0),gots)
-	  anmweight(gots)=anmweight(gots)+1
+	  anmsum(gots) =    anmsum(gots)+stat_anoms(findit(0),gots)
+	  anmweight(gots) = anmweight(gots)+1
         ENDIF ELSE BEGIN
-	  anmsum(gotsANMS)=anmsum(gotsANMS)+stat_anoms(findit(0),gotsANMS)
-	  anmweight(gotsANMS)=anmweight(gotsANMS)+1	
+	  anmsum(gotsANMS) =    anmsum(gotsANMS)+stat_anoms(findit(0),gotsANMS)
+	  anmweight(gotsANMS) = anmweight(gotsANMS)+1	
 	ENDELSE
-	clmsum(mons)=clmsum(mons)+stat_clims(findit(0),mons)
-	clmweight(mons)=clmweight(mons)+1
-	stdvals(stcount,gots)=stat_abs(findit(0),gots)
-	stcount=stcount+1
-	incount=incount+1
-	station_counts(lnn,ltt,gots)=station_counts(lnn,ltt,gots)+1 ;stations within GB only
+	clmsum(mons) =                 clmsum(mons)+stat_clims(findit(0),mons)
+	clmweight(mons) =              clmweight(mons)+1
+	stdvals(stcount,gots) =        stat_abs(findit(0),gots)
+	stcount =                      stcount+1
+	incount =                      incount+1
+	station_counts(lnn,ltt,gots) = station_counts(lnn,ltt,gots)+1 ;stations within GB only
       ENDIF      
     ENDFOR
     IF (homogtype NE 'RAW') THEN BEGIN
-      mahoos=WHERE(stobEsum GT 1000,countM)
+      mahoos = WHERE(stobEsum GT 1000,countM)
       IF (countM GT 0) THEN stop,'FOUND MAHOOSIVE OBS ERROR SUM'
     ENDIF
-    vals=WHERE(absweight NE 0.,count)
+    vals = WHERE(absweight NE 0.,count)
     IF (count GT 0) THEN BEGIN
-      GB_counts(lnn,ltt,0)=stcount
+      GB_counts(lnn,ltt,0) = stcount
 ; switch off if raw - here we're getting the Root mean square of the errors.* 1/SQRT(nstations) after Brohan et al. 2006
-      q_staterr(lnn,ltt,vals)=SQRT(sterrsum(vals)/stcount)*(1./SQRT(stcount))
-      q_obserr(lnn,ltt,vals)=SQRT(stobEsum(vals)/stcount)*(1./SQRT(stcount))
-      q_clmerr(lnn,ltt,vals)=SQRT(stcmEsum(vals)/stcount)*(1./SQRT(stcount))
-      q_adjerr(lnn,ltt,vals)=SQRT(stajEsum(vals)/stcount)*(1./SQRT(stcount))
-      q_abs(lnn,ltt,vals)=abssum(vals)/absweight(vals)
+      q_staterr(lnn,ltt,vals) = SQRT(sterrsum(vals)/stcount)*(1./SQRT(stcount))
+      q_obserr(lnn,ltt,vals) =  SQRT(stobEsum(vals)/stcount)*(1./SQRT(stcount))
+      q_clmerr(lnn,ltt,vals) =  SQRT(stcmEsum(vals)/stcount)*(1./SQRT(stcount))
+      q_adjerr(lnn,ltt,vals) =  SQRT(stajEsum(vals)/stcount)*(1./SQRT(stcount))
+      q_abs(lnn,ltt,vals) =     abssum(vals)/absweight(vals)
       IF (homogtype NE 'RAW') THEN BEGIN
-        q_anoms(lnn,ltt,vals)=anmsum(vals)/anmweight(vals)
+        q_anoms(lnn,ltt,vals) = anmsum(vals)/anmweight(vals)
       ENDIF ELSE BEGIN
-        valsANMS=WHERE(anmweight NE 0.,count)
-        q_anoms(lnn,ltt,valsANMS)=anmsum(valsANMS)/anmweight(valsANMS)
+        valsANMS =                  WHERE(anmweight NE 0.,count)
+        q_anoms(lnn,ltt,valsANMS) = anmsum(valsANMS)/anmweight(valsANMS)
       ENDELSE
-      mons=WHERE(clmweight NE 0.,count)
-      IF (count GT 0) THEN q_clims(lnn,ltt,mons)=clmsum(mons)/clmweight(mons)
+      mons = WHERE(clmweight NE 0.,count)
+      IF (count GT 0) THEN q_clims(lnn,ltt,mons) = clmsum(mons)/clmweight(mons)
       FOR mm=0,nmons-1 DO BEGIN
-        gots=WHERE(stdvals(*,mm) NE mdi,count)
-	IF (count GT 1) THEN q_stddevs(lnn,ltt,mm)=STDDEV(stdvals(gots,mm))
-	IF (count EQ 1) THEN q_stddevs(lnn,ltt,mm)=100.
+        gots = WHERE(stdvals(*,mm) NE mdi,count)
+	IF (count GT 1) THEN q_stddevs(lnn,ltt,mm) = STDDEV(stdvals(gots,mm))
+	IF (count EQ 1) THEN q_stddevs(lnn,ltt,mm) = 100.
       ENDFOR
     ENDIF
-    actcount=actcount+1
-    counter=counter+1
+    actcount = actcount+1
+    counter =  counter+1
   ENDFOR
 ENDFOR
 
@@ -698,23 +819,23 @@ ENDFOR
 ; needs all gridded data, number of stations in each box
 ; use anomalies - better to correlate these than absolutes
 
-clpoints=[clst,cled]
-samps_details=make_array(nlons,nlats,2,/float,value=mdi)
-q_samperr=calc_samplingerrorJUL2012_nofill(q_anoms,lats,lons,GB_counts,station_counts,mdi,clpoints,samps_details)
+clpoints =      [clst,cled] ; actual start and end points in years, cled+1 applied within calc_samplingerrorJUL2012_nofill to include final 12 months
+samps_details = make_array(nlons,nlats,2,/float,value=mdi)
+q_samperr =     calc_samplingerrorJUL2012_nofill(q_anoms,lats,lons,GB_counts,station_counts,mdi,clpoints,samps_details)
 
-q_rbar(*,*)=REFORM(samps_details(*,*,0))
-q_sbarSQ(*,*)=REFORM(samps_details(*,*,1))
+q_rbar(*,*) =   REFORM(samps_details(*,*,0))
+q_sbarSQ(*,*) = REFORM(samps_details(*,*,1))
 
 ;stop
 
 ; switch off if raw - here we're combining the sampling and station errors
-FOR tt=0,nmons-1 DO BEGIN
-  combarr=make_array(nlons,nlats,/float,value=mdi)
-  subarr1=q_staterr(*,*,tt)
-  subarr2=q_samperr(*,*,tt)
-  gots=WHERE(subarr1 NE mdi AND subarr2 NE mdi,count)
-  combarr(gots)=(SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2)))*2.
-  q_comberr(*,*,tt)=combarr
+FOR tt =              0,nmons-1 DO BEGIN
+  combarr =           make_array(nlons,nlats,/float,value=mdi)
+  subarr1 =           q_staterr(*,*,tt)
+  subarr2 =           q_samperr(*,*,tt)
+  gots =              WHERE(subarr1 NE mdi AND subarr2 NE mdi,count)
+  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2)))*2.
+  q_comberr(*,*,tt) = combarr
 ENDFOR
 ;stop
 
@@ -722,120 +843,120 @@ ENDFOR
 openw,19,outresults,/append
 printf,19,' '
 printf,19,'PARAMETER ',param,' ', homogtype
-wilma=NCDF_CREATE(outdat+grid+'_'+nowmon+nowyear+'_cf.nc',/clobber)
+wilma = NCDF_CREATE(outdat+'_'+nowmon+nowyear+'_cf.nc',/clobber)
   
-tid=NCDF_DIMDEF(wilma,'time',nmons)
-clmid=NCDF_DIMDEF(wilma,'month',12)
-charid=NCDF_DIMDEF(wilma, 'Character', 3)
-latid=NCDF_DIMDEF(wilma,'latitude',nlats)
-lonid=NCDF_DIMDEF(wilma,'longitude',nlons)
+tid =    NCDF_DIMDEF(wilma,'time',nmons)
+clmid =  NCDF_DIMDEF(wilma,'month',12)
+charid = NCDF_DIMDEF(wilma, 'Character', 3)
+latid =  NCDF_DIMDEF(wilma,'latitude',nlats)
+lonid =  NCDF_DIMDEF(wilma,'longitude',nlons)
   
-timesvar=NCDF_VARDEF(wilma,'time',[tid],/SHORT)
-latsvar=NCDF_VARDEF(wilma,'latitude',[latid],/FLOAT)
-lonsvar=NCDF_VARDEF(wilma,'longitude',[lonid],/FLOAT)
-meanstvar=NCDF_VARDEF(wilma,'mean_n_stations',[lonid,latid],/FLOAT)
-nstvar=NCDF_VARDEF(wilma,'actual_n_stations',[lonid,latid,tid],/FLOAT)
+timesvar =  NCDF_VARDEF(wilma,'time',[tid],/SHORT)
+latsvar =   NCDF_VARDEF(wilma,'latitude',[latid],/FLOAT)
+lonsvar =   NCDF_VARDEF(wilma,'longitude',[lonid],/FLOAT)
+meanstvar = NCDF_VARDEF(wilma,'mean_n_stations',[lonid,latid],/FLOAT)
+nstvar =    NCDF_VARDEF(wilma,'actual_n_stations',[lonid,latid,tid],/FLOAT)
 CASE param OF
   'dpd': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'dpd_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'dpd_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'dpd_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'dpd_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'dpd_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'dpd_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'dpd_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'dpd_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'dpd_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'dpd_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'dpd_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'dpd_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'dpd_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'dpd_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'dpd_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'dpd_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'dpd_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'dpd_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'dpd_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'dpd_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'dpd_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'dpd_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'dpd_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'dpd_clims',[lonid,latid,clmid],/FLOAT)
   END
   'td': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'td_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'td_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'td_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'td_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'td_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'td_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'td_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'td_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'td_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'td_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'td_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'td_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'td_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'td_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'td_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'td_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'td_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'td_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'td_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'td_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'td_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'td_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'td_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'td_clims',[lonid,latid,clmid],/FLOAT)
   END
   't': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'t_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'t_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'t_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'t_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'t_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'t_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'t_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'t_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'t_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'t_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'t_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'t_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'t_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'t_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'t_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'t_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'t_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'t_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'t_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'t_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'t_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'t_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'t_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'t_clims',[lonid,latid,clmid],/FLOAT)
   END
   'tw': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'tw_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'tw_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'tw_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'tw_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'tw_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'tw_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'tw_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'tw_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'tw_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'tw_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'tw_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'tw_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'tw_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'tw_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'tw_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'tw_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'tw_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'tw_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'tw_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'tw_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'tw_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'tw_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'tw_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'tw_clims',[lonid,latid,clmid],/FLOAT)
   END
   'e': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'e_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'e_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'e_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'e_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'e_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'e_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'e_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'e_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'e_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'e_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'e_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'e_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'e_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'e_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'e_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'e_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'e_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'e_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'e_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'e_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'e_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'e_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'e_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'e_clims',[lonid,latid,clmid],/FLOAT)
   END
   'q': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'q_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'q_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'q_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'q_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'q_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'q_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'q_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'q_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'q_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'q_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'q_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'q_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'q_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'q_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'q_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'q_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'q_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'q_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'q_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'q_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'q_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'q_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'q_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'q_clims',[lonid,latid,clmid],/FLOAT)
   END
   'rh': BEGIN
-    rhanomvar=NCDF_VARDEF(wilma,'rh_anoms',[lonid,latid,tid],/FLOAT)
-    rhabsvar=NCDF_VARDEF(wilma,'rh_abs',[lonid,latid,tid],/FLOAT)
-    rhsdvar=NCDF_VARDEF(wilma,'rh_std',[lonid,latid,tid],/FLOAT)
-    rhsterr=NCDF_VARDEF(wilma,'rh_stationerr',[lonid,latid,tid],/FLOAT)
-    rhajerr=NCDF_VARDEF(wilma,'rh_adjerr',[lonid,latid,tid],/FLOAT)
-    rhcmerr=NCDF_VARDEF(wilma,'rh_climerr',[lonid,latid,tid],/FLOAT)
-    rhoberr=NCDF_VARDEF(wilma,'rh_obserr',[lonid,latid,tid],/FLOAT)
-    rhsperr=NCDF_VARDEF(wilma,'rh_samplingerr',[lonid,latid,tid],/FLOAT)
-    rhrberr=NCDF_VARDEF(wilma,'rh_rbar',[lonid,latid],/FLOAT)
-    rhsberr=NCDF_VARDEF(wilma,'rh_sbarSQ',[lonid,latid],/FLOAT)
-    rhcberr=NCDF_VARDEF(wilma,'rh_combinederr',[lonid,latid,tid],/FLOAT)
-    rhclimvar=NCDF_VARDEF(wilma,'rh_clims',[lonid,latid,clmid],/FLOAT)
+    rhanomvar = NCDF_VARDEF(wilma,'rh_anoms',[lonid,latid,tid],/FLOAT)
+    rhabsvar =  NCDF_VARDEF(wilma,'rh_abs',[lonid,latid,tid],/FLOAT)
+    rhsdvar =   NCDF_VARDEF(wilma,'rh_std',[lonid,latid,tid],/FLOAT)
+    rhsterr =   NCDF_VARDEF(wilma,'rh_stationerr',[lonid,latid,tid],/FLOAT)
+    rhajerr =   NCDF_VARDEF(wilma,'rh_adjerr',[lonid,latid,tid],/FLOAT)
+    rhcmerr =   NCDF_VARDEF(wilma,'rh_climerr',[lonid,latid,tid],/FLOAT)
+    rhoberr =   NCDF_VARDEF(wilma,'rh_obserr',[lonid,latid,tid],/FLOAT)
+    rhsperr =   NCDF_VARDEF(wilma,'rh_samplingerr',[lonid,latid,tid],/FLOAT)
+    rhrberr =   NCDF_VARDEF(wilma,'rh_rbar',[lonid,latid],/FLOAT)
+    rhsberr =   NCDF_VARDEF(wilma,'rh_sbarSQ',[lonid,latid],/FLOAT)
+    rhcberr =   NCDF_VARDEF(wilma,'rh_combinederr',[lonid,latid,tid],/FLOAT)
+    rhclimvar = NCDF_VARDEF(wilma,'rh_clims',[lonid,latid,clmid],/FLOAT)
   END
 ENDCASE
-climsvar=NCDF_VARDEF(wilma,'month',[charid,clmid],/CHAR)
+climsvar = NCDF_VARDEF(wilma,'month',[charid,clmid],/CHAR)
 
 NCDF_ATTPUT,wilma,'time','standard_name','time'
 NCDF_ATTPUT,wilma,'time','long_name','time'
@@ -872,8 +993,8 @@ NCDF_ATTPUT,wilma,'longitude','axis','X'
 
 NCDF_ATTPUT,wilma,'mean_n_stations','long_name','Mean number of stations contributing to gridbox mean'
 NCDF_ATTPUT,wilma,'mean_n_stations','units','standard'
-min_t=0
-max_t=MAX(GB_counts(*,*))
+min_t = 0
+max_t = MAX(GB_counts(*,*))
 NCDF_ATTPUT,wilma,'mean_n_stations','valid_min',min_t(0)
 NCDF_ATTPUT,wilma,'mean_n_stations','valid_max',max_t(0)
 NCDF_ATTPUT,wilma,'mean_n_stations','missing_value',-1.e+30
@@ -884,8 +1005,8 @@ printf,19,'MEAN N STATIONS: ',min_t,max_t
 
 NCDF_ATTPUT,wilma,'actual_n_stations','long_name','Actual number of stations within gridbox'
 NCDF_ATTPUT,wilma,'actual_n_stations','units','standard'
-min_t=0
-max_t=MAX(station_counts(*,*,*))
+min_t = 0
+max_t = MAX(station_counts(*,*,*))
 NCDF_ATTPUT,wilma,'actual_n_stations','valid_min',min_t(0)
 NCDF_ATTPUT,wilma,'actual_n_stations','valid_max',max_t(0)
 NCDF_ATTPUT,wilma,'actual_n_stations','missing_value',-1.e+30
@@ -897,10 +1018,10 @@ printf,19,'ACTUAL N STATIONS: ',min_t,max_t
 NCDF_ATTPUT,wilma,rhanomvar,'long_name','Monthly mean anomaly'
 NCDF_ATTPUT,wilma,rhanomvar,'units',unitees
 NCDF_ATTPUT,wilma,rhanomvar,'axis','T'
-valid=WHERE(q_anoms NE -1.E+30, tc)
+valid = WHERE(q_anoms NE -1.E+30, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_anoms(valid))
-  max_t=MAX(q_anoms(valid))
+  min_t = MIN(q_anoms(valid))
+  max_t = MAX(q_anoms(valid))
   NCDF_ATTPUT,wilma,rhanomvar,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhanomvar,'valid_max',max_t(0)
 ENDIF
@@ -913,10 +1034,10 @@ printf,19,'ANOMS: ',min_t,max_t
 NCDF_ATTPUT,wilma,rhabsvar,'long_name','Monthly mean absolutes'
 NCDF_ATTPUT,wilma,rhabsvar,'units',unitees
 NCDF_ATTPUT,wilma,rhabsvar,'axis','T'
-valid=WHERE(q_abs NE -1.E+30, tc)
+valid = WHERE(q_abs NE -1.E+30, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_abs(valid))
-  max_t=MAX(q_abs(valid))
+  min_t = MIN(q_abs(valid))
+  max_t = MAX(q_abs(valid))
   NCDF_ATTPUT,wilma,rhabsvar,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhabsvar,'valid_max',max_t(0)
 ENDIF
@@ -929,10 +1050,10 @@ printf,19,'ABS: ',min_t,max_t
 NCDF_ATTPUT,wilma,rhsdvar,'long_name','Monthly mean st dev'
 NCDF_ATTPUT,wilma,rhsdvar,'units',unitees
 NCDF_ATTPUT,wilma,rhsdvar,'axis','T'
-valid=WHERE(q_stddevs NE -1.E+30, tc)
+valid = WHERE(q_stddevs NE -1.E+30, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_stddevs(valid))
-  max_t=MAX(q_stddevs(valid))
+  min_t = MIN(q_stddevs(valid))
+  max_t = MAX(q_stddevs(valid))
   NCDF_ATTPUT,wilma,rhsdvar,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhsdvar,'valid_max',max_t(0)
 ENDIF
@@ -946,8 +1067,8 @@ NCDF_ATTPUT,wilma,rhclimvar,'long_name','Monthly climatology'
 NCDF_ATTPUT,wilma,rhclimvar,'units',unitees
 valid=WHERE(q_clims NE -1.E+30, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_clims(valid))
-  max_t=MAX(q_clims(valid))
+  min_t = MIN(q_clims(valid))
+  max_t = MAX(q_clims(valid))
   NCDF_ATTPUT,wilma,rhclimvar,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhclimvar,'valid_max',max_t(0)
 ENDIF
@@ -961,8 +1082,8 @@ NCDF_ATTPUT,wilma,rhsterr,'long_name','Station uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhsterr,'units',unitees
 valid=WHERE(q_staterr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_staterr(valid))
-  max_t=MAX(q_staterr(valid))
+  min_t = MIN(q_staterr(valid))
+  max_t = MAX(q_staterr(valid))
   NCDF_ATTPUT,wilma,rhsterr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhsterr,'valid_max',max_t(0)
 ENDIF
@@ -976,8 +1097,8 @@ NCDF_ATTPUT,wilma,rhajerr,'long_name','Adjustment uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhajerr,'units',unitees
 valid=WHERE(q_adjerr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_adjerr(valid))
-  max_t=MAX(q_adjerr(valid))
+  min_t = MIN(q_adjerr(valid))
+  max_t = MAX(q_adjerr(valid))
   NCDF_ATTPUT,wilma,rhajerr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhajerr,'valid_max',max_t(0)
 ENDIF
@@ -991,8 +1112,8 @@ NCDF_ATTPUT,wilma,rhoberr,'long_name','Station uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhoberr,'units',unitees
 valid=WHERE(q_obserr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_obserr(valid))
-  max_t=MAX(q_obserr(valid))
+  min_t = MIN(q_obserr(valid))
+  max_t = MAX(q_obserr(valid))
   NCDF_ATTPUT,wilma,rhoberr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhoberr,'valid_max',max_t(0)
 ENDIF
@@ -1006,8 +1127,8 @@ NCDF_ATTPUT,wilma,rhcmerr,'long_name','Station uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhcmerr,'units',unitees
 valid=WHERE(q_clmerr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_clmerr(valid))
-  max_t=MAX(q_clmerr(valid))
+  min_t = MIN(q_clmerr(valid))
+  max_t = MAX(q_clmerr(valid))
   NCDF_ATTPUT,wilma,rhcmerr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhcmerr,'valid_max',max_t(0)
 ENDIF
@@ -1021,8 +1142,8 @@ NCDF_ATTPUT,wilma,rhsperr,'long_name','Sampling uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhsperr,'units',unitees
 valid=WHERE(q_samperr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_samperr(valid))
-  max_t=MAX(q_samperr(valid))
+  min_t = MIN(q_samperr(valid))
+  max_t = MAX(q_samperr(valid))
   NCDF_ATTPUT,wilma,rhsperr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhsperr,'valid_max',max_t(0)
 ENDIF
@@ -1036,8 +1157,8 @@ NCDF_ATTPUT,wilma,rhrberr,'long_name','Intersite correlation (rbar - Jones et al
 NCDF_ATTPUT,wilma,rhrberr,'units','standard'
 valid=WHERE(q_rbar NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_rbar(valid))
-  max_t=MAX(q_rbar(valid))
+  min_t = MIN(q_rbar(valid))
+  max_t = MAX(q_rbar(valid))
   NCDF_ATTPUT,wilma,rhrberr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhrberr,'valid_max',max_t(0)
 ENDIF
@@ -1051,8 +1172,8 @@ NCDF_ATTPUT,wilma,rhsberr,'long_name','Mean variance over all stations in gridbo
 NCDF_ATTPUT,wilma,rhsberr,'units',unitees
 valid=WHERE(q_sbarSQ NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_sbarSQ(valid))
-  max_t=MAX(q_sbarSQ(valid))
+  min_t = MIN(q_sbarSQ(valid))
+  max_t = MAX(q_sbarSQ(valid))
   NCDF_ATTPUT,wilma,rhsberr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhsberr,'valid_max',max_t(0)
 ENDIF
@@ -1066,8 +1187,8 @@ NCDF_ATTPUT,wilma,rhcberr,'long_name','Combined uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhcberr,'units',unitees
 valid=WHERE(q_comberr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
-  min_t=MIN(q_comberr(valid))
-  max_t=MAX(q_comberr(valid))
+  min_t = MIN(q_comberr(valid))
+  max_t = MAX(q_comberr(valid))
   NCDF_ATTPUT,wilma,rhcberr,'valid_min',min_t(0)
   NCDF_ATTPUT,wilma,rhcberr,'valid_max',max_t(0)
 ENDIF
@@ -1120,34 +1241,35 @@ NCDF_VARPUT, wilma,rhclimvar,q_clims
 NCDF_CLOSE,wilma
 close,19
 
-bads=where(q_abs EQ mdi,count)
-IF (count GT 0) THEN q_abs(bads)=-9999.99
-bads=where(q_anoms EQ mdi,count)
-IF (count GT 0) THEN q_anoms(bads)=-9999.99
-bads=where(q_comberr EQ mdi,count)
-IF (count GT 0) THEN q_comberr(bads)=-9999.99
+bads = where(q_abs EQ mdi,count)
+IF (count GT 0) THEN q_abs(bads) = -9999.99
+bads = where(q_anoms EQ mdi,count)
+IF (count GT 0) THEN q_anoms(bads) = -9999.99
+bads = where(q_comberr EQ mdi,count)
+IF (count GT 0) THEN q_comberr(bads) = -9999.99
 
 ; Write out to ascii
-openw,2,outdat+grid+'_actuals_'+nowmon+nowyear+'.dat'
-openw,3,outdat+grid+'_anomalies19762005_'+nowmon+nowyear+'.dat'
-openw,4,outdat+grid+'_uncertainty_'+nowmon+nowyear+'.dat'
+openw,2,outdat+'_actuals_'+climchoice+'_'+nowmon+nowyear+'.dat'
+IF (climchoice EQ 'anoms7605') THEN openw,3,outdat+'_anomalies19762005_'+nowmon+nowyear+'.dat' $
+                               ELSE openw,3,outdat+'_anomalies19812010_'+nowmon+nowyear+'.dat'
+openw,4,outdat+'_uncertainty_'+climchoice+'_'+nowmon+nowyear+'.dat'
 
 ; writes out 72 columns and 36 rows r1c1=-177.5W,87.5N to r36c72=177.5E,87.5S
-year=styr
-mcount=0
-FOR mm=0,nmons-1 DO BEGIN
-  printf,2,year,monarr(mcount),format='(i4,x,a3)'
-  printf,3,year,monarr(mcount),format='(i4,x,a3)'
-  printf,4,year,monarr(mcount),format='(i4,x,a3)'
-  FOR ltt=0,35 DO BEGIN
-    printf,2,q_abs(*,ltt,mm),format='(72f9.2)'
-    printf,3,q_anoms(*,ltt,mm),format='(72f9.2)'
-    printf,4,q_comberr(*,ltt,mm),format='(72f9.2)'
+year =   styr
+mcount = 0
+FOR mm = 0,nmons-1 DO BEGIN
+  printf,2,year,monarr(mcount),format = '(i4,x,a3)'
+  printf,3,year,monarr(mcount),format = '(i4,x,a3)'
+  printf,4,year,monarr(mcount),format = '(i4,x,a3)'
+  FOR ltt = 0,35 DO BEGIN
+    printf,2,q_abs(*,ltt,mm),format =     '(72f9.2)'
+    printf,3,q_anoms(*,ltt,mm),format =   '(72f9.2)'
+    printf,4,q_comberr(*,ltt,mm),format = '(72f9.2)'
   ENDFOR
-  mcount=mcount+1
+  mcount = mcount+1
   IF (mcount EQ 12) THEN BEGIN
-    mcount=0
-    year=year+1
+    mcount = 0
+    year = year+1
   ENDIF
 ENDFOR
 printf,2,lons,format='(72f9.2)'

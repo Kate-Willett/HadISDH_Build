@@ -199,7 +199,7 @@ Remove all stations with T adj > 5 deg from Largest_Adjs_landT.2.0.1.2014p_IDPHA
 	Blue line = change of resolution
 	
 COPY HOMOGENISED MONTHLIES TO NETCDF - CREATE ANOMALIES, CLIMS, SDs, STATION UNCERTAINTIES
-create_homogNCDFall_stunc_JAN2014.pro (all variables seperately)
+create_homogNCDFall_stunc_JAN2015.pro (all variables seperately)
 	-> calc_evap.pro
 	- T first, then RH, DPD, q, e, td, tw
 	- Add station counts and missed adjustment uncertainty before running.
@@ -207,6 +207,10 @@ create_homogNCDFall_stunc_JAN2014.pro (all variables seperately)
 	Posthomog<ID>PHA<var>_badsHadISDH<version>_JAN2014.txt - move from sats/subzeros if station appears in bads and annotate bads
 	- Cross check PHADPDTd sats list with stations removed for T during Output_PHAASCII and remove.(Jan 2015 ???)
 	- Propogate totals of goods, sats, subzeros through to all other programs
+
+NOTE THAT WE CAN NOW CHOOSE CLIMATOLOGY PERIOD (1976-2005 = HadISDH standard, 1981-2010 International Standard) 
+ - > this will result in different goods, bads, subs and sats! 
+ - > not quite sure why it would affect subs and sats other than allowing/disallowing different stations
 	
 GRID ALL HOMOGENISED STATIONS (AND RAW FOR COMPARISON)
 	- now made it all CF compliant and added an ascii grid print out
@@ -316,7 +320,7 @@ IndirectPHA_JAN2014.py
 	Station counts for T (and Td), Tw, q, e, RH
 	
 ;*******************************************************************
-plot_HadISDH_adjs_JAn2014.pro
+plot_HadISDH_adjs_JAN2014.pro
       	INPUTS:
       	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2014.txt'
       	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/HadISDH.landq.'+version+'_<homogtype>PHA_JAN2014.log' 
@@ -326,7 +330,7 @@ plot_HadISDH_adjs_JAn2014.pro
       	missed adjustment uncertainty value (st dev of estimated complete adjustment distribution minus actual distribution)
 
 ;********************************************************************
-create_homogNCDFall_stunc_JAN2014.pro
+create_homogNCDFall_stunc_JAN2015.pro
     	INPUTS:
 	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2014.txt
     	/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_PHAadj.txt
@@ -334,52 +338,52 @@ create_homogNCDFall_stunc_JAN2014.pro
        	/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/ saturation test and uncertainty bins
     	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_JAN2014.log'     ;***
     	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-     	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-    	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-        /data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ 
-        /data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/UNCPLOTS/<VAR>DIR/'
+	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+     	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+    	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+        /data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
+        /data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/STAT_PLOTS/UNCPLOTS/<VAR>DIR/' *anoms7605_*
 
 ;*******************************************************************
-grid_HadISDHFLAT_DEC2013.pro
+grid_HadISDHFLAT_JAN2015.pro
       	INPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_goodsHadISDH.'+version+'_JAN2014.txt
-      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_satsHadISDH.'+version+'_JAN2014.txt
-      	/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/
+      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_JAN2014.txt
+      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_JAN2014.txt
+      	/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
       	/data/local/hadkw/HADCRUH2/UPDATE2013/MONTHLIES/NETCDF/	; raw data
       	OUTPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014.nc 
-      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/GriddingResults_2.0.0.2013p_JAN2014.txt	max/mins of all fields in nc file 
+      	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2014.nc 
+      	/data/local/hadkw/HADCRUH2/UPDATE2013/LISTS_DOCS/GriddingResults_2.0.0.2013p_anoms7605_JAN2014.txt	max/mins of all fields in nc file 
 
 ;*******************************************************************
 make_MP_trends.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2014
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_MPtrends_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
 		
 ;*******************************************************************
 make_area_avg_ts.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2014
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_areaTS_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
 
 ;*******************************************************************
 plot_HadISDH_MPtrendsscat_JAN2014.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_MPtrends_19732013.nc
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_areaTS_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
 	OUTPUTS:
-  	/data/local/hadkw/HADCRUH2/UPDATE2013/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_MPtrendsscat_19732013.eps
+  	/data/local/hadkw/HADCRUH2/UPDATE2013/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrendsscat_19732013.eps
 
 ;*******************************************************************
 plot_HadISDH_MPdectrends_JAN2014.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_MPtrends_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE2013/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
 	OUTPUTS:
-  	/data/local/hadkw/HADCRUH2/UPDATE2013/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_MPdectrends_19732013.eps
+  	/data/local/hadkw/HADCRUH2/UPDATE2013/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPdectrends_19732013.eps
 
 
 
