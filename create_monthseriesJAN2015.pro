@@ -2,16 +2,16 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 22 January 2016
-; Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
+; Last update: 18 January 2017
+; Location: /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
 ; Reads in hourly HadISD data, converts to humidity variables, caluclates monthly means and monthly mean anomalies, saves to ascii and netCDF.
-; Outputs to PHA folder: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/
-; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/
-; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/
+; Outputs to PHA folder: /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/
+; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/
+; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/ASCII/
 ;
 ; this program reads in every QC'd netcdf file and outputs a monthly mean anomaly, abs, clim and sd version
 ; this uses T, Tdew and SLP from the netCDF but also needs to know elevation in order to calculate SLP if necessary.
@@ -20,7 +20,7 @@
 ; May add heat indices in the future
 ;
 ; this also reads in source data and outputs a station history file
-; /data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/ of the format:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HISTORY/ of the format:
 ; /data/local/hadkw/HADCRUH2/PROGS/USHCN_v52d/src_codes/documentation/SHF_tob_inst.txt
 ; some amendments:
 ; SOURCE CODE 3=history created from raw data using: 
@@ -50,14 +50,15 @@
 ; -----------------------
 ; reads in netCDF hourly station data from HadISD /media/Kate1Ext3/HadISD.1.0.4.2015p/
 ; Old list of 6103 potential HadISD stations to include
-; inlists='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'
+; inlists='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISD.2.0.1.2016p_candidate_stations_details.txt'
+; inCIDs='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/isd-history_downloaded23JAN2017_1230.txt'
 ; 20CR SLP data for making climatological SLP for humidity calculation
-; inSLP='/data/local/hadkw/HADCRUH2/OTHERDATA/'	;CR20Jan7605MSLP_yycompos.151.170.240.10.37.8....nc
+; inSLP='/data/local/hadkw/HADCRUH2/UPDATE2016/OTHERDATA/'	;20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
 ;
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
-; First make sure the source data are in the right place.
+; First make sure the HadISD and 20CR source data are in the right place.
 ; Make sure this year's directories are set up: makeHadISDHdirectories.sh
 ; Make sure this year's PHA directories are set up: makePHAdirectories.sh
 ; Update this file to work with new version number and latest year of data and file structure
@@ -78,26 +79,41 @@
 ; ASCII monthly means and anomalies
 ; outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/'
 ; GHCNM style ASCII monthly means for PHA
-; outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315q/monthly/raw/'
-; outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315e/monthly/raw/'
-; outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315t/monthly/raw/'
-; outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315dpd/monthly/raw/'
-; outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315td/monthly/raw/'
-; outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315tw/monthly/raw/'
-; outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315rh/monthly/raw/'
-; outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315ws/monthly/raw/'
-; outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
-; outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'
-; outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
+; outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316q/monthly/raw/'
+; outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316e/monthly/raw/'
+; outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316t/monthly/raw/'
+; outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316dpd/monthly/raw/'
+; outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316td/monthly/raw/'
+; outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316tw/monthly/raw/'
+; outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316rh/monthly/raw/'
+; outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316ws/monthly/raw/'
+; outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316slp/monthly/raw/'
+; outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HISTORY/'
+; outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/'
 ; A list of stations that are not carried forward because they do not contain enough months of data
-; ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 ; A list of stations that have enough months to be carried forward
-; keepfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; keepfile='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 3 (18 January 2017)
+; ---------
+;  
+; Enhancements
+; Updated to deal with HadISD.2.0.1 - now 8000 stations plus, data from 1900 onwards and new station list
+; Sticking with 1976-2005 clim for now so that I don't have to redo 20CR stuff yet - next year I should do this
+;  
+; Changes
+; Now requires an ish-history...txt file to find the CID (2 digit country code ID) to match up to the station WMO-WBAN numbers
+; These are saved and then put in the output station list file at the end for continuity with previous versions and the hope
+; that one day this CID will be corrected and usable - we know of many errors in it e.g., CI meaning China or Chile in some cases.
+;  
+; Bug fixes
+
+;
 ; Version 2 (22 January 2016)
 ; ---------
 ;  
@@ -139,7 +155,7 @@
 ; when the odd hour makes an hour_month clim possible but not a monthly..
 
 ; DEC 2013
-; Adding dewpoint depression ready for 2013 update ***KATE STILL NEED TO DO THIS***
+; Adding dewpoint depression ready for 2013 update
 ; Need to check that T-DPD = Td as it may not.
 ; Not entirely sure whether its best to calculate monthly T and Td and then create DPD
 ; Or whether its best to calculate monthly DPD directly from the hourly data
@@ -164,29 +180,30 @@
 ;-------------------------------------------------------------------------
 pro create_monthseriesJAN2015
 
-newstart=long(0)   	    ;long(0)	; use this to restart the program at a specified place 
+newstart=long(042020)   	    ;long(0) or long(010010) etc	; use this to restart the program at a specified place 
 nowmon='JAN'
-nowyear='2016'
-version='2.1.0.2015p'
+nowyear='2017'
+version='3.0.0.2016p'
 
 
-indir='/media/Kate1Ext3/HadISD.1.0.4.2015p/'
-inlists='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/current_HadISD_stationinfo_AUG2011.txt'
-inSLP='/data/local/hadkw/HADCRUH2/OTHERDATA/'	;CR20Jan7605MSLP_yycompos.151.170.240.10.37.8....nc
-outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/ASCII/'
-outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315q/monthly/raw/'
-outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315e/monthly/raw/'
-outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315t/monthly/raw/'
-outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315dpd/monthly/raw/'
-outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315td/monthly/raw/'
-outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315tw/monthly/raw/'
-outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315rh/monthly/raw/'
-outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315ws/monthly/raw/'
-outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA_2015/PHA52j_full/pha_v52j/data/hadisdh/hadisdh7315slp/monthly/raw/'
-outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HISTORY/'
-outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/NETCDF/'
-ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-keepfile='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+indir='/media/Kate1Ext3/HadISD.2.0.1.2016p/'
+inlists='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISD.2.0.1.2016p_candidate_stations_details.txt'
+inCIDs='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/isd-history_downloaded23JAN2017_1230.txt'
+inSLP='/data/local/hadkw/HADCRUH2/UPDATE2016/OTHERDATA/'	;20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
+outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/ASCII/'
+outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316q/monthly/raw/'
+outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316e/monthly/raw/'
+outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316t/monthly/raw/'
+outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316dpd/monthly/raw/'
+outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316td/monthly/raw/'
+outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316tw/monthly/raw/'
+outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316rh/monthly/raw/'
+outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316ws/monthly/raw/'
+outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316slp/monthly/raw/'
+outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HISTORY/'
+outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/'
+ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+keepfile='/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 
 ; variables
 mdi=-1e+30
@@ -200,7 +217,7 @@ styear=1973
 stday=1
 stmon=1
 stjul=JULDAY(stmon,stday,styear,0)
-edyear=2015 
+edyear=2016 
 edday=1
 edmon=1
 edjul=JULDAY(edmon,edday,edyear+1, 0)
@@ -211,6 +228,15 @@ nmons=(edyear-styear+1)*12
 nyrs=edyear-styear+1
 actyears=indgen(nyrs)+styear
 ndays=LONG(edjul-stjul)
+; ISD times are now HOURS since 1931-01-01 00:00 rather than DAYS since 1973-01-01 00:00 so we need to extract
+; this is a little complicated as they are provided as integers rather than decimals of a whole day (1./24.)
+; set up an array of time pointers from 1973 onwards in HadISD time language (hours since 1931-01-01 00:00)
+; 753887 hours since 1931 comes out as Dec 31st 2016 at 23:00 - which is correct!!!
+; 24 * (JULDAY(12,31,2016,23) - JULDAY(1,1,1931,0) = 753887
+; 24 * (JULDAY(1,1,1973,0) - JULDAY(1,1,1931,0) = 368184
+isdstyear=1931
+isdstjul=JULDAY(stmon,stday,isdstyear,0) ; this gives a number in days 2426342.5
+isd_full_times=int(24. * (TIMEGEN(ntims,UNIT='Hours',START=stjul)-isdstjul)) ; all times from 1973 to 2016 but zero'd to jan 1st 1931, midnight?
 full_times=(TIMEGEN(ntims,UNIT='Hours',START=stjul)-stjul) ; zero'd to jan 1st 1973, midnight?
 int_times=lindgen(ntims)
 times=TIMEGEN(nmons,UNIT='Months',START=stjul)
@@ -232,7 +258,7 @@ fullslp_arr=make_array(ntims,/float,value=mdi)
 ; i.e., 1974 June 30th = 181st day Dec 31st = 365th day (184)
 ; i.e., 1975 June 30th = 181st day Dec 31st = 365th day (184)
 ; i.e., 1976 June 30th = 182nt day Dec 31st = 366th day (184)
-; leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012
+; leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012,2016
 ; leap if divisible by four by not 100, unless also divisible by 400 i.e. 1600, 2000
 
 tots={structots,hd:[181,184]}
@@ -246,7 +272,7 @@ halfyrtots=REFORM(halfyrtots,nyrs*2)
 leapsids=intarr(nyrs)
 leapsids(founds)=1  ;1s identify leap years
 JANpoint=indgen(744)
-FEBpoint=indgen(696)+744
+FEBpoint=indgen(696)+744 ; always includes a potential leap year
 MARpoint=indgen(744)+1440
 APRpoint=indgen(720)+2184
 MAYpoint=indgen(744)+2904
@@ -260,10 +286,15 @@ DECpoint=indgen(744)+8040
 
 dates=[stjul,edactjul]
 clims=[1976,2005]
-;clpointies=indgen((clims(1)+1)-clims(0))+(clims(0)-styear)    ;an array from 3 to 32?
 stclim=clims(0)-styear
 edclim=clims(1)-styear
 climsum=(edclim+1)-stclim
+CLIMstjul=JULDAY(stmon,stday,clims(0),0)
+CLIMedjul=JULDAY(edmon,edday,clims(1)+1, 0)
+CLIMedactjul=JULDAY(12,31,clims(1),23)
+CLIMtims=LONG((CLIMedjul-CLIMstjul)*24.)
+CLIMstpoint = LONG((CLIMstjul - stjul) * 24.)
+clpointies=lindgen(CLIMtims) +CLIMstpoint    ;an array from 3 to 32?
 ;stop,'check these clims'
 
 ;station hist arrays
@@ -394,21 +425,35 @@ WHILE NOT EOF(5) DO BEGIN
   wmoid=''
   wbanid=''
   namoo=''
-  cid=''
+;  cid=''
   lat=0.
   lon=0.
   stationelv=0.
-  readf,5,wmoid,wbanid,namoo,cid,lat,lon,stationelv,format='(a6,x,a5,2x,a29,x,a2,x,f7.3,x,f8.3,x,f6.1)'
+  mush=''
+;  readf,5,wmoid,wbanid,namoo,cid,lat,lon,stationelv,format='(a6,x,a5,2x,a29,x,a2,x,f7.3,x,f8.3,x,f6.1)'
+  readf,5,wmoid,wbanid,namoo,lat,lon,stationelv,mush,format='(a6,x,a5,x,a30,x,f7.3,x,f8.3,x,f7.1,x,a21)'
   IF (LONG(wmoid) LT LONG(newstart)) THEN continue
+  
+  ; make sure the loop then carries on after a restart 
+  newstart = LONG(0)
+  
   stationid=wmoid+'-'+wbanid	; New ISD will have different filenames
   outstationid=wmoid+wbanid	; New ISD will have different filenames
   
 ;  IF (wmoid NE 722486) THEN continue
-  
-; open the file----------------------------------------------------------
+
   print,'Working on ',stationid
 
-  filee=indir+stationid+'_mask2.nc.gz'
+  ; Find the CID from the ish-history file
+  spawn,'grep ^'+wmoid+' '+inCIDs, ishline 
+  cid = strmid(ishline(0),43,2)		; (0) in case there are more than one entries for that station in the inventory e.g. 037970
+  print,'CID for this station: ',cid
+  ;stop
+  
+; open the file----------------------------------------------------------
+
+;  filee=indir+stationid+'_mask2.nc.gz'
+  filee=indir+stationid+'_mask.nc.gz'
   spawn,'gunzip -c '+filee+' > homogfile.nc'
   inn=NCDF_OPEN('homogfile.nc')
   timid=NCDF_VARID(inn,'time')
@@ -419,7 +464,7 @@ WHILE NOT EOF(5) DO BEGIN
   inputid=NCDF_VARID(inn,'input_station_id')
   ; USING CONSTANT PRESSURE CALCULATED FROM ELEVATION BECAUSE SLP MAY NOT BE GOOD QUALITY 
   ; ANY CHANGES IN HUMIDITY ARE NOT DUE TO CHANGES IN PRESSURE THEN.
-  NCDF_VARGET,inn,timid,tims
+  NCDF_VARGET,inn,timid,tims ; NOW HOURS SINCE 1931-01-01 00:00
   NCDF_VARGET,inn,tmpid,temps
   NCDF_VARGET,inn,dpid,dewps
   NCDF_VARGET,inn,slpid,slps
@@ -428,7 +473,6 @@ WHILE NOT EOF(5) DO BEGIN
   NCDF_CLOSE,inn
   spawn,'rm homogfile.nc'
 
-  
 ; make all mdis the same
   bads=WHERE(temps LE mdi,count)
   IF (count GT 0) THEN temps(bads)=mdi
@@ -438,10 +482,16 @@ WHILE NOT EOF(5) DO BEGIN
   IF (count GT 0) THEN slps(bads)=mdi
   bads=WHERE(ws LE mdi,count)
   IF (count GT 0) THEN ws(bads)=mdi
+  
+; ensure tims are integers like isd_full_times
+  tims = int(tims)  
 
-;  MATCH,tims,full_times,suba,subb
-  MATCH,tims,int_times,suba,subb    
-  print,n_elements(suba),n_elements(subb)
+;;  MATCH,tims,full_times,suba,subb
+;  MATCH,tims,int_times,suba,subb    
+; HadISDv2 now has times as hours since Jan 1st 1931 00:00 so we need to extract the data we want
+  MATCH,tims,isd_full_times,suba,subb    
+
+  print,'Points in suba and subb: ',n_elements(suba),n_elements(subb)
 ;stop
   
   fulltemp_arr=make_array(ntims,/float,value=mdi)
@@ -471,7 +521,7 @@ WHILE NOT EOF(5) DO BEGIN
   obsfreq_hum(subb(WHERE(dewps(suba) NE mdi)))=1	; only where actualy dewpoint temperatures exist
   boo=where(obsfreq_tmp EQ 1,countt)
   boo=where(obsfreq_hum EQ 1,counth)
-  print,countt,' ',counth
+  print,'TOTAL TEMPS and DEWPS: ',countt,' ',counth
 ;stop  
   gotTs=WHERE(temps NE mdi)
   gotHs=WHERE(dewps NE mdi)
@@ -487,12 +537,13 @@ WHILE NOT EOF(5) DO BEGIN
 ;  stop,'CHECK THESE FREQ, RES and INPUT are working'
 
 ; convert to other variables---------------------------------------------
-  gots=WHERE(fulltemp_arr NE mdi AND fulldewp_arr NE mdi,count)
+; Just quickly double check there are vaguely enough data in the climatology period
+  CLIMgots=WHERE(fulltemp_arr(clpointies) NE mdi AND fulldewp_arr(clpointies) NE mdi,count) ; subset to only data over the clim period
   IF (count GT 24000) THEN BEGIN	; 300 days for 20 years with 4 obs per day.
 
 ;  FEB2013 IF iii) then use CR20 MSLP
-    tempyearsarr=make_array(8784,climsum,/float,value=mdi)        ; array with all hours including leaps present for each year
-    tempclimsarr=make_array(8784,nyrs,/float,value=mdi)        ; array with all hours including leaps present for each year
+    tempyearsarr=make_array(8784,climsum,/float,value=mdi)     ; 30 year by all hours (including leaps) array - containing the years within the climatology period
+    tempclimsarr=make_array(8784,nyrs,/float,value=mdi)        ; all years by all hours (including leaps) array - to fill with climatological daily means 
     slpclimsarr=make_array(8784,nyrs,/float,value=mdi) ; array with all hours including leaps present for each year
     temppointer=0L
     FOR yrfill=0,nyrs-1 DO BEGIN
@@ -508,46 +559,74 @@ WHILE NOT EOF(5) DO BEGIN
       ENDELSE
 ;    print,temppointer,actyears(yrfill)
     ENDFOR
+    
   ; now subset to get clims for each month, fill tempclimsarr with those clims, slpclimsarr with CR20 MSLP for closestgridbox
     matchlats=WHERE(CR20lats LT lat)
     thelat=matchlats(0)-1 
     matchlons=WHERE(CR20lons GT lon)
     IF (lon GT -179) THEN thelon=matchlons(0)-1 ELSE thelon=179 ; the last of 180 gridboxes covering 179 to -179
 ;    stop, 'check CR lats and lons'
+;stop,'check data presence over months'
+
+; Annoyingly we need a catch in here to check if any of the months do not have data over the climatology period just in case
+
     lotsofhours=tempyearsarr(JANpoint,*)   ; calculate T clims over clim period 1976-2005
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(JANpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(JANpoint,*)=CR20arr(thelon,thelat,0)
+
     lotsofhours=tempyearsarr(FEBpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(FEBpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(FEBpoint,*)=CR20arr(thelon,thelat,1)
+
     lotsofhours=tempyearsarr(MARpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(MARpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(MARpoint,*)=CR20arr(thelon,thelat,2)
+
     lotsofhours=tempyearsarr(APRpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(APRpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(APRpoint,*)=CR20arr(thelon,thelat,3)
+
     lotsofhours=tempyearsarr(MAYpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(MAYpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(MAYpoint,*)=CR20arr(thelon,thelat,4)
+
     lotsofhours=tempyearsarr(JUNpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(JUNpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(JUNpoint,*)=CR20arr(thelon,thelat,5)
+
     lotsofhours=tempyearsarr(JULpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(JULpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(JULpoint,*)=CR20arr(thelon,thelat,6)
+
     lotsofhours=tempyearsarr(AUGpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(AUGpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(AUGpoint,*)=CR20arr(thelon,thelat,7)
+
     lotsofhours=tempyearsarr(SEPpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(SEPpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(SEPpoint,*)=CR20arr(thelon,thelat,8)
+
     lotsofhours=tempyearsarr(OCTpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(OCTpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(OCTpoint,*)=CR20arr(thelon,thelat,9)
+
     lotsofhours=tempyearsarr(NOVpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(NOVpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(NOVpoint,*)=CR20arr(thelon,thelat,10)
+
     lotsofhours=tempyearsarr(DECpoint,*)
+    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
     tempclimsarr(DECpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
     slpclimsarr(DECpoint,*)=CR20arr(thelon,thelat,11)
   ;now convert back to fulltemp_arr space without fake leap years - converting standard P too
@@ -568,6 +647,7 @@ WHILE NOT EOF(5) DO BEGIN
     ENDFOR
 ;  stop,'check out station Ps'
     
+    gots=WHERE(fulltemp_arr NE mdi AND fulldewp_arr NE mdi,count) ; subset to only data over the clim period
     fullddep_arr(gots)=fulltemp_arr(gots)-fulldewp_arr(gots)
 ; Check DPD for subzeros - there really shouldn't be any as QC should have picked this up
     subszeros=WHERE(fullddep_arr(gots) LT 0.,countss)
@@ -588,6 +668,7 @@ WHILE NOT EOF(5) DO BEGIN
     fullqhum_arr(gots)=calc_qhum(fullevap_arr(gots),statP_arr(gots))	;station_P
     fullqsat_arr(gots)=calc_qhum(fullesat_arr(gots),statP_arr(gots))	;station_P
   ENDIF ELSE BEGIN
+    TooFewHours: print,'Too few hours in month climatology'
     openw,99,ditchfile,/append
     printf,99,stationid,'HOURS: ',count,format='(a12,x,a7,i6)'
     close,99
@@ -1769,6 +1850,8 @@ ENDIF
   openw,99,keepfile,/append
     printf,99,wmoid,wbanid,lat,lon,stationelv,cid,namoo,'MONTHS: ',cgots,format='(a6,a5,f8.4,x,f9.4,x,f6.1,x,a2,x,a29,x,a8,i4)'
   close,99
+
+;  stop
 
 ENDWHILE
 close,5
