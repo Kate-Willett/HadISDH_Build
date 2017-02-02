@@ -26,16 +26,24 @@
 ; -----------------------
 ; LIST OF MODULES
 ; -----------------------
-; <List of program modules required to run the code, or link to compiler/batch file>
+; .compile calc_evap.pro
 ; 
 ; -----------------------
 ; DATA
 ; -----------------------
-; <source data sets required for code; include data origin>
+;      inlist =	    dirlist+'goodforHadISDH.'+version+'_PHADPDtd_'+thenmon+thenyear+'.txt'
+;      inlistS =	    dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'	;need to use these to remove stations from 'goods' - and copy
+;      inlistB =	    dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'	;need to use these to remove stations from 'goods' - and copy
+;      inhom =	    dirhomog+'IDPHAASCII/TDDIR/'	    ;***
+;      inlog =	    dirlist+'HadISDH.landTd.'+version+'_PHADPD_'+thenmon+thenyear+'.log'     ;***
 ; 
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
+; First check that you have the up to date station counts input
+; And that you have the up to date missed adjustment uncertainty values
+; And that you have updated the end year, version etc.
+;
 ; The variables should be run in a specific order:
 ; T first because homogenised t_abs is used to:
 ;  -> find supersats in Td and Tw
@@ -56,13 +64,33 @@
 ; -----------------------
 ; OUTPUT
 ; -----------------------
-; <where this is written to and any other useful information about output>
+; List of 'good' stations - outlist:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/PosthomogPHADPDtd_anoms'+CLMlab+'_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; List of supersaturated values (q, e, RH, Td, Tw, DPD) - outfunniesT: 
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/PosthomogPHADPDtd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; List of bad stations (not enough months after PHA) - outbads:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/PosthomogPHADPDtd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; netCDF monthly station time series with uncertainty - outdat:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLY/HOMOG/IDPHANETCDF/TDDIR/'
+; uncertainty time series plots for each station - outplots:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLY/HOMOG/STAT_PLOTS/UNCPLOTS/TDDIR/'
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
+;
+; Version 3 (31 January 2017)
+; ---------
+;  
+; Enhancements
+; General tidy up of code and input variable format
+;  
+; Changes
+;  
+; Bug fixes
+;
 ; 
-; Version 1 (12 August 2015)
+; Version 2 (12 August 2015)
 ; ---------
 ;  
 ; Enhancements
@@ -82,7 +110,7 @@
 ; This has resulted in 1 fewer sat and 1 new sub for RH (anoms8110)
 ; missed adjustment for e was 0.12 but should have been 0.2!!!
 ;
-
+;
 ; Version 1 (15 January 2015)
 ; ---------
 ;  
@@ -96,7 +124,6 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-
 
 pro create_homogNCDFall_stunc_JAN2015
 
@@ -151,6 +178,47 @@ pro create_homogNCDFall_stunc_JAN2015
 ; AT GRIDBOX level this could scale with time too - introduce some change to RH sensor uncertainty beginning in 1990s to
 ; be almost complete by 2011? Tricky and a bit arbitray - at least doing all using wetbulb uncertainty is a 'worst case'
 
+; TEMPERATURE RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 4039, 3519??? good stations IDPHA
+; 132, 139??? bad stations (data removed from PHA)
+
+; Relative humidity RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 4148, 3599??? good stations IDPHA, 3392??? PHA
+; 20, 50??? bad stations IDPHA (some fail because anoms not tested, only abs in create_monthseries), 234??? PHA
+; 0, 1??? subzeros IDPHA, 0??? PHA
+; 38, 31??? supersats IDPHA, 26??? PHA 
+;
+; Dewpoint depression RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 3886, 3458??? good stations PHA
+; 294, 205??? bad stations PHA
+; NA subzeros
+; 227, 169??? supersats
+
+; Specific humidity RESULTS JAN2017 climatology 1976-2005, 1981-2010 
+; 4149, 3604??? good stations IDPHA, 3416??? PHA
+; 21, 51??? bad stations IDPHA, 163??? PHA
+; 44, 49??? subzeros IDPHA, 52??? PHA
+; 38, 31??? supersats IDPHA, 26??? PHA
+
+; Vapour Pressure RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 4149, 3604??? good stations 
+; 21, 51??? bad stations
+; 45, 53??? subzeros
+; 38, 31??? supersats
+
+; Dewpoint TEMPERATURE RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 3727, 3338??? good stations T-DPD, 3321??? PHA
+; 444 (739), 320??? (526)??? bad stations T-DPD (brackets includes duplicates), 188??? PHA
+; NA subzeros
+; 227, 163??? supersats T-DPD, 165??? PHA
+
+; Wetbulb TEMPERATURE RESULTS JAN2017 climatology 1976-2005, 1981-2010
+; 4150, 3604??? good stations
+; 21, 51??? bad stations
+; NA subzeros
+; 949, 831??? supersats
+
+;****************
 ; TEMPERATURE RESULTS JAN2016 climatology 1976-2005, 1981-2010
 ; 3560, 3519 good stations IDPHA
 ; 98, 139 bad stations (data removed from PHA)
@@ -199,54 +267,49 @@ pro create_homogNCDFall_stunc_JAN2015
 startee=' ' 	; fix as a station to restart
 ; 85470099999 for PETER
 
-; T first, RH, DPD, q, e, td, tw
-
-homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
-param =      'tw'
-param2 =     'Tw'		;'T','Td','q','e','RH','Tw','DPD'
-nowmon =     'JAN'
-nowyear =    '2016'
-thenmon =    'JAN'
-thenyear =   '2016'
-version =    '2.1.0.2015p'
-workingdir = 'UPDATE2015'
-
+; Which year?
 MYstyr = 1973
-MYedyr = 2015
+MYedyr = 2016
+
+; Which climatology?
 MYclst = 1976	; 1976, 1981
 MYcled = 2005	; 2005, 2010
 CLMlab = strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/remove_all),2,2)
 
-; files and directories
-dirlist =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/LISTS_DOCS/'
-dirhomog = '/data/local/hadkw/HADCRUH2/'+workingdir+'/MONTHLIES/HOMOG/'
-dirraw =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/MONTHLIES/NETCDF/'
+; Which variable? T first, RH, DPD, q, e, td, tw
+param =      'tw'
 
-; NOT REQUIRED!!! REMOVED AUGUST 2016
-;; Number of stations for each variable RAW and HOMOG
-;CASE param OF 
-;  'dpd': nstations=3671							
-;  'rh': IF (homogtype EQ 'PHA') THEN nstations=3670 ELSE nstations=3657	
-;  'td': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3666	
-;  't':  IF (homogtype EQ 'PHA') THEN nstations=3675 ELSE nstations=3666	
-;  'tw': IF (homogtype EQ 'PHA') THEN nstations=3674 ELSE nstations=3663	
-;  'e':  IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
-;  'q':  IF (homogtype EQ 'PHA') THEN nstations=3673 ELSE nstations=3663	
-;ENDCASE
+; Which homog type?
+homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
+
+; Which working file dates?
+nowmon =     'JAN'
+nowyear =    '2017'
+thenmon =    'JAN'
+thenyear =   '2017'
+
+; Which version?
+version =    '3.0.0.2016p'
 
 ; Missed adjustment uncertainty which has to be worked out each year
 ; this is 1 sigma so needs to be multiplied by 1.65 to match adj_err
 ;***MISSEDADJUNC***
 CASE param OF 
-  'dpd': missadjerr=0.26 	; PHA 2016
-  'rh':  IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=1.01 ; 2016 ID
-  'td':  missadjerr=0.31		; 2016 PHADPD
-  't':   missadjerr=0.26 		; 2016 ID		
-  'tw':  missadjerr=0.18		; 2016
-  'e':   missadjerr=0.20		; 2016
-  'q':   IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.16 ; 2016 ID
+  'dpd': missadjerr=0.36 		; PHA 2017
+  'rh':  IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=1.19 ; 2017 ID
+  'td':  missadjerr=0.33		; 2017 PHADPD
+  't':   missadjerr=0.30 		; 2017 ID		
+  'tw':  missadjerr=0.22		; 2017
+  'e':   missadjerr=0.25		; 2017
+  'q':   IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.20 ; 2017 ID
 ENDCASE
 
+; files and directories
+updatedir =  'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
+workingdir = '/data/local/hadkw/HADCRUH2/'+updatedir
+dirlist =    workingdir+'/LISTS_DOCS/'
+dirhomog =   workingdir+'/MONTHLIES/HOMOG/'
+dirraw =     workingdir+'/MONTHLIES/NETCDF/'
 
 ;*******************************************************
 
@@ -260,6 +323,8 @@ insat =       dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FO
 
 CASE param OF
   'td': BEGIN
+    param2 =     'Td'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees='deg C'
     IF (homogtype EQ 'PHA') THEN BEGIN
       inlist =	    dirlist+'goodforHadISDH.'+version+'_PHAtd_'+thenmon+thenyear+'.txt'
       inhom =	    dirhomog+'PHAASCII/TDDIR/'	    ;***
@@ -295,6 +360,8 @@ CASE param OF
   END
   
   't': BEGIN
+    param2 =      'T'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees =     'deg C'
     inlist =	  dirlist+'goodforHadISDH.'+version+'_IDPHAt_'+thenmon+thenyear+'.txt'
     inhom =	  dirhomog+'IDPHAASCII/TDIR/'	    ;***
     inlog =	  dirlist+'HadISDH.landT.'+version+'_IDPHAMG_'+thenmon+thenyear+'.log'     ;***
@@ -305,6 +372,8 @@ CASE param OF
   END
 
   'dpd': BEGIN
+    param2 =      'DPD'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees =     'deg C'
     inlist =	  dirlist+'goodforHadISDH.'+version+'_PHAdpd_'+thenmon+thenyear+'.txt'
     inhom =	  dirhomog+'PHAASCII/DPDDIR/'	    ;***
     ; can find sats from negative DPD
@@ -319,6 +388,8 @@ CASE param OF
   END
   
   'tw': BEGIN
+    param2 =      'Tw'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees =     'deg C'
     inlist =	  dirlist+'goodforHadISDH.'+version+'_IDPHAtw_'+thenmon+thenyear+'.txt'
     inhom =	  dirhomog+'IDPHAASCII/TWDIR/'	    ;***
     ; no subzeros from q and sats from homogenised T if < Tw
@@ -331,6 +402,8 @@ CASE param OF
   END
   
   'q': BEGIN
+    param2 =        'q'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees =       'g/kg'
     IF (homogtype EQ 'PHA') THEN BEGIN
       inlist =	    dirlist+'goodforHadISDH.'+version+'_IDPHAq_'+thenmon+thenyear+'.txt'
       inhom =	    dirhomog+'PHAASCII/QDIR/'	    ;***
@@ -357,6 +430,8 @@ CASE param OF
   END
 
   'rh': BEGIN
+    param2 =        'RH'		;'T','Td','q','e','RH','Tw','DPD'  
+    unitees =       '%rh'
     IF (homogtype EQ 'PHA') THEN BEGIN
       inlist =	    dirlist+'goodforHadISDH.'+version+'_IDPHArh_'+thenmon+thenyear+'.txt'
       inhom =	    dirhomog+'PHAASCII/RHDIR/'	    ;***
@@ -383,6 +458,8 @@ CASE param OF
   END
 
   'e': BEGIN
+    param2 =      'e'		;'T','Td','q','e','RH','Tw','DPD'
+    unitees =     'hPa'
     inlist =	  dirlist+'goodforHadISDH.'+version+'_IDPHAe_'+thenmon+thenyear+'.txt'
     inhom =	  dirhomog+'IDPHAASCII/EDIR/'	    ;***
     ; can find subzeros from e and sats from homogenised RH > 100%
@@ -399,13 +476,6 @@ ENDCASE
 ;--------------------------------------------------------
 ; other variables and arrays
 mdi=-1e+30
-
-CASE param OF
-  'q':  unitees='g/kg'
-  'rh': unitees='%rh'
-  'e':  unitees='hPa'
-  ELSE: unitees='deg C'
-ENDCASE
 
 monarr =   ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 styr =     MYstyr
@@ -445,17 +515,17 @@ station_err =    make_array(nmons,/float,value=mdi)
 ; read in and loop through all station info
 openr,5,inlist
 openw,55,outlist,/append
-counter=0
+counter = 0
 WHILE NOT EOF(5) DO BEGIN
-  wmo=''
-  lat=0.
-  lon=0.
-  elv=0.
-  cid=''
-  namoo=''
+  wmo   = ''
+  lat   = 0.
+  lon   = 0.
+  elv   = 0.
+  cid   = ''
+  namoo = ''
   readf,5,wmo,lat,lon,elv,cid,namoo,format='(a11,f8.4,f10.4,f7.1,x,a2,x,a29,x)'  
   IF (startee NE ' ') AND (startee NE wmo) THEN continue    ;restart code 
-  startee=' '
+  startee = ' '
 
 ; find homog file and read in to array 
   filee = FILE_SEARCH(inhom+wmo+'*',count=count)

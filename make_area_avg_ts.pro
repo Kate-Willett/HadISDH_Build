@@ -74,44 +74,58 @@ pro make_area_avg_ts
 ; last modified JUL 2012
 
 ;---------------------------------------------------
-; set up directories and filenames
+; EDITABLES set up directories and filenames
 mdi =        -1e+30
-; *** CHOOSE PARAMETER ***
-param =      'dpd'	;'dpd','td','t','tw','e','q','rh','w','evap'
+
+; *** CHOOSE CANDIDATE set up values
+styr =       1973	; 1850, 1973, 1950, 1880, 1979
+edyr =       2016	; 
+climst =     1976	; 1976 or 1981
+climed =     2005	; 2005 or 2010
+
 ; *** CHOOSE READ IN DATE ***
 thenmon =     'JAN'
-thenyear =    '2016'
+thenyear =    '2017'
+
 ; *** CHOOSE PRINT OUT DATE ***
-nowmon =     'SEP'
-nowyear =    '2016'
+nowmon =     'JAN'
+nowyear =    '2017'
+
+; *** CHOOSE PARAMETER ***
+param =      'tw'	;'dpd','td','t','tw','e','q','rh','w','evap'
+
 ; *** CHOOSE TYPE OF DATA ***
-homogtype =  'PHA'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','MARINE','ERA'
+homogtype =  'ID'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','MARINE','ERA'
+
 ; *** CHOOSE VERSION IF HadISDH ***
-version =    '2.1.0.2015p'
+version =    '3.0.0.2016p'
+
 ; *** CHOOSE WORKING DIRECTORY ***
-workingdir = 'UPDATE2015
+workingdir = 'UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
+
 ; *** CHOOSE WHETHER TO MASK WITH HadISDH IF NOT HadISDH ***
 mask =       'false'	; default = 'false', if 'true' then mask to HadISDH equivalent
+; MASKFILE (HadISDH set up values)
+mstyr =       1973	; 1850, 1973, 1950, 1880
+medyr =       2016	; 2013, 2011
+mclimst =     1976	; could be 1976 or 1981
+mclimed =     2005	; could be 2005 or 2010
+
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
 domain =     'land'	; 'land','marine','blend'
+
 ; *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
 isanom =     'true'	; 'false' for actual values, 'true' for anomalies
+
 ; *** Might add a renormalisation section later ***
 ; renorm = 'false'
 
-; CANDIDATE set up values
-styr =       1973	; 1850, 1973, 1950, 1880, 1979
-edyr =       2015	; 2013, 2011
-climst =     1976	; 1976 or 1981
-climed =     2005	; 2005 or 2010
+
+
+
 CLMlab =     strmid(strcompress(climst,/remove_all),2,2)+strmid(strcompress(climed,/remove_all),2,2)
 climchoice = 'anoms'+CLMlab ; 'anoms7605','anoms8110'
 
-; MASKFILE (HadISDH set up values)
-mstyr =       1973	; 1850, 1973, 1950, 1880
-medyr =       2015	; 2013, 2011
-mclimst =     1976	; could be 1976 or 1981
-mclimed =     2005	; could be 2005 or 2010
 MCLMlab =     strmid(strcompress(mclimst,/remove_all),2,2)+strmid(strcompress(mclimed,/remove_all),2,2)
 mclimchoice = 'anoms'+MCLMlab ; 'anoms7605','anoms8110'
 
@@ -146,7 +160,7 @@ CASE param OF
     param2 = 'DPD'	
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landDPD.2.1.0.2015p.BLENDDPD.QC0.0.0_APR2016'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landDPD.2.1.0.2015p.BLENDDPD.QC0.0.0_OCT2016'
     IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
@@ -191,8 +205,8 @@ CASE param OF
 ;    IF (homogtype EQ 'OTHER')  THEN infile = 'HadSST.3.1.1.0.median'
     IF (homogtype EQ 'OTHER')  THEN infile = 'CRUTEM.4.3.0.0.anomalies'
 ;    IF (homogtype EQ 'OTHER')  THEN infile = 'GHCNM_18802014'
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landT.2.1.0.2015p.BLENDT.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landT.2.1.0.2015p.BLENDT.QC0.0.0_OCT2016'
+    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclimNBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN
@@ -232,8 +246,8 @@ CASE param OF
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landq.2.1.0.2015p.BLENDq.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landq.2.1.0.2015p.BLENDq.QC0.0.0_OCT2016'
+    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -252,8 +266,8 @@ CASE param OF
    param2 = 'e'	
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.lande.2.1.0.2015p.BLENDe.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.lande.2.1.0.2015p.BLENDe.QC0.0.0_OCT2016'
+    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 

@@ -28,27 +28,57 @@
 ; -----------------------
 ; LIST OF MODULES
 ; -----------------------
-; <List of program modules required to run the code, or link to compiler/batch file>
+; .compile calc_samplingerrorJUL2012_nofill
 ; 
 ; -----------------------
 ; DATA
 ; -----------------------
-; <source data sets required for code; include data origin>
+; Input station list of 'good stations':
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_JAN2017.txt
+; Input station list of supersaturated stations to be removed from the good list:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_JAN2017.txt
+; Input station list of subzero stations to be removed from the good list:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subsHadISDH.'+version+'_JAN2017.txt
+; Input homogenised netCDF files of data with station uncertainties to grid - IDPHA version and PHADPD:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
+; or for PHA version:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/PHANETCDF/<VAR>DIR/ *anoms7605_*
+; or for RAW version:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/	; raw data
 ; 
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
-; <step by step guide to running the code>
+; Make sure you have updated the year, climatology period, variable, homog type and version
+; > tidl
+; > .compile calc_samplingerrorJUL2012_nofill
+; > .compile grid_HadISDHFLAT_JAN2015
+; > grid_HadISDHFLAT_JAN2015
+; may have to exit and then re-run for each variable because the datastructure changes?
 ; 
 ; -----------------------
 ; OUTPUT
 ; -----------------------
-; <where this is written to and any other useful information about output>
+; The gridded netCDF file:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017.nc 
+; The summary min and max values for each variable within the netCDF file:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/GriddingResults_3.0.0.2016p_anoms7605_JAN2017.txt	max/mins of all fields in nc file 
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 3 (1 February 2017)
+; ---------
+;  
+; Enhancements
+; General tidy up and improved headers
+;  
+; Changes
+;  
+; Bug fixes
+;
+;
 ; Version 2 (7 September 2017)
 ; ---------
 ;  
@@ -76,9 +106,6 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-
-
-
 pro grid_HadISDHFLAT_JAN2015
 
 ; *** WILL NEED UPDATING WITH UNCERTAINTY ***
@@ -150,20 +177,33 @@ pro grid_HadISDHFLAT_JAN2015
 ; .compile calc_samplingerrorJUL2012_nofill
 
 ;-----------------------------------------------------
-; editables
-param =      'tw'	;'dpd','td','t','tw','e','q','rh'
-nowmon =     'JAN'
-nowyear =    '2016'
-thenmon =    'JAN'
-thenyear =   '2016'
-homogtype =  'ID'	;'PHA','ID','DPD', 'RAW'
-version =    '2.1.0.2015p'
-workingdir = 'UPDATE2015'
+; EDITABLES
 
+; Which variable?
+param =      'td'	;'dpd','td','t','tw','e','q','rh'
+
+; Which start year/end year?
 MYstyr =     1973
-MYedyr =     2015
-MYclst =     1981	; could be 1976 or 1981
-MYcled =     2010	; could be 2005 or 2010
+MYedyr =     2016
+
+; Which climatologye period?
+MYclst =     1976	; could be 1976 or 1981
+MYcled =     2005	; could be 2005 or 2010
+
+; Date of working files?
+nowmon =     'JAN'
+nowyear =    '2017'
+thenmon =    'JAN'
+thenyear =   '2017'
+
+; Which homog type?
+homogtype =  'DPD'	;'PHA','ID','DPD', 'RAW'
+
+; Which version?
+version =    '3.0.0.2016p'
+
+workingdir = 'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
+
 CLMlab =     strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/remove_all),2,2)
 climchoice = 'anoms'+CLMlab ; 'anoms7605','anoms8110'
 
@@ -171,33 +211,33 @@ MYlatlg = 5.
 MYlonlg = 5.
 grid =    strcompress(ROUND(MYlatlg),/remove_all)+'by'+strcompress(ROUND(MYlonlg),/remove_all)
 
-;JAN2016 stats
-; number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
-; number of subzero stations to remove
-; number of supersaturated stations to remove
-dpdstats = {stato,nstations:[3271,3289, 9999,9999, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,  0,   0,0, 0,0, 0,0],$
-		  nsats:[171,169, 0,0, 0,0, 0,0]}
-tdstats =  {stato,nstations:[9999,9999, 9999,9999, 3161,3175, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
-		  nsats:[0,0, 0,0, 166,163, 0,0]}
-tstats =   {stato,nstations:[9999,9999, 3560,3519, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+;JAN2017 stats
+; nstations: number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
+; nsubs: number of subzero stations to remove
+; nsats: number of supersaturated stations to remove
+tstats =   {stato,nstations:[9999,9999, 4039,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
                   nsubs:[0,0, 0,0, 0,0, 0,0],$
 		  nsats:[0,0, 0,0, 0,0, 0,0]}
-twstats =  {stato,nstations:[9999,9999, 2791,2773, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
+dpdstats = {stato,nstations:[3659,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,  0, 0,0, 0,0, 0,0],$
+		  nsats:[227,0, 0,0, 0,0, 0,0]}
+tdstats =  {stato,nstations:[9999,9999, 9999,9999, 3506,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 0,0, 0,  0, 0,0],$
+		  nsats:[0,0, 0,0, 221,0, 0,0]}
+qstats =   {stato,nstations:[9999,9999, 4067,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 44,0, 0,0, 0,0],$
+		  nsats:[0,0, 38,0, 0,0, 0,0]}
+rhstats =  {stato,nstations:[9999,9999, 4110,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 0, 0, 0,0, 0,0],$
+		  nsats:[0,0, 38,0, 0,0, 0,0]}		  
+estats =   {stato,nstations:[9999,9999, 4066,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+                  nsubs:[0,0, 45,0, 0,0, 0,0],$
+		  nsats:[0,0, 38,0, 0,0, 0,0]}
+twstats =  {stato,nstations:[9999,9999, 3201,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
                   nsubs:[0,0, 0,  0, 0,0, 0,0],$
-		  nsats:[0,0, 847,831, 0,0, 0,0]}  
-estats =   {stato,nstations:[9999,9999, 3553,3520, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 54,53, 0,0, 0,0],$
-		  nsats:[0,0, 31,31, 0,0, 0,0]}
-qstats =   {stato,nstations:[9999,9999, 3557,3524, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 50,49, 0,0, 0,0],$
-		  nsats:[0,0, 31,31, 0,0, 0,0]}
-rhstats =  {stato,nstations:[9999,9999, 3601,3567, 9999,9999, 9999,9999],$  ; dpdstats.nstations(0) (PHA7607, PHA8110, ID7605, ID8110, DPD7607, DPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 1, 1,  0,0, 0,0],$
-		  nsats:[0,0, 31,31, 0,0, 0,0]}		  
+		  nsats:[0,0, 949,0, 0,0, 0,0]}  
 
-;; files and directories
+; files and directories
 
 dirlist =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/LISTS_DOCS/'
 dirdat =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/MONTHLIES/'
@@ -371,7 +411,6 @@ outresults = dirlist+'GriddingResults_'+version+'_'+climchoice+'_'+nowmon+nowyea
 ;--------------------------------------------------------
 ; variables and arrays
 mdi=-1e+30
-
 
 ;units
 CASE param OF
