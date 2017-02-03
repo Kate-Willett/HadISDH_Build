@@ -770,11 +770,45 @@ plot_HadISDH_MPdectrends_JAN2014.pro (/data/local/hadkw/HADCRUH2/UPDATE2016/PROG
 	-> make_key.pro
 Can also use PlotTrendMap_JAN2015.py in UPDATE2016/PROGS/PYTHON/	***PREFERRED***
 
+
 19) PLOT ANNUAL ANOMALY MAPS FOR HADOBS
+/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/IDL/
+run_annualanommaps.pro
+plot_annualanommaps_FEB2015.pro
+	-> boxfill.pro
+	-> make_key.pro
+	need to update:
+		plot_annualanomaps_FEB2015.pro
+		- edyr
+		- ensure varid points to q_anoms, rh_anoms et
+		run_annualanomaps.pro
+		- version, nowmon, nowyear, thenmon,thenyear, homogtype, param 
+		- ensure filepaths and pointers are up to date
+	Make directories called ANOMS7605_7605 to reflect the use of anoms7605 for producing anomalies relative to 7605 (can choose a different period)
+	Move all maps (images and data grids) into these directories for tidiness
+	
+20) Create the CEDA versions
+/data/local/hadkw/HADCRUH2/UPDATE2016/PRnedtOGS/PYTHON/
+WriteNetCDF_CEDAESGF_JAN2016.py
+Convert_CEDAESGF_JAN2016.py
+	- Follow ~hadkw/Desktop/HadISDH/CEDA_DIR/UPDATING_CEDA_README/ to update the CEDA versions
+	including documentation
+	
+RESULTS:
+DONE ESGF
+DONE Copy ASCII
+DONE check table - same
+DONE write update doc	
 
+21) hadcruh_uncertainties.py
 
-19) hadcruh_uncertainties.py
+22) Put up new version on HadOBS (www.metoffice.gov.uk/hadobs/hadisdh)
+	- login as hadobs: ssh -Y hadobs@eld256 or ssh -Y hadobs@eldint01
+	- set up new version pages
+	- copy data across and move old data to old directories
+	go into scripts and type: >export_hadisdh to upload
 
+DONE
 
 ;------------------------------------------------------------------
 DETAILS

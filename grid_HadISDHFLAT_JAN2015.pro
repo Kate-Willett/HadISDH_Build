@@ -1288,10 +1288,11 @@ bads = where(q_comberr EQ mdi,count)
 IF (count GT 0) THEN q_comberr(bads) = -9999.99
 
 ; Write out to ascii
-openw,2,outdat+'_actuals_'+climchoice+'_'+nowmon+nowyear+'.dat'
-IF (climchoice EQ 'anoms7605') THEN openw,3,outdat+'_anomalies19762005_'+nowmon+nowyear+'.dat' $
-                               ELSE openw,3,outdat+'_anomalies19812010_'+nowmon+nowyear+'.dat'
-openw,4,outdat+'_uncertainty_'+climchoice+'_'+nowmon+nowyear+'.dat'
+openw,2,outdat+'_actuals_'+nowmon+nowyear+'.dat'
+;IF (climchoice EQ 'anoms7605') THEN openw,3,outdat+'_anomalies19762005_'+nowmon+nowyear+'.dat' $
+;                               ELSE openw,3,outdat+'_anomalies19812010_'+nowmon+nowyear+'.dat'
+openw,3,outdat+'_anomalies_'+nowmon+nowyear+'.dat'
+openw,4,outdat+'_uncertainty_'+nowmon+nowyear+'.dat'
 
 ; writes out 72 columns and 36 rows r1c1=-177.5W,87.5N to r36c72=177.5E,87.5S
 year =   styr
