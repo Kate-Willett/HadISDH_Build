@@ -1245,14 +1245,14 @@ NCDF_ATTPUT,wilma,/GLOBAL,'description',"HadISDH monthly mean land surface "+par
 					 "or interpolation)."
 NCDF_ATTPUT,wilma,/GLOBAL,'title',"HadISDH monthly mean land surface "+param2+" climate monitoring product from 1973 onwards."
 NCDF_ATTPUT,wilma,/GLOBAL,'institution',"Met Office Hadley Centre (UK), National Climatic Data Centre (USA), Climatic Research Unit (UK), "+$
-                                         "National Physical Laboratory (UK), Bjerknes Centre for Climate Research (Norway)"
+                                         "National Physical Laboratory (UK), Maynooth University (Ireland)"
 NCDF_ATTPUT,wilma,/GLOBAL,'history',"Updated "+STRING(current_time)
-NCDF_ATTPUT,wilma,/GLOBAL,'source',"HadISD.1.0.3.2014f (Dunn et al., 2012), www.metoffice.gov.uk/hadobs/hadisd/"
+NCDF_ATTPUT,wilma,/GLOBAL,'source',"HadISD.2.1.0.2016p (Dunn et al., 2016), www.metoffice.gov.uk/hadobs/hadisd/"
 NCDF_ATTPUT,wilma,/GLOBAL,'comment'," "
 NCDF_ATTPUT,wilma,/GLOBAL,'reference',"Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., Jones, "+$
                                        "P. D., and Williams Jr., C. N.: HadISDH land surface multi-variable humidity and temperature "+$
 				       "record for climate monitoring, Clim. Past, 10, 1983-2006, doi:10.5194/cp-10-1983-2014, 2014."
-NCDF_ATTPUT,wilma,/GLOBAL,'version',"HadISDH.2.0.1.2014p"
+NCDF_ATTPUT,wilma,/GLOBAL,'version',"HadISDH."+version
 NCDF_ATTPUT,wilma,/GLOBAL,'Conventions',"CF-1.0"
 
 NCDF_CONTROL,wilma,/ENDEF

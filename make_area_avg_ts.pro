@@ -8,7 +8,8 @@
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
-; <brief summary of code purpose and main outputs>
+; This code reads in monthly mean gridded (5by5) netCDF files and produces area average time series
+; in netCDF and ASCII
 ; 
 ; <references to related published material, e.g. that describes data set>
 ; 
@@ -20,22 +21,51 @@
 ; -----------------------
 ; DATA
 ; -----------------------
-; <source data sets required for code; include data origin>
+; HadISDH-land:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; HadISDH.landq.3.0.0.2016p_FLATgridIDPHA5by5_anoms7605_JAN2017_cf.nc
+; HadISDH-marine
+; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocal_anoms8110_JAN2017_cf.nc
+; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocalship_anoms8110_JAN2017_cf.nc
+; HadISDH-blend:
+; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; HadISDH.blendq.1.0.0.2016p_FULL_anoms8110_JAN2017_cf.nc
+; HadISDH.blendq.1.0.0.2016p_FULLship_anoms8110_JAN2017_cf.nc
+; Other:
 ; 
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
-; <step by step guide to running the code>
-; 
+; Make sure all of the EDITABLES are correct
+; > tidl
+; > .compile make_area_avg_ts
+; > make_area_avg_ts 
+;
 ; -----------------------
 ; OUTPUT
 ; -----------------------
-; <where this is written to and any other useful information about output>
+; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/TIMESERIES/
+; HadISDH.landq.3.0.0.2016p_FLATgridIDPHA5by5_anoms7605_JAN2017_areaTS_19732016.nc
+; HadISDH.blendq.1.0.0.2016p_FULL_anoms8110_JAN2017_areaTS_19732016.nc
+; HadISDH.blendq.1.0.0.2016p_FULLship_anoms8110_JAN2017_areaTS_19732016.nc
+; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocal_anoms8110_JAN2017_areaTS_19732016.nc
+; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocalship_anoms8110_JAN2017_areaTS_19732016.nc
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 2 (2 August 2016)
+; ---------
+;  
+; Enhancements
+; Can now work with updated marine and blended versions
+;  
+; Changes
+;  
+; Bug fixes
+;
 ; Version 2 (2 August 2016)
 ; ---------
 ;  
@@ -80,8 +110,8 @@ mdi =        -1e+30
 ; *** CHOOSE CANDIDATE set up values
 styr =       1973	; 1850, 1973, 1950, 1880, 1979
 edyr =       2016	; 
-climst =     1976	; 1976 or 1981
-climed =     2005	; 2005 or 2010
+climst =     1981	; 1976 or 1981
+climed =     2010	; 2005 or 2010
 
 ; *** CHOOSE READ IN DATE ***
 thenmon =     'JAN'
@@ -92,13 +122,13 @@ nowmon =     'JAN'
 nowyear =    '2017'
 
 ; *** CHOOSE PARAMETER ***
-param =      'tw'	;'dpd','td','t','tw','e','q','rh','w','evap'
+param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap'
 
 ; *** CHOOSE TYPE OF DATA ***
-homogtype =  'ID'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','MARINE','ERA'
+homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
 
 ; *** CHOOSE VERSION IF HadISDH ***
-version =    '3.0.0.2016p'
+version =    '1.0.0.2016p' ; 3.0.0.3016p 1.0.0.2016p
 
 ; *** CHOOSE WORKING DIRECTORY ***
 workingdir = 'UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
@@ -112,14 +142,13 @@ mclimst =     1976	; could be 1976 or 1981
 mclimed =     2005	; could be 2005 or 2010
 
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
-domain =     'land'	; 'land','marine','blend'
+domain =     'marine'	; 'land','marine','blend'
 
 ; *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
 isanom =     'true'	; 'false' for actual values, 'true' for anomalies
 
 ; *** Might add a renormalisation section later ***
 ; renorm = 'false'
-
 
 
 
@@ -143,7 +172,7 @@ ENDIF
 latlg = 5.	;5., 4.
 lonlg = 5. 	;5., 4.
   
-IF (homogtype EQ 'OTHER') OR (homogtype EQ 'MARINE') OR (homogtype EQ 'ERA') THEN $
+IF (homogtype EQ 'OTHER') OR (homogtype EQ 'ERA') THEN $
   dir =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/' ELSE $
   dir =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/'
     
@@ -160,8 +189,10 @@ CASE param OF
     param2 = 'DPD'	
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landDPD.2.1.0.2015p.BLENDDPD.QC0.0.0_OCT2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendDPD.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineDPD.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendDPD.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineDPD.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN
@@ -181,8 +212,10 @@ CASE param OF
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'DPD')    THEN infile = 'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landTd.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landTd.2.1.0.2015p.BLENDTd.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendTd.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineTd.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendTd.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineTd.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN
@@ -205,8 +238,10 @@ CASE param OF
 ;    IF (homogtype EQ 'OTHER')  THEN infile = 'HadSST.3.1.1.0.median'
     IF (homogtype EQ 'OTHER')  THEN infile = 'CRUTEM.4.3.0.0.anomalies'
 ;    IF (homogtype EQ 'OTHER')  THEN infile = 'GHCNM_18802014'
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landT.2.1.0.2015p.BLENDT.QC0.0.0_OCT2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclimNBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendT.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineT.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendT.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineT.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN
@@ -225,8 +260,10 @@ CASE param OF
    param2 = 'Tw'	
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landTw.2.1.0.2015p.BLENDTw.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendTw.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineTw.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendTw.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineTw.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -246,8 +283,10 @@ CASE param OF
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landq.2.1.0.2015p.BLENDq.QC0.0.0_OCT2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendq.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineq.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendq.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineq.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -266,8 +305,10 @@ CASE param OF
    param2 = 'e'	
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.lande.2.1.0.2015p.BLENDe.QC0.0.0_OCT2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blende.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marinee.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blende.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marinee.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -287,8 +328,10 @@ CASE param OF
     IF (homogtype EQ 'ID')     THEN infile = 'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'BLEND')  THEN infile = 'BLEND_HadISDH.landRH.2.1.0.2015p.BLENDRH.QC0.0.0_APR2016'
-    IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
+    IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendRH.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineRH.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendRH.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineRH.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -312,9 +355,7 @@ ENDCASE
 
 inlandcover = '/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'
 
-IF (homogtype EQ 'MARINE') THEN BEGIN
-  ofile=infile+'_'+param2+'_areaTS_'+strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
-ENDIF ELSE IF (homogtype EQ 'ERA') THEN BEGIN
+IF (homogtype EQ 'ERA') THEN BEGIN
   IF (mask EQ 'true') THEN BEGIN
     ofile=infile+'_areaTS_'+domain+'_MASK_'+strcompress(mstyr,/remove_all)+strcompress(medyr,/remove_all)
   ENDIF ELSE BEGIN
@@ -327,7 +368,7 @@ ENDIF ELSE BEGIN
 ENDELSE
 
 CASE param OF
-  'rh': unitees =   '% rh'
+  'rh': unitees =   '%rh'
   'e': unitees =    'hPa'
   'q': unitees =    'g/kg'
   'w': unitees =    'm/s'
@@ -354,16 +395,15 @@ lons = (findgen(nlons)*lonlg)+stln
 
 ;----------------------------------------------------
 ; read in files
-IF (homogtype EQ 'BLEND') THEN BEGIN
-  filee = NCDF_OPEN(dir+'GRIDS/'+infile+'.nc')
-ENDIF ELSE IF (homogtype EQ 'OTHER') OR (homogtype EQ 'MARINE') OR (homogtype EQ 'ERA') THEN BEGIN
+IF (homogtype EQ 'OTHER') OR (homogtype EQ 'ERA') THEN BEGIN
   filee = NCDF_OPEN('/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/'+infile+'.nc')
 ENDIF ELSE BEGIN
   filee = NCDF_OPEN(dir+'GRIDS/'+infile+'_cf.nc')
 ENDELSE
 longs_varid = NCDF_VARID(filee,'longitude')
 lats_varid =  NCDF_VARID(filee,'latitude')
-IF (homogtype EQ 'BLEND') THEN tims_varid = NCDF_VARID(filee,'times') ELSE  tims_varid=NCDF_VARID(filee,'time')
+;IF (homogtype EQ 'BLEND') THEN tims_varid = NCDF_VARID(filee,'times') ELSE  tims_varid=NCDF_VARID(filee,'time')
+tims_varid=NCDF_VARID(filee,'time')
 
 IF (homogtype EQ 'ERA') THEN BEGIN
   IF (isanom EQ 'true') THEN qvarid = NCDF_VARID(filee,'anomalies') ELSE qvarid=NCDF_VARID(filee,'actuals')
@@ -375,70 +415,30 @@ ENDIF ELSE BEGIN
   ;    qvarid = NCDF_VARID(filee,'anomalies_sea')
     END 
     'dpd': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid = NCDF_VARID(filee,'blend_dpd_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid = NCDF_VARID(filee,'dew_point_depression_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid = NCDF_VARID(filee,'dpd_anoms') ELSE qvarid=NCDF_VARID(filee,'dpd_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid = NCDF_VARID(filee,'dpd_anoms') ELSE qvarid=NCDF_VARID(filee,'dpd_abs')
     END
     'td': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_td_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'dew_point_temperature_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'td_anoms') ELSE qvarid=NCDF_VARID(filee,'td_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'td_anoms') ELSE qvarid=NCDF_VARID(filee,'td_abs')
     END
-   't': BEGIN
+    't': BEGIN
       IF (homogtype EQ 'OTHER') THEN BEGIN
         qvarid=NCDF_VARID(filee,'temperature_anomaly')
 ;       qvarid=NCDF_VARID(filee,'sst')      
-      ENDIF ELSE IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_t_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'marine_air_temperature_anomalies')    
       ENDIF ELSE BEGIN
         IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'t_anoms') ELSE qvarid=NCDF_VARID(filee,'t_abs')
       ENDELSE
     END
     'tw': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_tw_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'wet_bulb_temperature_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'tw_anoms') ELSE qvarid=NCDF_VARID(filee,'tw_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'tw_anoms') ELSE qvarid=NCDF_VARID(filee,'tw_abs')
     END
     'q': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_q_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'specific_humidity_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'q_anoms') ELSE qvarid=NCDF_VARID(filee,'q_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'q_anoms') ELSE qvarid=NCDF_VARID(filee,'q_abs')
     END
     'rh': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_rh_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'relative_humidity_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'rh_anoms') ELSE qvarid=NCDF_VARID(filee,'rh_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'rh_anoms') ELSE qvarid=NCDF_VARID(filee,'rh_abs')
     END
     'e': BEGIN
-      IF (homogtype EQ 'BLEND') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'blend_e_anoms')
-      ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
-        qvarid=NCDF_VARID(filee,'vapor_pressure_anomalies')    
-      ENDIF ELSE BEGIN
-        IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'e_anoms') ELSE qvarid=NCDF_VARID(filee,'e_abs')
-      ENDELSE
+      IF (isanom EQ 'true') THEN qvarid=NCDF_VARID(filee,'e_anoms') ELSE qvarid=NCDF_VARID(filee,'e_abs')
     END
     'w': BEGIN
       qabsid=NCDF_VARID(filee,'sp')
@@ -475,11 +475,11 @@ NCDF_VARGET,filee,longs_varid,longs
 NCDF_VARGET,filee,tims_varid,dayssince
 NCDF_CLOSE,filee
 
-If (homogtype EQ 'MARINE') THEN BEGIN
-  q_values = reverse(q_values,2)
-  bads = where(q_values LT -100,count)
-  if (count GT 0) THEN q_values(bads) = mdi
-ENDIF
+;If (homogtype EQ 'MARINE') THEN BEGIN
+;  q_values = reverse(q_values,2)
+;  bads = where(q_values LT -100,count)
+;  if (count GT 0) THEN q_values(bads) = mdi
+;ENDIF
 If ((homogtype EQ 'ERA') OR (homogtype EQ 'OTHER')) AND (mask EQ 'true') THEN BEGIN
   CASE domain OF
     'land': filee=NCDF_OPEN(maskfileL+'_cf.nc')
@@ -593,8 +593,6 @@ nhem_mask=global_mask
 shem_mask=global_mask
 trop_mask=global_mask
 
-
-
 for deg=0,nlats-1 DO BEGIN
   if (lats(deg) LT -70.) OR (lats(deg) GT 70.) THEN BEGIN
     global_mask(*,deg) = mdi
@@ -613,7 +611,6 @@ endfor
 field_values=make_array(nlons,nlats,nmons,/float)	;all values or a subsection
 num_val=n_elements(field_values(0,0,*))
 
-
 global_mask_3d=fltarr(nlons,nlats,num_val)
 nhem_mask_3d=fltarr(nlons,nlats,num_val)
 shem_mask_3d=fltarr(nlons,nlats,num_val)
@@ -625,7 +622,6 @@ for add=0,num_val-1 do begin
   shem_mask_3d(*,*,add)=shem_mask(*,*)
   trop_mask_3d(*,*,add)=trop_mask(*,*)
 endfor
-
 
 field_values(*,*,*)=q_values(*,*,0:nmons-1)
 print,n_elements(field_values(0,0,*))
@@ -755,7 +751,7 @@ NCDF_VARPUT,file_out,time_id,dayssince
 NCDF_CLOSE,file_out;
 
 ; Output to ascii too
-IF (homogtype NE 'OTHER') AND (homogtype NE 'MARINE') AND (homogtype NE 'ERA') THEN openw,2,dir+'TIMESERIES/'+ofile+'_monthly.dat' $
+IF (homogtype NE 'OTHER') AND (homogtype NE 'ERA') THEN openw,2,dir+'TIMESERIES/'+ofile+'_monthly.dat' $
     ELSE openw,2,odir+ofile+'_monthly.dat'
 printf,2,'DATE','GLOBAL','N_HEMI','TROPICS','S_HEMI',format='(a6,4a8)'
 year=styr
@@ -772,7 +768,7 @@ printf,2,year,monarr(mpoint),glob_avg_ts(mm),nhem_avg_ts(mm),trop_avg_ts(mm),she
 ENDFOR
 close,2
 
-IF (homogtype NE 'OTHER') AND (homogtype NE 'MARINE') AND (homogtype NE 'ERA') THEN openw,2,dir+'TIMESERIES/'+ofile+'_annual.dat' $
+IF (homogtype NE 'OTHER') AND (homogtype NE 'ERA') THEN openw,2,dir+'TIMESERIES/'+ofile+'_annual.dat' $
     ELSE openw,2,odir+ofile+'_annual.dat'
 printf,2,'DATE','GLOBAL','N_HEMI','TROPICS','S_HEMI',format='(a4,4a8)'
 year=styr
