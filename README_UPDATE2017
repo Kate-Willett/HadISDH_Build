@@ -33,7 +33,15 @@ change years in file where appropriate
 		-> BUILD
 		-> ANALYSIS
 		-> OTHER
-	-> PROGS (may need some faffing with the git repositories as described below but a straightforward copy appears to work!)
+	-> PROGS 
+	(may need some faffing with the git repositories as described below but a straightforward copy appears to work!
+	This does then require all files to be added, committed and synced as they are seen as modifications:
+	    -> git add filename
+	    -> git config -m "This is the 2017 update"
+	    -> git push HADISDHOrigin master
+	    -> git status THIS LETS YOU SEE WHAT NEEDS TO BE DONE)
+	So the below stuff about git can be ignored but I'm keeping the info just in case    
+	***
 	 -> mkdir HADISDH_BUILD
 	 -> cd HADISDH_BUILD
 	 -> git init
@@ -45,6 +53,7 @@ change years in file where appropriate
 	 -> git remote add ClimExpOrigin git@github.com:Kate-Willett/Climate_Explorer.git
 	 -> git fetch ClimExpOrigin
 	 -> git checkout master
+	 ***
 	 -> mkdir PHA2015
 	 -> cd PHA2015
 	 -> scp -r ../UPDATE2014/PHA_2014/.* .
