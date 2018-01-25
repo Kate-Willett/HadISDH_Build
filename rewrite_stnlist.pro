@@ -1,7 +1,7 @@
 pro rewrite_stnlist
 
-openr,5,'goodforHadCRUH_FEB2013.txt'
-openw,7,'hadisdh7312_stnlist.tavg'
+openr,5,'goodforHadISDH.3.0.1.2017p_JAN2018.txt'
+openw,7,'hadisdh7317_stnlist.tavg'
 while not eof(5) do begin
   inid=''
   inlat=0.
