@@ -13,7 +13,8 @@
 # hte missing years with missing data indicators (entire missing years are not printed by PHA).
 # This code also plots the raw and homogenised station series alongside its raw neighbours with
 # the linear trend (median pairwise) shown, for abs and anomaly annual means. 
-# It can cope with PHA, IDPHA and PHADPD homogenised modes.
+# It can cope with PHA, IDPHA and PHADPD homogenised modes. It doresn't need to be run for IDPHA 
+# though, nor is it essential to run for q, e, RH or Tw as we don't use the PHA output.
 # When run for Td in PHADPD mode it creates homogenised Td from IDPHAt minus PHAdpd and outputs
 # a merged log file which attempts to acumulate the changepoints appropriately.
 #
@@ -156,18 +157,18 @@ from LinearTrends import MedianPairwise
 # RESTART VALUE
 Restarter='------'				#'------'		#'681040'
 Spin='TRUE'	#TRUE: loop through, FALSE: perform one stations only
-Plotonly='TRUE'	#TRUE or FALSE
+Plotonly='FALSE'	#TRUE or FALSE
 AddLetter='a)'		#'---'
 
 # Set up initial run choices
 styr       = 1973
-edyr       = 2016
+edyr       = 2017
 param      = 'e'	# tw, q, e, rh, t, td, dpd
 nowmon     = 'JAN'
-nowyear    = '2017'
+nowyear    = '2018'
 thenmon    = 'JAN'
-thenyear   = '2017'
-version    = '3.0.0.2016p'
+thenyear   = '2018'
+version    = '4.0.0.2017f'
 homogtype  = 'PHA'	#'PHA','IDPHA','PHADPD'
 updateyear = str(edyr)[2:4]
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear

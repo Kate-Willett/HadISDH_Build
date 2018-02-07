@@ -1,13 +1,26 @@
 Creation of HadISDH multivariate using both PHA and indirect PHA for 
 T, Td, Tw, q, e, RH, DPD, WS and SLP
 
-VERSION 3.0.0.2016p based on HadISD.2.0.1.2015p
+VERSION 3.0.1.2017f based on HadISD.2.0.2.2017p
 
-Note: This uses a new version of HadISD which has a lot more stations, some different stations, 
-different station merges and some changes to the HadISD QC code so this constitutes a whole new 
-version of HadISDH which should be acompanied by a peer reviewed paper. In this case I don't 
-think that there is enough change to be journal worthy - there is a new paper for HadISDv2. So,
-I think a technical note should suffice in this case? 
+Note: This is just an annual update with a similar station make up to the previous
+version (3.0.0.2016p). There are now 8103 stations to begin selection from as opposed to 7877. 
+There are no code changes, just an extra year of data, small changes to station selection and 
+possibly some historical changes to stations so only needs the Z element incremented.
+
+However, I have also run a version using the 1981-2010 climatology period rather than the 1976-2005
+period with a view to making this the standard clim period for HadISDH. This could then warrant a major 
+change again. I will run both versions and compare.
+
+1976-2005 = 3.0.1.2017f
+1981-2010 = 4.0.0.2017f
+
+Version 4.0.0.2017f has more stations 4576 verses 4210
+
+Other changes:
+I'm now removing stations with 'Large Adjustments in q (>3g/kg), RH (>15%), T (>5deg) and Td (>5deg) - arbitrary threshold choices' from all variables.
+This results in removal of ? stations
+ 
 
 GLOSSARY:
 PHA = Pairwise Homogenisation Algorithm v52j Menne and Williams, 2009
@@ -16,17 +29,28 @@ adjustments derived from each variables own neighbour networks
 
 ;------------------------------------------------------------------
 BUILD DIRECTORY STRUCTURE:
-/data/local/hadkw/HADCRUH2/UPDATE2016/
+/data/local/hadkw/HADCRUH2/UPDATE2017/
 
-cp ../UPDATE2015/makeHadISDHdirectories.sh .
+Copy the HadISD data from Robert Dunn (/scratch/rdunn/hadisd/v202_2017p/
+Make the HadISD.2.0.2.2017p directory in /media/Kate1Ext/ and move into it.
+scp -c blowfish -r /scratch/rdunn/hadisd/v202_2017p/netcdf_files_v202_2017p/hadisd.2.0.2.2017p_19310101-20171231_0* .
+Do this for 0*to 9* and check station counts:
+ls hadisd.2.0.2.2017p_19310101-20171231_9*raw.nc.gz | wc -l
+This year there are 8103.
+Also copy the candidate_stations_details.txt station list, final_mergers.txt merge list and isd-history.txt from
+v202_2017p/input_files_v202_2017p/ to HadISD.2.0.2.2017p
+
+cp ../UPDATE2016/makeHadISDHdirectories.sh .
 
 change years in file where appropriate
 
 ./makeHadISDHdirectories.sh
 
 	-> LISTS_DOCS
-	  -> cp most recent HadISD.<version>_candidate_stations_details.txt
+	  -> cp /media/Kate1Ext/HadISD.2.0.2.2017p/candidate_stations_details.txt HadISD.2.0.2.2017p_candidate_stations_details.txt
 	  -> cp most recent isd-history.txt from ftp://ftp.ncdc.noaa.gov/pub/data/noaa to isd-history_downloadedDDJANYYYY_1230.txt
+	  OR 
+	  -> cp /media/Kate1Ext/HadISD.2.0.2.2017p/isd-history.txt isd-history_downloaded18JAN2017_1230.txt
 	-> IMAGES
 		-> MAPS
 		-> TIMESERIES
@@ -34,7 +58,7 @@ change years in file where appropriate
 		-> ANALYSIS
 		-> OTHER
 	-> PROGS 
-	(may need some faffing with the git repositories as described below but a straightforward copy appears to work!
+	(may need some faffing with the git repositories as described below but a straightforward copy appears to work and is in makeHadISDHdirectories.sh!
 	This does then require all files to be added, committed and synced as they are seen as modifications:
 	    -> git add filename
 	    -> git config -m "This is the 2017 update"
@@ -58,7 +82,7 @@ change years in file where appropriate
 	 -> cd PHA2015
 	 -> scp -r ../UPDATE2014/PHA_2014/.* .
 	  -> ./makePHAdirecotories.sh
-	  -> set up the .conf files, incl files
+	  -> set up the .conf files, incl files as described in README_KATEJAN2016
 	-> MONTHLIES 
 		-> ASCII -> TABS,TDABS,TWABS,QABS,EABS,RHABS,DPDABS,WSABS,SLPABS
 		            TANOMS,TDANOMS,TWANOMS,QABS,EANOMS,RHANOMS,DPDANOMS,
@@ -88,18 +112,18 @@ change years in file where appropriate
 		-> TIMESERIES
 		-> OTHER
 	-> OTHERDATA
-	  -> cp 20CR... files from UPDATE2015/OTHERDATA/
+	  -> cp 20CR... files from UPDATE2016/OTHERDATA/
 
 ;------------------------------------------------------------------
 ORDER
-1) SET UP PHA DIRECTORIES
-        /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/
+1) SET UP PHA DIRECTORIES (mostly already done as described above)
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/
 	- set up PHA directories:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/
 	-> makePHAdirectories.sh 
-	- change all cases of 15 to 16 and then run ./
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PHA2015/pha52jgo/data/hadisdh/
-							-> 7316<var>
+	- change all cases of 16 to 17 and then run ./makePHAdirectories.sh
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PHA2015/pha52jgo/data/hadisdh/
+							-> 73<yy><var>
 								-> meta
 								-> corr
 								-> output
@@ -107,142 +131,160 @@ ORDER
 									-> raw
 									-> WMs.r00
 									-> FLs.r00							
- 	- set up /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2016/pha52jgo/data/7316<var>.conf
-		- change datatag=7315... to datatag=7316...
-		- change endyr=2015 to endyr=2016
+ 	- set up /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/73<yy><var>.conf
+		- change datatag=7316... to datatag=7317...
+		- change endyr=2016 to endyr=2017
 		- hopefully maxyrs=300000 is ok but may need to be expanded now we're working with 8000+ stations
 
 2) CREATE MONTHLY DATA FROM HOURLY HADISD
-create_monthseriesJAN2015.pro	(all variables inclusive)
-	- change nowmon, nowyear and version to appropriate values
-	- change all innie and outie filepaths to reflect 2016 run
-	- change edyear to 2016
+/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/HADISDH_BUILD/create_monthseriesJAN2015.pro	(all variables inclusive)
+	- change thisyear, nowmon, nowyear and version to appropriate values
+	- check all innie and outie filepaths to reflect 2017 run
 	-> make_months_oddtimesJAN2015.pro
 	-> calc_evap.pro
 	-> match.pro
+	Run this using a detached screen so that you can shutdown - it takes.....
+	navigate to PROGS/HADISDH_BUILD/
+	>screen
+	>tidl
+	>.compile match.pro
+	>.compile calc_evap.pro
+	>.compile make_months_oddtimesJAN2015.pro
+	>.compile create_monthseriesJAN2015.pro
+	>create_monthseriesJAN2015
+	to rerun after crash
+	>close,/all
+	>retall
+	>.compile filename
+	From another terminal
+	>screen -d
+	To re-enter
+	>screen -r
+	This can be restarted by changing newstart to the ID number
+	
 	
 RESULTS:
-From 7877 stations we now have 4216 'good' stations and 3661 'too short' stations.	
+2017 From 8103 stations we now have 4210 'good' stations and 3893 'too short' stations.	1976-2005 climatology
+2017 From 8103 stations we now have 4576 'good' stations and 3527 'too short' stations.	1981-2010 climatology
+2016 From 7877 stations we now have 4216 'good' stations and 3661 'too short' stations.	
 
 3) RUN DIRECT PHA FOR T and DPD (and all others to get corr files): 
-	- set up /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/phav52jgo/all_code/source_expand/
-	 	 parm_includes/inhomog.parm.MNTHLY.TEST.incl
-	- compile from /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/phav52jgo/all_code/
-	- make compile -C source_expand
-	- cp /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/phav52jgo/all_code/source_expand/PHA* 
-             /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/phav52jgo/code/bin/
-	- copy goodforHadISDH.<version>_JAN2017.txt into 
-		/data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/PHA2015/phav52jgo/data/hadisdh/7316<var>/meta/
-	- make 7316<var>_stnlist.tavg from goodforHadISDH.<version>_JAN2017.txt using ->rewrite_stnlist.pro
-	- make blank 7316<var>_metadata_file.txt
+	- set up /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/all_code/source_expand/parm_includes/inhomog.parm.MNTHLY.TEST.incl
+	  end year, max number of stations (I just round up to nearest 100)
+	- compile from /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/all_code/
+	>make compile -C source_expand
+	OR
+	- compile from /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/all_code/source_expand
+	>make compile
+	- cp /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/all_code/source_expand/PHA* 
+             /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/code/bin/
+	- edit /PROGS/HADISDH_BUILD/rewrite_stnlist.pro to work with latest year and run to rewrite goodforHadISDH.<version>_JAN<yyyy>.txt
+	  station lists and populate PHA directories with station lists and blank metadata files: 
+		->/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/meta/
+		->73<yy><var>_stnlist.tavg 
+		->73<yy><var>_metadata_file.txt
 	   
-	- run from /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/PHA2015/phav52jgo/
-	nohup ./testv52i-pha.sh 7316<var> tavg raw 0 0 P > runlogs/7316<var>.log &
+	- run from /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/
+	nohup ./testv52i-pha.sh 73<yy><var> tavg raw 0 0 P > runlogs/73<yy><var>.log &
 	
 	OR
 	- run from /scratch/hadkw:
-	scp -c blowfish -r /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo .
-	Check testv52j-phaSPICE.sh has the correct filepaths
-	>sbatch --mem=20000 --time=150 --ntasks=1 --output=runlogs/7316<var>.log ./testv52j-phaSPICE.sh 7316<var> tavg raw 0 0 P > runlogs/7316<var>.log &
+	- Check PROGS/PHA2015/pha52jgo/testv52j-phaSPICE.sh has the correct filepaths
+	- Update PROGS/PHA2015/pha52jgo/RunPHASPICE.sh has the updated years
+	>scp -c blowfish -r /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo .(takes a while - 30-60mins?)
+	- If you've just redone something then you can just rsync from /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/ 
+	>rsync -r * /scratch/hadkw/pha52jgo/data/hadisdh/
+	- For individual runs:
+	>sbatch --mem=20000 --time=150 --ntasks=1 --output=runlogs/7317<var>.log ./testv52j-phaSPICE.sh 7317<var> tavg raw 0 0 P > runlogs/7317<var>.log &
+	- For the whole lot:
+	>./RunPHASPICE.sh
 	
-	- AFTER THIS YOU WILL NEED TO REMOVE A FEW STATIONS FROM THE LIST goodforHadISDH.<version>_JAN2017 THAT 
-	DID NOT MAKE IT THROUGH PHA (no neighbours?) - create: goodforHadISDH.<version>_PHA<var>_JAN2017.txt
-	THESE ARE STORED HERE:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/pha52jgo/data/hadisdh/7316<var>/corr/
-	meta.7316<var>.tavg.r00.<tiemdate>.1.input_nopt_stnlist
-	
-	Also remove DPD and T missing from: T, q, e, RH, Td and Tw
-	
-	- copy goodforHadISDH.<version>_PHA<var>_JAN2017.txt to /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/
-	
-	- create a station list with only those that pass through T AND DPD: 
-		goodforHadISDH.<version>_IDPHAall_JAN2017.txt
-	- copy goodforHadISDH.<version>_IDPHAall_JAN2017.txt to /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/ 
-
-	- in /corr/ copy corr.* to corr.log for ease of read later 
-	>cp corr* corr.log
-	
-	- copy 'Adj write...' lines from /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316<var>/output/PHAv52i... 
-	  to a new file HadISDH.land<var>.<version>_JAN2017.log
-	>grep -a ^'Adj write:' PHAv52j.FAST.MLY.TEST.YYMMDDHHMM.tavg.7316<var>.r00.out > HadISDH.land<VAR>.<version>_PHA_JAN2017.log
-
-	- copy HadISDH.land<var>.<version>_PHA_JAN2017.log to /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/
+	Copy the newly created files back to /data/local/ rsync from PROGS/PHA2015/pha52jgo/?
+	>rync -r /scratch/hadkw/pha52jgo/* . takes AGES!!! 90mins?
+	could just do this from data/hadisdh/ which might save a little time - ignore the runlogs
 
 NOTE: 
 May be some issue with length of filepath maxing out fortran line length. I had
 problems with hadisdh7314dpd but not hadisdh7314t or hadisdh7314q. I had no
 issues last year but the filepath was different/shorter. For this reason I now use 7316<var>
 
+3a) Now run the python code RewriteStnlistPostPHA.py to make /LISTS_DOCS/goodforHadISDH.<version>_JAN<yyyy>.txt
+        for each variable with the stations with fewer than 7 neighbours (corr > 0.1) removed, 
+	goodforHadISDH.<version>_IDPHAall_JAN<yyyy>.txt with DPD and T few-neighbour stations removed, copy the 
+	/corr/corr* files to /corr/corr.log and scrape the adjustment info from /output/PHA* into 
+	HadISDH.land<var>.<version>_PHA_JAN<yyyy>.log which is also copied to /LISTS_DOCS/.
+	This also creates 73<yy>td/corr/badlist.txt for PHAtd few neighbour stations for later use
+	- Put the updated edyr, nowyear, version and PHAID in the Start section editables
+	>python2.7 RewriteStnlistPostPHA.py
+	- now copy the output on screen below and fill in the list of removed stations from /corr/meta*input_not_stnlist 
+
 RESULTS:
-T: 4212 stations kept, 4 removed:
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
+('BAD DPD and T uniq stations: ', 11)
+('GOOD DPD and T uniq stations: ', 4565)
+(0, 'DPD')
+('BAD Stations for: ', 'DPD', 8)
+('GOOD DPD uniq stations: ', 4568)
+61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
+68300099999 -26.68     15.25          139 WA LUDERITZ (DIAZ POINT)        
+68994099999 -46.88     37.87           22 SF MARION ISLAND                
+85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
+85488099999 -29.92    -71.20          146 CI LA FLORIDA                   
+89002099999 -70.67     -8.25           50 AY NEUMAYER                     
+89022099999 -75.61    -26.27           30 AY HALLEY                       
+89564099999 -67.60     62.87           16 AY MAWSON                       
+(1, 'T')
+('BAD Stations for: ', 'T', 4)
+('GOOD T uniq stations: ', 4572)
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 91245041606  19.28    166.65            3 WQ WAKE ISLAND AIRFLD           
-
-DPD: 4209 stations kept, 7 removed:
+91925099999  -9.80   -139.03           53 FP HIVA-OA                      
+(2, 'q')
+('BAD Stations for: ', 'q', 3)
+('GOOD q uniq stations: ', 4573)
+08501099999  39.46    -31.13           34 PO FLORES                       
+89642099999 -66.67    140.02           43 AY DUMONT D'URVILLE             
+91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
+(3, 'e')
+('BAD Stations for: ', 'e', 3)
+('GOOD e uniq stations: ', 4573)
+08501099999  39.46    -31.13           34 PO FLORES                       
+89642099999 -66.67    140.02           43 AY DUMONT D'URVILLE             
+91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
+(4, 'RH')
+('BAD Stations for: ', 'RH', 9)
+('GOOD RH uniq stations: ', 4567)
+61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
+68300099999 -26.68     15.25          139 WA LUDERITZ (DIAZ POINT)        
 68994099999 -46.88     37.87           22 SF MARION ISLAND                
-85470099999 -27.30    -70.41          298 CI CHAMONATE                    
+85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
 85488099999 -29.92    -71.20          146 CI LA FLORIDA                   
 89002099999 -70.67     -8.25           50 AY NEUMAYER                     
-89022099999 -75.45    -26.22           30 AY HALLEY                       
+89022099999 -75.61    -26.27           30 AY HALLEY                       
 89564099999 -67.60     62.87           16 AY MAWSON                       
 91610099999   1.38    173.15            2 KR BONRIKI INTL                 
-
-T and DPD combined: 4205 stations kept, 11 removed
-68994099999 -46.88     37.87           22 SF MARION ISLAND                
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
-85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
-85470099999 -27.30    -70.41          298 CI CHAMONATE                    
-85488099999 -29.92    -71.20          146 CI LA FLORIDA                   
-89002099999 -70.67     -8.25           50 AY NEUMAYER                     
-89022099999 -75.45    -26.22           30 AY HALLEY                       
-89564099999 -67.60     62.87           16 AY MAWSON                       
-91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
-91245041606  19.28    166.65            3 WQ WAKE ISLAND AIRFLD           
-91610099999   1.38    173.15            2 KR BONRIKI INTL                 
-
-Q: 4211 stations kept, 5 removed: (not yet removed T and DPD stations)
+(5, 'Tw')
+('BAD Stations for: ', 'Tw', 4)
+('GOOD Tw uniq stations: ', 4572)
 08501099999  39.46    -31.13           34 PO FLORES                       
 68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
-
-RH: 4208 stations kept, 8 removed: (not yet removed T and DPD stations)
+(6, 'Td')
+('BAD Stations for: ', 'Td', 7)
+('GOOD Td uniq stations: ', 4569)
+08501099999  39.46    -31.13           34 PO FLORES                       
+61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
+68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
 68994099999 -46.88     37.87           22 SF MARION ISLAND                
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
-85470099999 -27.30    -70.41          298 CI CHAMONATE                    
-85488099999 -29.92    -71.20          146 CI LA FLORIDA                   
-89022099999 -75.45    -26.22           30 AY HALLEY                       
-89564099999 -67.60     62.87           16 AY MAWSON                       
-89571099999 -68.58     77.97           23 AY DAVIS                        
-91610099999   1.38    173.15            2 KR BONRIKI INTL                 
-
-TD: 4211 stations kept, 5 removed: (not yet removed T and DPD stations)
-08501099999  39.46    -31.13           34 PO FLORES                       
-68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
-85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
-91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
-
-E: 4211 stations kept, 5 removed: (not yet removed T and DPD stations)
-08501099999  39.46    -31.13           34 PO FLORES                       
-68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
-85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
-91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
-
-TW: 4211 stations kept, 5 removed: (not yet removed T and DPD stations)
-08501099999  39.46    -31.13           34 PO FLORES                       
-68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
-69146499999  40.87    141.38            5 JA DRAUGHON RANGE               
-85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
+89532099999 -69.00     39.58           21 AY SYOWA                        
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 
 4) INFIL MDIs for MISSING YEARS, SAVE TO HOMOG ASCII DIRECTORY, PLOT RAW vs HOMOG with NEIGHBOURS, FOR T and DPD
 OutputPHAASCIIPLOT_JAN2015.py
-	THIS ONLY NEEDS TO BE DONE FOR T, DPD and then after IDPHA for Td 	
+	THIS ONLY NEEDS TO BE DONE FOR T, DPD and then after IDPHA for Td (PHADPD)
+	FOR COMPARISONS IT CAN ALSO BE DONE FOR e, q, RH, Tw and Td (PHA)	
 
 RESULTS:
 DONE T
@@ -253,81 +295,80 @@ Restarted at next station 010330 and it seems fine - odd - completed now.
 Non-essentials:
 DONE q
 DONE RH
-DONE Td PHA
+Td PHA
 DONE e
-DONE Tw Plots will be oK!!!
-
-ONLY FOR 2016 RUN - Need to redo all with PlotOnly = True becoause anoms plots have blue and red the wrong way around.
-Do NOT DO THIS FOR FUTURE RUNS
-Redone T - plotonly
-Redone DPD - plotonly
-Redone Td - plotonly
-Redone q - plotonly
-Redone RH - plotonly
-Redone e - plotonly
-No need to redo Tw - new code already
+Tw Plots will be oK!!!
 	
 5) RUN INDIRECT PHA FOR T (merge adjustment log), q, e, RH and Tw
 IndirectPHA_JAN2015.py	(all variables seperately)
 	-> LinearTrends.py
-	- AFTER RUNNING FOR T create goodforHadISDH<version>_PHADPDtd_JAN2017.txt by removing T noneighbours... stations from
-	goodforHadISDH<version>_IDPHAall_JAN2015.txt (or just cp the IDPHAt file) and also remove any additional Td PHA corr fails.
+	- This program conducts IDPHA and outputs a list of adjustments and uncertainty and a new station list.
+	- When run for T it also inputs a new station list for PHADPDtd which is then used by OutputPHAASCIIPLOT_JAN2015.py
+	  This list has the Td no neighbours stations removed from it. It may be the same as T because the T noneighbours from
+	  IDPHA tend to be those from Td that have not already been removed. This is a bit suspicious. I should check the
+	  neighbour finding code. Why weren't these stations classed as having noneighbours from PHA? I think its because actually
+	  PHA uses neighbours even if the correlation is less than 0.1 where as in IDPHA we say this is too low.
 	- input station counts for q, e, Tw, RH, T and Td to plot_HadISDH_adjs_JAN2015.pro 
 
 RESULTS:
 DONE T
-4200 stations in goods
-5 noneighbours:
-08501099999 39.4550  -31.1310   34.1 PO FLORES                           5 
-47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA                 6 
-68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                     6 
-91190022516 20.9000 -156.4290   15.5 US KAHULUI AIRPORT                  6 
-91232041408 15.1170  145.7330    4.0 CQ SAIPAN/ISLEY (CGS)               6 
+4561 stations in goods
+4 noneighbours
+08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    5 
+68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    6 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    6 
+91190022516 20.9000 -156.4290   15.5 US KAHULUI AIRPORT               NGHBRS:    6 
 
-Results in 4200 for Td then minus the Td stations failing PHA - which is none because all have already been removed!
+4561 stations in goods for Td (all bad stations had been removed anyway by PHA T , PHA DPD and IDPHA T (noneighbours))
 
 DONE q
-4199 stations in goods
-6 noneighbours
-08501099999 39.4550  -31.1310   34.1 PO FLORES                           0 
-61901099999-15.9330   -5.6670  436.0 SH ST. HELENA IS.                   5 
-68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                     0 
-89611099999-66.2830  110.5330   42.0 AY CASEY                            5 
-91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                    6 
-91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                     6 
-
-DONE RH
-4197 stations in goods
-8 noneighbours
-61901099999-15.9330   -5.6670  436.0 SH ST. HELENA IS.                   6 
-68104099999-22.9800   14.6450   91.1 WA WALVIS BAY                       5 
-68300099999-26.6830   15.2500  139.0 WA LUDERITZ (DIAZ POINT)            6 
-78767099999  9.9580  -83.0220    2.1 CS LIMON INTL                       6 
-88963099999-63.4000  -56.9830   24.0 AY BASE ESPERANZA                   5 
-89571099999-68.5830   77.9670   23.0 AY DAVIS                            0 
-91186099999 21.1500 -157.1000  137.0 US MOLOKAI (AMOS)                   6 
-91948099999-23.1330 -134.9670   89.0 FP MANGAREVA                        6 
-
-DONE Tw
-4200 stations in goods
-5 noneighbours
-08501099999 39.4550  -31.1310   34.1 PO FLORES                           0 
-08505099999 38.5200  -28.7160   36.0 PO HORTA                            6 
-68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                     0 
-91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                    6 
-91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                     6 
+4556 stations in goods
+9 noneighbours
+08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
+08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
+47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    6 
+68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    5 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    5 
+89611099999-66.2830  110.5330   42.0 AY CASEY                         NGHBRS:    5 
+89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    0 
+91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
+91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
 
 DONE e
-4199 stations in goods
-6 noneighbours
-08501099999 39.4550  -31.1310   34.1 PO FLORES                           0 
-61901099999-15.9330   -5.6670  436.0 SH ST. HELENA IS.                   5 
-68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                     0 
-89611099999-66.2830  110.5330   42.0 AY CASEY                            5 
-91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                    6 
-91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                     6 
+4556 stations in goods
+9 noneighbours
+08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
+08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
+47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    6 
+68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    5 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    5 
+89611099999-66.2830  110.5330   42.0 AY CASEY                         NGHBRS:    5 
+89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    0 
+91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
+91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
 
-Re-ran T to get blue and red lines the right way around in plots - ok for next year's run.
+DONE RH
+4556 stations in goods
+9 noneighbours
+62721099999 15.5890   32.5530  385.6 SU KHARTOUM                      NGHBRS:    6 
+64500099999  0.4590    9.4120   11.9 GB LEON M BA                     NGHBRS:    6 
+64501099999 -0.7120    8.7540    4.0 GB PORT GENTIL                   NGHBRS:    6 
+78767099999  9.9580  -83.0220    2.1 CS LIMON INTL                    NGHBRS:    6 
+88963099999-63.4000  -56.9830   24.0 AY BASE ESPERANZA                NGHBRS:    6 
+89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    5 
+91218099999 13.5670  144.9170  162.0 GQ ANDERSEN AFB                  NGHBRS:    6 
+91610099999  1.3820  173.1470    2.7 KR BONRIKI INTL                  NGHBRS:    0 
+91943099999-14.4830 -145.0330    3.0 FP TAKAROA                       NGHBRS:    6 
+
+DONE Tw
+4559 stations in goods
+6 noneighbours
+08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
+08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
+68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    0 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    6 
+91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
+91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
 
 6) DERIVE Td (and merge adjustment log), SAVE TO HOMOG ASCII DIRECTORY, PLOT RAW vs HOMOG with NEIGHBOURS, FOR Td
 OutputPHAASCIIPLOT_JAN2014.py
@@ -335,24 +376,33 @@ OutputPHAASCIIPLOT_JAN2014.py
 	neighbours in this case - only for plotting. However, its easiest just to remove these stations from the list for 
 	further processing
 	NB: Future versions have an'IF NO NEIGHBOURS STILL OUTPUT FILE'
+	
+DONE
 
-7) Input station counts into plot_HadISDH_adjs_JAN2015.pro
+7) OBSELETE - I have automated this: Input station counts into plot_HadISDH_adjs_JAN2015.pro
 
 8) CALCULATE MISSED ADJUSTMENT UNCERTAINTY AND PLOT ADJUSTMENT STATISTICS (Magnitude and time distributions)
-plot_HadISDH_adjs_JAN2015.pro (all variables seperately)
+plot_HadISDH_adjs_JAN2015.pro (all variables seperately called via command line)
+        >tidl
+	>.compile plot_HadISDH_adjs_JAN2015.pro
+	>plot_HadISDH_adjs_JAN2015,'q','ID'   
+	or 'dpd','rh','td','t','tw','e','q'
+	or 'PHA' (dpd and all) or 'ID' (t, q, rh, e, tw) or 'DPD' (td)
 	- Record missed adjustment uncertainty from plot and changepoint frequency/magnitude stats in program header
 	- iterate to find histogram size that looks optimal - tweak 'pseudomax'
-	- find all T(IDPHAMG) adjustments greater than 5 and remove those stations from all variable lists (bad
-	merges):	goodforHadISDH<version>_PHAdpd_JAN2016.txt
-			goodforHadISDH<version>_IDPHAt_JAN2016.txt
-			goodforHadISDH<version>_IDPHAq_JAN2016.txt
-			goodforHadISDH<version>_IDPHArh_JAN2016.txt
-			goodforHadISDH<version>_IDPHAe_JAN2016.txt
-			goodforHadISDH<version>_IDPHAtw_JAN2016.txt
-			goodforHadISDH<version>_PHADPDtd_JAN2016.txt
+	- this programs finds all adjustments and lists them in Largest_Adjs_landq.4.0.0.2017f_IDPHA_JAN2018.txt to be
+	used by UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 	- put missed adjustment uncertainties into create_homogNCDFall_stunc_JAN2016.pro
+	- If you have time look in /LISTS_DOCS/HadISD.<version>_final_mergers.txt and look up large adjustment 
+	(q>3, T/Td > 5, RH> 15) stations. Write MERGE or NO  MERGE next to that station in 
+	LISTS_DOCS/Largest_Adjs_land<var>.<version>>_IDPHA_JAN<yyyy>.txt. Could also look to see whether it is a 
+	'large' adjustment in T or Td and add IN T or IN TD as appropriate. Only really need to do this for key variables: T, Td, q and RH
 
-NB - IF you rerun this you will have to run with _KeptLarge.txt!!!!
+NB - IF you rerun this you will have to run with _KeptLarge.txt!!!! You can switch between by uncommenting/commenting in the code
+
+NOTE: Not quite sure why the stations with largest adjs in q and e are not very large in either T or Td.
+
+NOTE - NOW I'M REMOVING ALL STATIONS WHERE q>3 or RH>15 or T/TD > 5
 
 RESULTS:	
 DONE T ID:
@@ -661,13 +711,14 @@ Td only
 17330099999  -5.06 NOT MERGED
 94255099999   5.01 NOT MERGED
 
-Saved these in a list called HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt in LISTS_DOCS
+Saved these in a list called HadISDH.<version>_LargeAdj_removals_JAN<yyyy>.txt in LISTS_DOCS
 
-9) Manually save 'large' - > 5 deg adjustment stations from T and Td adjustments in a list of unique stations called:
+OBSELETE 9) Manually save 'large' - > 5 deg adjustment stations from T and Td adjustments in a list of unique stations called:
 HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt in LISTS_DOCS
 
 10) Run program to copy goodstations***(IDPHA, PHAdpd, PHADPDtd) to _KeptLarge.txt and remove 
-all stations with T adj > 5 deg listed in Largest_Adjs_landT.3.0.0.2016p_IDPHAMG_JAN2017.txt
+all stations with T or Td adj > 5 deg, q > 3 g/kg or RH > 15% listed in Largest_Adjs_landT.<version>_IDPHAMG_JAN<yyyy>.txt
+and Largest_Adjs_landTd.<version>_PHATd_JAN<yyyy>.txt and q and RH IDPHA equivalents
 from each of the goodstations*** files (IDPHA, PHAdpd and PHADPDtd). 
 	I can look at old time series of known issues here: /data/local/hadkw/HADCRUH2/IMAGES/TESTCREATE
 	Prog used: test_create_monthseries_MAY2012.pro, can be assessed using: check_HadCRUHstationsMAY2012.pro
@@ -831,173 +882,194 @@ PHA2015.
 
 	Inputs:
 	/media/Kate1Ext3//HadISD.2.0.1.2016p/'		; QC'd HadISD stations
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISD.2.0.1.2016p_candidate_stations.txt'	; full 6103 station list
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/isd-history_downloaded23JAN2017_1230.txt'	; most recent ISD station list with CIDs 
-	/data/local/hadkw/HADCRUH2/UPDATE2016/OTHERDATA/'		;20CR SLP 20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'	; full 6103 station list
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/isd-history_downloaded23JAN2017_1230.txt'	; most recent ISD station list with CIDs 
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/OTHERDATA/'		;20CR SLP 20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
 
 	Outputs:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/ASCII/'	; directoriies for ASCII
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316q/monthly/raw/'   ; directories for PHA
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316e/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316t/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316td/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316tw/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316rh/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316slp/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phav52jgo/data/hadisdh/7316ws/monthly/raw/'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HISTORY/'	; directory for history files
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/'	; directory for NetCDF files
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/tooshortforHadISDH.<version>_JAN2017.txt'	; list of removed stations
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.<version>_JAN2017.txt'		; list of kept stations
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/ASCII/'	; directoriies for ASCII
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>q/monthly/raw/'   ; directories for PHA
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>e/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>t/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>td/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>tw/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>rh/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>slp/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>ws/monthly/raw/'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HISTORY/'	; directory for history files
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/NETCDF/'	; directory for NetCDF files
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/tooshortforHadISDH.<version>_JAN2017.txt'	; list of removed stations
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_JAN2017.txt'		; list of kept stations
 
 ;******************************************************************
-run direct PHA FOR T and DPD : /data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/
+run direct PHA FOR T and DPD : /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/monthly/raw:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/meta:
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/monthly/raw:
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/meta:
 
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/runlogs/7316<var>.log
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/corr/corr.7316<var>.tavg.r00.<timedate>
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/outputs/*
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/monthly/WMs.r00/*
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/monthly/FLs.r00/*
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.<version>_PHA<var>_JAN2017.txt
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.land<var>.<version>_PHA_JAN2017.log
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.<version>_IDPHAall_JAN2017.txt
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/runlogs/73<yy><var>.log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/corr.73<yy><var>.tavg.r00.<timedate>
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/meta.73<yy><var>.tavg.r00.<timedate>.1.input_not_stnlist
+	(may be more than 1)
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/outputs/*
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/monthly/WMs.r00/*
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/monthly/FLs.r00/*
 	Station counts for DPD
+
+;*****************************************************************
+RewriteStnlistPostPHA.py
+       
+	INPUTS:
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_JAN<yyyy>.txt
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/corr.73<yy><var>.tavg.r00.<timedate>
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/meta.73<yy><var>.tavg.r00.<timedate>.1.input_not_stnlist
+	(may be more than 1)
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/outputs/PHA*	
+
+	OUTPUTS:
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_PHA<var>_JAN<yyyy>.txt
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.land<var>.<version>_PHA_JAN<yyyy>.log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_IDPHAall_JAN<yyyy>.txt
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/corr.log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>td/corr/badlist.txt
 	
 ;*******************************************************************	
 OutputPHAASCIIPLOT_JAN2014.py
 	INPUTS:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.<version>_PHA<var>_JAN2017.txt  	; station list
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/monthly/WMs.r00/*	; homogenised data
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/ASCII/<VAR>ABS/						; raw data
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/corr/corr.7316<var>.tavg.r00.<timedate> ; neighbour network list	
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_PHA<var>_JAN2017.txt  	; station list
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/monthly/WMs.r00/*	; homogenised data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/ASCII/<VAR>ABS/						; raw data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/corr.73<yy><var>.tavg.r00.<timedate> ; neighbour network list	
 	Td only:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landDPD.'+version+'_JAN2017.log		; DPD adjustment log
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_JAN2017.log		; T adjustment log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landDPD.'+version+'_JAN2017.log		; DPD adjustment log
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_JAN2017.log		; T adjustment log
 	
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/PHAASCII/<VAR>DIR/*_PHAadj.txt	; ASCII homogenised data
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/<VAR>DIR/*	; raw vs homogenised and neighbours time series plot
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/PHAASCII/<VAR>DIR/*_PHAadj.txt	; ASCII homogenised data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/STAT_PLOTS/PHAADJCOMP/<VAR>DIR/*	; raw vs homogenised and neighbours time series plot
 	Td only:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landTd.'+version+'_DPDPHA_JAN2017.log		; Td merged adjustment log
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landTd.'+version+'_DPDPHA_JAN2017.log		; Td merged adjustment log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_PHAadj.txt	; ASCII homogenised data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/<VAR>DIR/*	; raw vs homogenised and neighbours time series plot
 
 ;*******************************************************************       
 IndirectPHA_JAN2014.py
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.<version>_IDPHAall_JAN2017.txt	;station list for T and DPD combined
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landT.<version>_PHA_JAN2017.log	; adjustment logs
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landDPD.<version>_PHA_JAN2017.log	; adjustment logs
-	/data/local/hadkw/HADCRUH2/UPDATE2016/PROGS/PHA2015/phsv57jgo/data/hadisdh/7316<var>/corr/corr.7316<var>.tavg.r00.<timedate>	; neighbour network list
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/ASCII/<VAR>ABS/					; raw data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_IDPHAall_JAN2017.txt	;station list for T and DPD combined
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landT.<version>_PHA_JAN2017.log	; adjustment logs
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landDPD.<version>_PHA_JAN2017.log	; adjustment logs
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy><var>/corr/corr.73<yy><var>.tavg.r00.<timedate>	; neighbour network list
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/ASCII/<VAR>ABS/					; raw data
 	T only:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_JAN2017.log		; adjustment log	
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_JAN2017.log		; adjustment log	
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy>td/corr/badlist.txt
 	
 	OUTPUTS:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.land<var>.'+version+'_<homogtype>PHA_JAN2017.log		; adjustment log
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_<homogtype>PHAadj.txt	; ASCII homogenised data
-	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/<VAR>DIR/*	; raw vs homogenised and neighbours time series plot
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_ID<var>_JAN2017.txt	;station list for T and DPD combined
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.land<var>.'+version+'_<homogtype>PHA_JAN2017.log		; adjustment log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_<homogtype>PHAadj.txt	; ASCII homogenised data
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/<VAR>DIR/*	; raw vs homogenised and neighbours time series plot
 	T only:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMERGE_JAN2017.log		; adjustment log
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMERGE_JAN2017.log		; adjustment log
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.<version>_PHADPDtd_JAN2017.txt	;station list for T and DPD combined
 	Station counts for T (and Td), Tw, q, e, RH
 	
 ;*******************************************************************
 plot_HadISDH_adjs_JAN2014.pro
       	INPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2017.txt'
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landq.'+version+'_<homogtype>PHA_JAN2017.log' 
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2017.txt'
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landq.'+version+'_<homogtype>PHA_JAN2017.log' 
       	OUTPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/IMAGES/HadISDH.landq.'+version+'_adjspread_<homogtype>PHA_'+nowmon+nowyear+'.eps'
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Largest_Adjs_land<var>.'+version+'_<homogtype>PHA_'+nowmon+nowyear+'.txt'
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/IMAGES/HadISDH.landq.'+version+'_adjspread_<homogtype>PHA_'+nowmon+nowyear+'.eps'
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Largest_Adjs_land<var>.'+version+'_<homogtype>PHA_'+nowmon+nowyear+'.txt'
       	missed adjustment uncertainty value (st dev of estimated complete adjustment distribution minus actual distribution)
 	A MANUAL list of T and Td stations with adjustments larger than 5 degrees: HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt
 
 ;********************************************************************
 UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 	INPUTS:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017.txt
 	OUTPUTS:
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017_KeptLarge.txt
-        /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAt_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAq_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHArh_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAe_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_IDPHAtw_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHADPDtd_JAN2017_KeptLarge.txt
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.3.0.0.2016p_PHAdpd_JAN2017_KeptLarge.txt
 
 
 ;********************************************************************
 create_homogNCDFall_stunc_JAN2015.pro
     	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2014.txt
-    	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_PHAadj.txt
-       	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHANETCDF/RHDIR/ saturation test and uncertainty bins
-       	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/ saturation test and uncertainty bins
-    	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_JAN2014.log'     ;***
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/goodforHadISDH.'+version+'_<homogtype>PHA<var>_JAN2014.txt
+    	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHAASCII/<VAR>DIR/*_PHAadj.txt
+       	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHANETCDF/RHDIR/ saturation test and uncertainty bins
+       	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHANETCDF/TDIR/ saturation test and uncertainty bins
+    	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_JAN2014.log'     ;***
     	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-     	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-    	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-        /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
-        /data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/STAT_PLOTS/UNCPLOTS/<VAR>DIR/' *anoms7605_*
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+     	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+    	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subzerosHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
+        /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/STAT_PLOTS/UNCPLOTS/<VAR>DIR/' *anoms7605_*
 
 ;*******************************************************************
 grid_HadISDHFLAT_JAN2015.pro
       	INPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_JAN2017.txt
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_JAN2017.txt
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subsHadISDH.'+version+'_JAN2017.txt
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/MONTHLIES/NETCDF/	; raw data
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_goodsHadISDH.'+version+'_JAN2017.txt
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_satsHadISDH.'+version+'_JAN2017.txt
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Posthomog<homogtype>PHA<var>_anoms7605_subsHadISDH.'+version+'_JAN2017.txt
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/HOMOG/IDPHANETCDF/<VAR>DIR/ *anoms7605_*
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/MONTHLIES/NETCDF/	; raw data
       	OUTPUTS:
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017.nc 
-      	/data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/GriddingResults_3.0.0.2016p_anoms7605_JAN2017.txt	max/mins of all fields in nc file 
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017.nc 
+      	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/GriddingResults_3.0.0.2016p_anoms7605_JAN2017.txt	max/mins of all fields in nc file 
 
 ;*******************************************************************
 make_MP_trends.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2017_anoms7605_MPtrends_19732016.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2017_anoms7605_MPtrends_19732016.nc
 		
 ;*******************************************************************
 make_area_avg_ts.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2014
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2014
 	OUTPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
 
 ;*******************************************************************
 plot_HadISDH_MPtrendsscat_JAN2014.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_areaTS_19732013.nc
 	OUTPUTS:
-  	/data/local/hadkw/HADCRUH2/UPDATE2016/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrendsscat_19732013.eps
+  	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrendsscat_19732013.eps
 
 ;*******************************************************************
 plot_HadISDH_MPdectrends_JAN2014.pro
 	INPUTS:
-	/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
+	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/STATISTICS/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPtrends_19732013.nc
 	OUTPUTS:
-  	/data/local/hadkw/HADCRUH2/UPDATE2016/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPdectrends_19732013.eps
+  	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/IMAGES/HadISDH.land<Var>.'+version+'_FLATgrid<homogtype>PHA5by5_JAN2014_anoms7605_MPdectrends_19732013.eps
 
 ;*******************************************************************
 BAD STATIONS???

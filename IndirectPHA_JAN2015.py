@@ -3,7 +3,7 @@
 # 
 # Author: Kate Willett
 # Created: 11 October 2013
-# Last update: 29 January 2015
+# Last update: 5 February 2018
 # Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
@@ -18,7 +18,12 @@
 # differences are of the same sign then an adjustment is applied. Adjustment magnitude is stored as well as the 1SD as an 
 # uncertainty measure. Adjustment locations, amagnitudes and uncertainties are stored. Homogenised monthly data are 
 # output. Plots are created of raw and homogenised candidate verses raw neighbour annual average series for absolutes 
-# and anomalies.
+# and anomalies. This code outputs a new list of stations that have sufficient neighbours. It also creates a station
+# list for PHADPDtd.
+#
+# I think we do IDPHA on T for consistency - applying adjustments for breaks discovered in humidity. Although this will include
+# some breaks that only affect humidity the change in T should be negligible. Humidity may be a more sensitive variable to detect
+# inhomogeneity?
 # 
 # Willett et al., 2014
 # Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., Jones, P. D., and Williams Jr., 
@@ -41,6 +46,8 @@
 # from math import sqrt,pi
 # import struct
 # import pdb
+# from subprocess import call
+# from subprocess import check_output
 #
 # Kates:
 # from LinearTrends import MedianPairwise - fits linear trend using Median Pairwise
@@ -50,6 +57,8 @@
 # -----------------------
 # Station list of all stations with the PHA no-neighbour stations for T and DPD removed
 # STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations (6)
+# List of WMO ID for the stations removed from Td during PHA
+# TDBADSFILE='/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/hadisdh/73<yy?td/corr/badlist.txt'
 #
 # Break locations are taken from pha output for T and DPD
 # TBREAKFIL='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/HadISDH.landT.'+version+'_PHA_JAN2016.log'
@@ -79,12 +88,25 @@
 # NONEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/noneighbours_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
 # Good stations list to carry on for further processing
 # GOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
+# Good stations list to carry on for further processing - for Td (derived)
+# TDGOTNEIGHBOURSLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+'.txt'
 # Plot showing raw and homogenised station with all raw neighbours - abs and anomalies, with linear trends (median pairwise)
 # OUTPLOT='/data/local/hadkw/HADCRUH2/UPDATE2015/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/RHDIR/'
 # 
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
+#
+# Version 3 (25 January 2017)
+# ---------
+#  
+# Enhancements
+# This now outputs goodforHadISDH.<version>_PHADPDtd_JAN<yyyy>.txt automatically on the t run rather than having to be done manually.
+#  
+# Changes
+#  
+# Bug fix
+# 
 #
 # Version 2 (25 January 2017)
 # ---------
@@ -136,6 +158,9 @@ import scipy.stats
 from math import sqrt,pi
 import struct
 import pdb
+from subprocess import call
+from subprocess import check_output
+
 
 from LinearTrends import MedianPairwise
 
@@ -145,21 +170,21 @@ Restarter = '------'				#'------'		#'681040'
 # Set up initial run choices
 # Start and end years
 styr       = 1973
-edyr       = 2016
+edyr       = 2017
 
 # Variable
-param      = 't'	# tw, q, e, rh, t
+param      = 'tw'	# tw, q, e, rh, t
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2017'
+nowyear    = '2018'
 
 # Dataset version
-version    = '3.0.0.2016p'
+version    = '4.0.0.2017f'
 
 # Climatology start and end years
-clmst=1976
-clmed=2005
+clmst = 1981   #1976
+clmed = 2010   #2005
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
@@ -232,7 +257,9 @@ elif param == 't':
     BREAKSINFOMERGE   = workingdir+'/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.log'
     NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_landT.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
     GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
+    TDGOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+'.txt'
     OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDIR/'
+    TDBADSFILE        = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'t/corr/badlist.txt'
 
 # Set up variables and arrays needed
 
@@ -843,8 +870,10 @@ def ListStation(TheFile,TheStationID,TheLat,TheLon,TheElev,TheCID,TheName,TheCou
 
     filee = open(TheFile,'a+')
     
-    filee.write('%11s%8.4f%10.4f%7.1f%4s%29s%4i \n' % (TheStationID,TheLat,TheLon,
-                TheElev,TheCID,TheName,TheCount))
+    #filee.write('%11s%8.4f%10.4f%7.1f%4s%29s%4i \n' % (TheStationID,TheLat,TheLon,
+    #            TheElev,TheCID,TheName,TheCount))
+    filee.write('%11s%8.4f%10.4f%7.1f%4s%30s%7s%5d \n' % (TheStationID,TheLat,TheLon,
+                TheElev,TheCID,TheName,'NGHBRS:',TheCount))
     
     filee.close()
 
@@ -1306,6 +1335,23 @@ for st in range(nstations):
 # list in good station list
     ListStation(GOTNEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
 	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+
+
+# if param = t then also list station in goodforHadISDH*PHADPDtd list of IDPHAt 
+# But check first to see if its a station listed in PHAtd bad stations from /corr/meta*
+    if param == 't':
+        
+	# Grep the WMO to see if it is in the PHAtd bad stations
+	moo = open('moo.dat','w')
+        call(['grep','-a',StationListWMO[st],TDBADSFILE],stdout=moo)
+        foo = check_output(['wc','-l','moo.dat'])
+	moo.close()
+        if int(foo[0]) == 0:
+
+	    # If it isn't then Output to file
+            ListStation(TDGOTNEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
+	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+
 
 # end loop of stations
 
