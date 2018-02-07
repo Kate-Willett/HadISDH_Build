@@ -11,7 +11,7 @@ spawn,'touch ''../PHA2015/pha52jgo/data/hadisdh/7317slp/meta/7317slp_metadata_fi
 spawn,'touch ''../PHA2015/pha52jgo/data/hadisdh/7317ws/meta/7317ws_metadata_file.txt'
 
 
-openr,5,'../../LISTS_DOCS/goodforHadISDH.3.0.1.2017p_JAN2018.txt'
+openr,5,'../../LISTS_DOCS/goodforHadISDH.3.0.1.2017f_JAN2018.txt'
 openw,10,'../PHA2015/pha52jgo/data/hadisdh/7317q/meta/7317q_stnlist.tavg'
 openw,11,'../PHA2015/pha52jgo/data/hadisdh/7317e/meta/7317e_stnlist.tavg'
 openw,12,'../PHA2015/pha52jgo/data/hadisdh/7317rh/meta/7317rh_stnlist.tavg'
