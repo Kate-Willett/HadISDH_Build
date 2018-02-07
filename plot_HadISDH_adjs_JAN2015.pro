@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
+; Last update: 6 February 2018
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -41,7 +41,6 @@
 ;	start year and end year
 ;	variable and homogtype
 ;	version and nowmonth/nowyear
-;	station numbers for this year's run
 ; Second:
 ; > tidl
 ; > .compile plot_HadISDH_adjs_JAN2015
@@ -65,6 +64,21 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 3 (6 February 2018)
+; ---------
+;  
+; Enhancements
+; This program now finds the number of stations in the candidate variable station
+; list so that it does not need to be put in manually before running.
+; Next I should pull out the variable and homogtype so that it is stated
+; at the command line rather than changed within the file before running.
+;
+; Now has param (variable) and homogtype called at the command line so you only need to edit the file once per year
+;  
+; Changes
+;  
+; Bug fixes
+;
 ; Version 2 (27 January 2017)
 ; ---------
 ;  
@@ -88,7 +102,44 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-pro plot_HadISDH_adjs_JAN2015
+pro plot_HadISDH_adjs_JAN2015,param,homogtype
+; Which variable and station list counts for that variable
+; param = 'q'	;'dpd','rh','td','t','tw','e','q'
+; Which type of product - DPD (Td), PHA (DPD or others) or ID (q, RH, T, e, Tw)?
+;homogtype = 'ID'	;'PHA' (dpd and all) or 'ID' (t, q, rh, e, tw) or 'DPD' (td)
+
+; RESULTS 2018
+; q - ID
+; 4.36 changepoints per station  (v sim to 2017)
+; ABS mean=0.28, st dev=0.31     (v sim to 2017)
+; Mean = -0.01, st dev=0.41      (v sim to 2017)
+; mean of diffs=-0.00, stdev=0.21 (v sim to 2017)
+;
+; e - ID
+; 4.36 changepoints per station   (v sim to 2017)
+; ABS mean=0.43, st dev=0.48      (v sim to 2017)
+; Mean = -0.01, st dev=0.64       (v sim to 2017)
+; mean of diffs=0.00, stdev=0.26 (v sim to 2017)
+;
+; T - PHA+ID 
+; 4.16 changepoints per station  (v sim to 2017)
+; ABS mean=0.37, st dev=0.48     (mean v sim, stdev lower than 2017)
+; Mean = -0.03, st dev=0.60      (mean v sim, stdev lower than 2017)
+; mean of diffs=0.02, stdev=0.29 (both very slightly smaller than 2017)
+;
+; Td - PHADPD
+; 4.24 changepoints per station   (v sim to 2017)
+; ABS mean=0.78, st dev=0.70      (v sim to 2017)
+; Mean = -0.02, st dev=1.05       (v sim to 2017)
+; mean of diffs=-0.01, stdev=0.39 (mean slightly lower, stdev higher than 2017)
+;
+; RH - ID 
+; 4.36 changepoints per station  (slightly fewer than 2017)
+; ABS mean=2.90, st dev=2.23     (v sim to 2017)
+; Mean = 0.03, st dev=3.66       (v sim to 2017)
+; mean of diffs=-0.08, stdev=1.32 (negative rather than positive and both larger than in 2017)
+
+
 
 ; RESULTS 2017
 ; T - PHA+ID 
@@ -327,28 +378,19 @@ startee = ' ' 	; fix as a station to restart
 
 ; The start year and end year to run through
 styr = 1973
-edyr = 2016
+edyr = 2017
 
 ; Which type of product - DPD (Td), PHA (DPD or others) or ID (q, RH, T, e, Tw)?
-homogtype = 'ID'	;'PHA' or 'ID' or 'DPD'
+;homogtype = 'ID'	;'PHA' or 'ID' or 'DPD'
 
 ; Which variable and station list counts for that variable
-param = 'e'	;'dpd','rh','td','t','tw','e','q'
-CASE param OF 
-  'dpd': nstations=4209							
-  'rh': IF (homogtype EQ 'PHA') THEN nstations = 4208 ELSE nstations = 4107	
-  'td': IF (homogtype EQ 'PHA') THEN nstations = 4211 ELSE nstations = 4200	
-  't':  IF (homogtype EQ 'PHA') THEN nstations = 4212 ELSE nstations = 4200	
-  'tw': IF (homogtype EQ 'PHA') THEN nstations = 4211 ELSE nstations = 4200	
-  'e':  IF (homogtype EQ 'PHA') THEN nstations = 4211 ELSE nstations = 4199	
-  'q':  IF (homogtype EQ 'PHA') THEN nstations = 4211 ELSE nstations = 4199	
-ENDCASE
+;param = 'q'	;'dpd','rh','td','t','tw','e','q'
 
 ; Month and Year label of file 
 nowmon  = 'JAN'
-nowyear = '2017'
+nowyear = '2018'
 
-version = '3.0.0.2016p'
+version = '4.0.0.2017f'
 plotonly = 'FALSE'	; TRUE or FALSE
 
 ; *********************
@@ -445,6 +487,11 @@ CASE param OF
 
 ENDCASE
 
+print,param2,inlist
+; Find the number of stations for the variable/homogtype
+spawn,'wc -l '+inlist,CountString
+nstations = int(strmid(CountString(0),0,7))
+print,nstations
 ;--------------------------------------------------------
 ; variables and arrays
 
