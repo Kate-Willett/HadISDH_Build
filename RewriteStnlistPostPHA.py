@@ -140,6 +140,7 @@ InAll       = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_JAN'+nowyear+'.
 
 # Out Filepaths
 OutIDPHAall = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_JAN'+nowyear+'.txt'
+OutTdBad    = phadir+'td/corr/badlist.txt'
 
 # Variables
 MyFullTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S7","int")
@@ -313,6 +314,13 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
 	      GOODStationListMonths)
     
     # Clear the BAD lists to start on the next variable
+    # But if var = Td then first copy the list to 73<yy>td/corr/badlist.txt
+    if var == 'Td':
+        f = open(OutTdBad,'w')
+        for bb in range(nBADstations):
+	    f.write('%6s\n' % BADStationListWMO[bb])
+	f.close()
+    
     nBADstations        = 0	# defined after reading in station list
     BADStationListWMO   = []	# nstations list filled after reading in station list
     BADStationListWBAN  = []	# nstations list filled after reading in station list
