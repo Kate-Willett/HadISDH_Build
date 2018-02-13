@@ -19,7 +19,7 @@ Version 4.0.0.2017f has more stations 4576 verses 4210
 
 Other changes:
 I'm now removing stations with 'Large Adjustments in q (>3g/kg), RH (>15%), T (>5deg) and Td (>5deg) - arbitrary threshold choices' from all variables.
-This results in removal of ? stations
+This results in removal of 54 stations. Vast majority are not merges.
  
 
 GLOSSARY:
@@ -398,13 +398,102 @@ plot_HadISDH_adjs_JAN2015.pro (all variables seperately called via command line)
 	LISTS_DOCS/Largest_Adjs_land<var>.<version>>_IDPHA_JAN<yyyy>.txt. Could also look to see whether it is a 
 	'large' adjustment in T or Td and add IN T or IN TD as appropriate. Only really need to do this for key variables: T, Td, q and RH
 
-NB - IF you rerun this you will have to run with _KeptLarge.txt!!!! You can switch between by uncommenting/commenting in the code
+NB - IF you rerun this you will have to run with _KeptLarge.txt!!!! You can switch between by editing
+KeptLarge = 'TRUE' or 'FALSE' in the editable variables at the beginning of the code
 
 NOTE: Not quite sure why the stations with largest adjs in q and e are not very large in either T or Td.
 
 NOTE - NOW I'M REMOVING ALL STATIONS WHERE q>3 or RH>15 or T/TD > 5
 
-RESULTS:	
+RESULTS:
+q,e,RH,Tw,T,Td - frequency of removals now increases over time and is less in the early years - more station neighbours? 
+DPD - goes up and then down more than before
+
+  q     ID    ABS MEAN:    0.275
+  q     ID    ABS MEDI:    0.180
+  q     ID    ABS STDV:    0.309
+  q     ID    ABS 2SIG:    0.618
+  q     ID    ABS 5pct:    0.020
+  q     ID    ABS 95pt:    0.850
+  q     ID    MEAN    :   -0.007
+  q     ID    MEDIAN  :    0.000
+  q     ID    ST DEV  :    0.414
+  q     ID    2SIGMA  :    0.828
+  q     ID    5th pct :   -0.630
+  q     ID    95th pct:    0.600
+  q     ID    MN GSDFS:   -0.004
+  q     ID    *SDGSDFS:    0.215
+  q     ID    MN ADJ N:    4.358
+  e     ID    ABS MEAN:    0.428
+  e     ID    ABS MEDI:    0.280
+  e     ID    ABS STDV:    0.478
+  e     ID    ABS 2SIG:    0.956
+  e     ID    ABS 5pct:    0.030
+  e     ID    ABS 95pt:    1.320
+  e     ID    MEAN    :   -0.010
+  e     ID    MEDIAN  :   -0.010
+  e     ID    ST DEV  :    0.641
+  e     ID    2SIGMA  :    1.282
+  e     ID    5th pct :   -0.980
+  e     ID    95th pct:    0.930
+  e     ID    MN GSDFS:    0.000
+  e     ID    *SDGSDFS:    0.260
+  e     ID    MN ADJ N:    4.358
+ rh     ID    ABS MEAN:    2.898
+ rh     ID    ABS MEDI:    2.450
+ rh     ID    ABS STDV:    2.228
+ rh     ID    ABS 2SIG:    4.455
+ rh     ID    ABS 5pct:    0.280
+ rh     ID    ABS 95pt:    7.120
+ rh     ID    MEAN    :    0.029
+ rh     ID    MEDIAN  :    0.050
+ rh     ID    ST DEV  :    3.655
+ rh     ID    2SIGMA  :    7.310
+ rh     ID    5th pct :   -5.720
+ rh     ID    95th pct:    5.740
+ rh     ID    MN GSDFS:   -0.084
+ rh     ID    *SDGSDFS:    1.322
+ rh     ID    MN ADJ N:    4.360
+ tw     ID    ABS MEAN:    0.317
+ tw     ID    ABS MEDI:    0.230
+ tw     ID    ABS STDV:    0.364
+ tw     ID    ABS 2SIG:    0.728
+ tw     ID    ABS 5pct:    0.020
+ tw     ID    ABS 95pt:    0.900
+ tw     ID    MEAN    :   -0.015
+ tw     ID    MEDIAN  :    0.000
+ tw     ID    ST DEV  :    0.483
+ tw     ID    2SIGMA  :    0.966
+ tw     ID    5th pct :   -0.720
+ tw     ID    95th pct:    0.650
+ tw     ID    MN GSDFS:   -0.013
+ tw     ID    *SDGSDFS:    0.219
+ tw     ID    MN ADJ N:    4.358
+
+  t     ID    ABS MEAN:    0.373
+  t     ID    ABS STDV:    0.476
+  t     ID    MEAN    :   -0.025
+  t     ID    ST DEV  :    0.605
+  t     ID    MN GSDFS:    0.023
+  t     ID    *SDGSDFS:    0.292
+  t     ID    MN ADJ N:    4.164
+
+dpd    PHA    ABS MEAN:    0.995
+dpd    PHA    ABS STDV:    0.729
+dpd    PHA    MEAN    :   -0.012
+dpd    PHA    ST DEV  :    1.233
+dpd    PHA    MN GSDFS:   -0.009
+dpd    PHA    *SDGSDFS:    0.430
+dpd    PHA    MN ADJ N:    2.916
+
+ td PHADPD    ABS MEAN:    0.781
+ td PHADPD    ABS STDV:    0.699
+ td PHADPD    MEAN    :   -0.017
+ td PHADPD    ST DEV  :    1.048
+ td PHADPD    MN GSDFS:   -0.010
+ td PHADPD    *SDGSDFS:    0.392
+ td PHADPD    MN ADJ N:    4.244
+	
 DONE T ID:
 4.14 changepoints per station  (more than 2016)
 ABS mean=0.38, st dev=0.53     (mean v sim, stdev higher than 2016)
@@ -423,11 +512,14 @@ Largest Adjustments (> 5 deg) - 6 unique stations!
 71836099999  -5.31 ~1995-2000? MERGED STATION
 53588099999   5.09 NOT MERGED
 
-VAST MAJORITY (all except 535880) ARE MERGED - THIS IS TRUE RIGHT DOWN TO 3 deg ADJUSTMENTS (possibly lower too). Need to consider
+2017 VAST MAJORITY (all except 535880) ARE MERGED - THIS IS TRUE RIGHT DOWN TO 3 deg ADJUSTMENTS (possibly lower too). Need to consider
 whether to ditch more stations with large adjustments - and to investigate the merge further - PHA might be an important
 post-check on the merging software? 2048 merged stations in total - this is a LOT of stations!
 For now - keep with removal of all stations with adjustments > 5 degrees. The 5.09 one (535880) is the first non-merged station so its
 plausible that 'real' jumps of this magnitude could be in there but looks like all larger jumps are due to bad merges.
+2018 All T > 5 are merges but its much more mixed for humidity. Its still worth considering whether to expand the threshold for station
+removals. For now we've increased removals by also removing q>3g/kg and RH>15%rh because many of these stations weren't being picked up
+by the 5deg threshold for T and Td.
 
 DONE T PHA:
 1.58 changepoints per station   (more than 2016)
@@ -674,44 +766,65 @@ and generally slightly larger stdevs. Means v similar.
 THINK ABOUT WHETHER TO REMOVE MORE STATIONS WITH VERY LARGE ADJUSTMENTS IN
 VARIABLES OTHER THAN T!!! IT WOULD SEEM SENSIBLE - ESP IF THEY ARE MERGES?
 DECISION!!! I am going to remove all stations with adjustments in either T (IDPHAMG) or 
-Td (PHADPD) that are larger than 5 degrees. This is still a little arbitrary but I'm 
+Td (PHADPD) that are larger than 5 degrees. I'm now also removing where q>3g/kg and RH>15%rh.
+This is still a little arbitrary but I'm 
 not sure where to draw the line. Even though PHA is good at removing large jumps it seems
 like evidence that the station is of poor quality if such a large jump is present.
-This results in 29 unique stations:
-T and Td
-71836099999 -21.63 ~2007? MERGED STATION
-71749099999 -18.61 ~1978-1995? MERGED STATION
-71627899999   9.31 ~1977-2012? MERGED STATION
-02096099999  -7.01 ~1975-1978? MERGED STATION
-11993099999  -5.89 ~1984-1993 or 2002-2007? MERGED STATION
-T only
-53588099999   5.09 NOT MERGED
-Td only
-41128099999   8.77 NOT MERGED
-44287099999  -7.24 NOT MERGED
-61498099999  -7.04 NOT MERGED
-72487099999   6.98 MERGED STATION
-44277099999  -6.86 NOT MERGED
-55664099999  -6.45 NOT MERGED
-62103099999  -6.40 NOT MERGED
-94488099999  -5.95 NOT MERGED
-41240099999  -5.82 MERGED STATION
-44284099999  -5.81 NOT MERGED
-40260099999   5.79 NOT MERGED
-40373099999   5.72 NOT MERGED
-40340099999  -5.62 NOT MERGED
-40310099999  -5.62 NOT MERGED
-60611099999  -5.54 NOT MERGED
-40362099999   5.40 NOT MERGED
-40394099999  -5.31 NOT MERGED
-44373099999   5.26 NOT MERGED
-55578099999  -5.23 NOT MERGED
-44275099999  -5.21 NOT MERGED
-40405099999  -5.21 NOT MERGED
-17330099999  -5.06 NOT MERGED
-94255099999   5.01 NOT MERGED
-
-Saved these in a list called HadISDH.<version>_LargeAdj_removals_JAN<yyyy>.txt in LISTS_DOCS
+This results in 54 unique stations:
+01406099999                              NO MERGE, NOT IN T, NOT IN TD
+02096099999                                               MERGE, IN TD
+04231099999                              NO MERGE, NOT IN T, NOT IN TD
+11993099999                                               MERGE, IN TD
+13579099999                                 MERGE, NOT IN T, NOT IN TD
+13615099999                              NO MERGE, NOT IN T, NOT IN TD
+15481099999                              NO MERGE, NOT IN T, NOT IN TD
+16115099999                                               MERGE, IN TD
+17330099999                                                   NO MERGE
+36982099999                              NO MERGE, NOT IN T, NOT IN TD
+37432099999                              NO MERGE, NOT IN T, NOT IN TD
+38001099999                              NO MERGE, NOT IN T, NOT IN TD
+38545099999                              NO MERGE, NOT IN T, NOT IN TD
+40260099999                                                  NO MERGE 
+40310099999                                                   NO MERGE
+40340099999                                                   NO MERGE
+40377099999                                                      MERGE
+40420099999                                                      MERGE
+40809099999                                                   NO MERGE
+41084099999                                                      MERGE
+41128099999                                                   NO MERGE
+41136099999                                                   NO MERGE
+41240099999                                                      MERGE
+41268099999                                                      MERGE
+44277099999                                                   NO MERGE
+44287099999                                                   NO MERGE
+44298099999                                                   NO MERGE
+44373099999                                                   NO MERGE
+47122099999                              NO MERGE, NOT IN T, NOT IN TD
+55279099999                                                   NO MERGE
+55578099999                                                   NO MERGE
+55664099999                                                   NO MERGE
+59948099999                              NO MERGE, NOT IN T, NOT IN TD
+60580099999                                                   NO MERGE
+60714099999                              NO MERGE, NOT IN T, NOT IN TD
+61498099999                                                   NO MERGE
+71433099999                              NO MERGE, NOT IN T, NOT IN TD
+71437099999                                 MERGE, NOT IN T, NOT IN TD
+71465099999                              NO MERGE, NOT IN T, NOT IN TD
+71627899999                                               MERGE, IN TD
+71749099999                                               MERGE, IN TD
+71800099999                              NO MERGE, NOT IN T, NOT IN TD
+72393099999                                 MERGE, NOT IN T, NOT IN TD
+72412799999                                 MERGE, NOT IN T, NOT IN TD
+72446713930                                 MERGE, NOT IN T, NOT IN TD
+72520799999                                                      MERGE
+76423099999                              NO MERGE, NOT IN T, NOT IN TD
+76577099999                                                   NO MERGE
+76762099999                                                   NO MERGE
+78367011706                                                   NO MERGE
+78397099999                                            NO MERGE, IN TD
+78520199999                                                      MERGE
+82281099999                                                   NO MERGE
+94339099999                                                   NO MERGE
 
 OBSELETE 9) Manually save 'large' - > 5 deg adjustment stations from T and Td adjustments in a list of unique stations called:
 HadISDH.3.0.0.2016p_LargeAdjT_Td_removals_JAN2017.txt in LISTS_DOCS
@@ -727,32 +840,43 @@ from each of the goodstations*** files (IDPHA, PHAdpd and PHADPDtd).
 	Blue line = change of resolution
 UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 
-RESULTS:	
+RESULTS 2018:
+54 stations removed because of large adjustments	
 Updated station counts are now:
     	IDPHA	PHA	PHADPD	MISSED ADJ UNC
-T    	4171	4212		
-DPD 		4209        	
-Td		4211	4171
-q	4170	4211
-RH	4168	4208
-e	4170	4211
-Tw	4171	4211
+T    	4507			0.292
+DPD 		4514        	0.430
+Td			4507    0.392
+q	4502	                0.215
+RH	4502	                1.322
+e	4502	                0.260
+Tw	4505	                0.219
 
-11) Put the missed adjustment uncertainty (st dev of differences) into
+OBSELETE - now automated 11) Put the missed adjustment uncertainty (st dev of differences) into
 create_homogNCDFall_stunc_JAN2015.pro
 	
 12) COPY HOMOGENISED MONTHLIES TO NETCDF - CREATE ANOMALIES, CLIMS, SDs, STATION UNCERTAINTIES
 create_homogNCDFall_stunc_JAN2015.pro (all variables seperately)
 	-> calc_evap.pro
+	- update year, version, choose clim period etc
 	- T first, then RH, DPD, q, e, td, tw
-	- Add missed adjustment uncertainty before running.
+	- create_homogNCDFall_stunc_JAN2015,'t','ID'
 	- Now cross check PosthomogPHA<var>_satsHadISDH<version>_JAN2017.txt and PosthomogPHA<var>_subzerosHadISDH<version>_JAN2017.txt with each other AND with
 	Posthomog<ID>PHA<var>_badsHadISDH<version>_JAN2017.txt - move from sats/subzeros if station appears in bads and annotate bads with SATS or SUBS
 	   This is quite a long process - consider automating somehow - better for avoiding error too!
 
-NOTE THAT WE CAN NOW CHOOSE CLIMATOLOGY PERIOD (1976-2005 = HadISDH standard, 1981-2010 International Standard) 
- - > this will result in different goods, bads, subs and sats! 
- - > not quite sure why it would affect subs and sats other than allowing/disallowing different stations
+
+RESULTS 2018 anoms81-10: 
+IDPHA, PHDdpd, PHDDPDtd	
+    	goods	bads	subs	sats 	goods (no sats or subs)
+T    	4364	143	NA	NA	4039
+DPD 	4077	437	NA	212     3865   	
+Td	3928	1016?	NA	204  	3724 - why so few?
+q	4485	17	44	48	4393
+RH	4486	16	0	48	4438
+e	4485	17	44	48	4393
+Tw	4488	17	NA	896	3592
+
 	
 RESULTS anoms76-05: 
 IDPHA, PHDdpd, PHDDPDtd	
@@ -765,13 +889,19 @@ RH	4148	20	0	38	4110
 e	4149	21	45	38	4066
 Tw	4150	21	NA	949	3201
 
-13) Propogate totals of goods (no sats and subs), sats, subzeros through to all other programs
+OBSELETE - NOW AUTOMATICALLY READ IN 13) Propogate totals of goods (no sats and subs), sats, subzeros through to all other programs
 
 		
 14) GRID ALL HOMOGENISED STATIONS (AND RAW FOR COMPARISON)
 	- now made it all CF compliant and added an ascii grid print out
 grid_HadISDHFLAT_JAN2015.pro
 	-> calc_samplingerrorJUL2012_nofill.pro
+	>tidl
+	>.compile calc_samplingerrorJUL2012_nofill
+	>.compile grid_HadISDHFLAT_JAN2015
+	>grid_HadISDHFLAT_JAN2015,'q','ID'
+	- 'q','e','rh','t','td','tw','dpd'
+	- 'ID','ID','ID','ID','DPD','ID','PHA'
 
 RESULTS:
 DONE q ID
