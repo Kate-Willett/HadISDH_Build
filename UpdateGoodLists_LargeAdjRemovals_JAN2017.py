@@ -3,16 +3,21 @@
 # 
 # Author: Kate Willett
 # Created: 31 January 2017
-# Last update: 5 February 2018
+# Last update: 7 February 2018
 # Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
 # CODE PURPOSE AND OUTPUT
 # -----------------------
 # This code: 
-#   - takes the stations with adjustments > 5.0 deg from T (IDPHAMG) and Td (PHADPD) and saves to file
-#   - reads in the list of stations to remove from the key lists because they have very large (> 5deg) adjustments
-#      detected and applied to T and Td
+#   - takes the stations with large adjustments:
+#	 > 5.0 deg from T (IDPHAMG)
+#	 > 5.0 deg from Td (PHADPD) 
+#	 > 3 g/kg from q (IDPHA)
+# 	 >15 %rh from RH (IDPHA)
+#	and saves to file
+#   - uses the list of stations to remove from the key lists (IDPHA T, Tw, q, e, RH, PHA DPD and PHADPD Td
+#	 because they have very large (as above) adjustments detected and applied to T, Td, RH and q
 #   - copies the old goodstations... files to goodstations...KeptLarge.txt
 #   - rewrites out the goodstations...txt with the bad stations removed
 # 
@@ -33,6 +38,10 @@
 # LARGETLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Largest_Adjs_landT.<version>_IDPHAMG_JAN<yyyy>.txt
 # List of largest adjustments for Td (PHADPD)
 # LARGETDLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Largest_Adjs_landTd.<version>_PHADPD_JAN<yyyy>.txt
+# List of largest adjustments for q (IDPHA)
+# LARGEQLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Largest_Adjs_landq.<version>_IDPHA_JAN<yyyy>.txt
+# List of largest adjustments for RH (IDPHA)
+# LARGERHLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/Largest_Adjs_landRH.<version>_IDPHA_JAN<yyyy>.txt
 #
 # Station lists of all good stations for each variables (IDPHA, PHAdpd and PHADPDtd)
 # STATLIST='/data/local/hadkw/HADCRUH2/UPDATE2015/LISTS_DOCS/goodforHadISDH.'+version+'_*_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations (6)
@@ -46,7 +55,7 @@
 # OUTPUT
 # -----------------------
 # Station list of those to remove
-# BADSLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.<version>_LargeAdjT_Td_removals_JAN<yyyy>.txt
+# BADSLIST = '/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/LISTS_DOCS/HadISDH.<version>_LargeAdj_removals_JAN<yyyy>.txt
 # Copy of original goodstations... lists to goodstations...KeptLarge.txt
 # New goodstations...txt with the bad stations removed
 # 
@@ -54,7 +63,7 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 # 
-# Version 2 (5 February 2018)
+# Version 2 (7 February 2018)
 # ---------
 #  
 # Enhancements
@@ -62,7 +71,8 @@
 # Changes
 # This code now creates the list of stations with large adjustments to remove from all station lists
 # rather than it having to be created manually beforehand:
-# /LISTS_DOCS/HadISDH.<version>_LargeAdjT_Td_removals_JAN<yyyy>.txt
+# /LISTS_DOCS/HadISDH.<version>_LargeAdj_removals_JAN<yyyy>.txt
+# This lists all unique stations where adjustments in T and Td > 5deg, in q > 3g/kg and in RH > 15%rh
 #  
 # Bug fixes
 #
@@ -111,7 +121,9 @@ workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
 # List of stations to remove
 LARGETLIST  = workingdir+'/LISTS_DOCS/Largest_Adjs_landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.txt'
 LARGETDLIST = workingdir+'/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHADPD_'+nowmon+nowyear+'.txt'
-BADSLIST    = workingdir+'/LISTS_DOCS/HadISDH.'+version+'_LargeAdjT_Td_removals_'+nowmon+nowyear+'.txt'
+LARGEQLIST = workingdir+'/LISTS_DOCS/Largest_Adjs_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+LARGERHLIST = workingdir+'/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
+BADSLIST    = workingdir+'/LISTS_DOCS/HadISDH.'+version+'_LargeAdj_removals_'+nowmon+nowyear+'.txt'
 GOODLISTt   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear
 GOODLISTdpd = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+nowmon+nowyear
 GOODLISTtd  = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear
@@ -128,6 +140,10 @@ LargeListWMO    = []	# nstations list filled after reading in station list
 LargeListWBAN   = []	# nstations list filled after reading in station list
 LargeListadj    = []	# nstations list filled after reading in station list
 LargeListBLURB  = []	# nstations list filled after reading in station list
+TmpLargeListWMO    = []	# nstations list filled after reading in station list
+TmpLargeListWBAN   = []	# nstations list filled after reading in station list
+TmpLargeListadj    = []	# nstations list filled after reading in station list
+TmpLargeListBLURB  = []	# nstations list filled after reading in station list
 
 #************************************************************************
 # Subroutines
@@ -195,14 +211,14 @@ def ListStation(TheFile,TheStationID,TheLat,TheLon,TheElev,TheCID,TheName,TheMus
 
 #***********************************************************************
 # WRITETEXT
-def WriteText(TheFile,TheStationWMO,TheStationWBAN,TheAdj,TheBlurb):
-    ''' Write out the station WMO and WBAN and adjustment to file   '''
+def WriteText(TheFile,TheStationWMO,TheStationWBAN,TheBlurb):
+    ''' Write out the station WMO and WBAN and Blurb to file   '''
 
     filee = open(TheFile,'w')
     
     for ll in range(len(TheStationWMO)):
     
-        filee.write('%6s$5s%7.2f%60s\n' % (TheStationWMO[ll],TheStationWBAN[ll],TheAdj[ll],TheBlurb[ll])) # \n'
+        filee.write('%6s%5s%60s' % (TheStationWMO[ll],TheStationWBAN[ll],TheBlurb[ll])) # \n'
     
     filee.close()
 
@@ -216,36 +232,87 @@ MyTypes            = ("|S6","|S5","float","|S60")
 MyDelimiters       = [6,5,7,60]
 # read in bad station list for T
 RawData            = ReadData(LARGETLIST,MyTypes,MyDelimiters)
-LargeListWMO       = np.array(RawData['f0'])
-LargeListWBAN      = np.array(RawData['f1'])
-LargeListadj       = np.array(RawData['f2'])
-LargeListBLURB     = np.array(RawData['f3'])
+TmpLargeListWMO       = np.array(RawData['f0'])
+TmpLargeListWBAN      = np.array(RawData['f1'])
+TmpLargeListadj       = np.array(RawData['f2'])
+TmpLargeListBLURB     = np.array(RawData['f3'])
 
 # read in bad station list for Td
-RawData            = ReadData(LARGETDLIST,MyTypes,MyDelimiters)
-LargeListWMO       = np.append(LargeListWMO,np.array(RawData['f0']))
-LargeListWBAN      = np.append(LargeListWBAN,np.array(RawData['f1']))
-LargeListadj       = np.append(LargeListadj,np.array(RawData['f2']))
-LargeListBLURB     = np.append(LargeListBLURB,np.array(RawData['f3']))
+RawData               = ReadData(LARGETDLIST,MyTypes,MyDelimiters)
+TmpLargeListWMO       = np.append(TmpLargeListWMO,np.array(RawData['f0']))
+TmpLargeListWBAN      = np.append(TmpLargeListWBAN,np.array(RawData['f1']))
+TmpLargeListadj       = np.append(TmpLargeListadj,np.array(RawData['f2']))
+TmpLargeListBLURB     = np.append(TmpLargeListBLURB,np.array(RawData['f3']))
 
 # Keep only those this adjustment values greater than 5 deg
-LargeMask      = np.where(LargeListadj > 5.0)[0]
-LargeListWMO   = LargeListWMO[LargeMask]
-LargeListWBAN  = LargeListWBAN[LargeMask]
-LargeListadj   = LargeListadj[LargeMask]
-LargeListBLURB = LargeListBLURB[LargeMask]
+LargeMask         = np.where(np.abs(TmpLargeListadj) > 5.0)[0]
+TmpLargeListWMO   = TmpLargeListWMO[LargeMask]
+TmpLargeListWBAN  = TmpLargeListWBAN[LargeMask]
+TmpLargeListBLURB = TmpLargeListBLURB[LargeMask]
+
+LargeListWMO       = np.append(LargeListWMO,TmpLargeListWMO)
+LargeListWBAN      = np.append(LargeListWBAN,TmpLargeListWBAN)
+LargeListBLURB     = np.append(LargeListBLURB,TmpLargeListBLURB)
+
+TmpLargeListWMO    = []	# nstations list filled after reading in station list
+TmpLargeListWBAN   = []	# nstations list filled after reading in station list
+TmpLargeListadj    = []	# nstations list filled after reading in station list
+TmpLargeListBLURB  = []	# nstations list filled after reading in station list
+
+# read in bad station list for q
+RawData               = ReadData(LARGEQLIST,MyTypes,MyDelimiters)
+TmpLargeListWMO       = np.array(RawData['f0'])
+TmpLargeListWBAN      = np.array(RawData['f1'])
+TmpLargeListadj       = np.array(RawData['f2'])
+TmpLargeListBLURB     = np.array(RawData['f3'])
+
+# Keep only those this adjustment values greater than 3 g/kg
+LargeMask         = np.where(np.abs(TmpLargeListadj) > 3.0)[0]
+TmpLargeListWMO   = TmpLargeListWMO[LargeMask]
+TmpLargeListWBAN  = TmpLargeListWBAN[LargeMask]
+TmpLargeListBLURB = TmpLargeListBLURB[LargeMask]
+
+LargeListWMO       = np.append(LargeListWMO,TmpLargeListWMO)
+LargeListWBAN      = np.append(LargeListWBAN,TmpLargeListWBAN)
+LargeListBLURB     = np.append(LargeListBLURB,TmpLargeListBLURB)
+
+TmpLargeListWMO    = []	# nstations list filled after reading in station list
+TmpLargeListWBAN   = []	# nstations list filled after reading in station list
+TmpLargeListadj    = []	# nstations list filled after reading in station list
+TmpLargeListBLURB  = []	# nstations list filled after reading in station list
+
+# read in bad station list for RH
+RawData               = ReadData(LARGERHLIST,MyTypes,MyDelimiters)
+TmpLargeListWMO       = np.array(RawData['f0'])
+TmpLargeListWBAN      = np.array(RawData['f1'])
+TmpLargeListadj       = np.array(RawData['f2'])
+TmpLargeListBLURB     = np.array(RawData['f3'])
+
+# Keep only those this adjustment values greater than 15 %rh
+LargeMask         = np.where(np.abs(TmpLargeListadj) > 15.0)[0]
+TmpLargeListWMO   = TmpLargeListWMO[LargeMask]
+TmpLargeListWBAN  = TmpLargeListWBAN[LargeMask]
+TmpLargeListBLURB = TmpLargeListBLURB[LargeMask]
+
+LargeListWMO       = np.append(LargeListWMO,TmpLargeListWMO)
+LargeListWBAN      = np.append(LargeListWBAN,TmpLargeListWBAN)
+LargeListBLURB     = np.append(LargeListBLURB,TmpLargeListBLURB)
+
+TmpLargeListWMO    = []	# nstations list filled after reading in station list
+TmpLargeListWBAN   = []	# nstations list filled after reading in station list
+TmpLargeListadj    = []	# nstations list filled after reading in station list
+TmpLargeListBLURB  = []	# nstations list filled after reading in station list
 
 # Keep only uniq stations
 UniqVals, UniqIndex   = np.unique(LargeListWMO,return_index=True)
 LargeListWMO          = LargeListWMO[UniqIndex]    
 LargeListWBAN         = LargeListWBAN[UniqIndex]   
-LargeListadj          = LargeListadj[UniqIndex]   
 LargeListBLURB        = LargeListBLURB[UniqIndex]   
 nLadjs                = len(UniqVals) 
-print('Large Adj T and Td uniq stations: ',nLadjs)
+print('Large Adj T, Td, q and RH uniq stations: ',nLadjs)
 
 # Save the list of large T and Td (>5) to file
-WriteText(BADSLIST,LargeListWMO,LargeListWBAN,LargeListadj,LargeListBLURB)
+WriteText(BADSLIST,LargeListWMO,LargeListWBAN,LargeListBLURB)
 
 # MOVE original station lists to goodstations*KeptLarge.txt
 print(GOODLISTt+'.txt')

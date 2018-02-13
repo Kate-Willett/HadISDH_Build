@@ -81,6 +81,8 @@
 # -----------------------
 # OTHER INFORMATION
 # -----------------------
+# Double check use of searchsorted because this gives the intersect, not the match
+# Its ok as long as all elements exist in the other array. Use np.in1d instead.
 #
 #************************************************************************
 #                                 START
