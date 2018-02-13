@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
+; Last update: 13 February 2018
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -53,7 +53,12 @@
 ; > tidl
 ; > .compile calc_samplingerrorJUL2012_nofill
 ; > .compile grid_HadISDHFLAT_JAN2015
-; > grid_HadISDHFLAT_JAN2015
+; > grid_HadISDHFLAT_JAN2015,param,homogtype
+;Now has param and homogtype called at run time
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
 ; may have to exit and then re-run for each variable because the datastructure changes?
 ; 
 ; -----------------------
@@ -68,6 +73,22 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+; Version 4 (13 February 2018)
+; ---------
+;  
+; Enhancements
+;Now has param and homogtype called at run time
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
+;
+; Now looks at Posthomog...lists to get station counts automatically rather than being hard coded
+;  
+; Changes
+;  
+; Bug fixes
+;
 ; Version 3 (1 February 2017)
 ; ---------
 ;  
@@ -106,7 +127,13 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-pro grid_HadISDHFLAT_JAN2015
+pro grid_HadISDHFLAT_JAN2015,param,homogtype
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
+
 
 ; *** WILL NEED UPDATING WITH UNCERTAINTY ***
 
@@ -179,28 +206,28 @@ pro grid_HadISDHFLAT_JAN2015
 ;-----------------------------------------------------
 ; EDITABLES
 
-; Which variable?
-param =      'td'	;'dpd','td','t','tw','e','q','rh'
-
+;; Which variable?
+;param =      'td'	;'dpd','td','t','tw','e','q','rh'
+;
 ; Which start year/end year?
 MYstyr =     1973
-MYedyr =     2016
+MYedyr =     2017
 
 ; Which climatologye period?
-MYclst =     1976	; could be 1976 or 1981
-MYcled =     2005	; could be 2005 or 2010
+MYclst =     1981	; could be 1976 or 1981
+MYcled =     2010	; could be 2005 or 2010
 
 ; Date of working files?
 nowmon =     'JAN'
-nowyear =    '2017'
+nowyear =    '2018'
 thenmon =    'JAN'
-thenyear =   '2017'
+thenyear =   '2018'
 
-; Which homog type?
-homogtype =  'DPD'	;'PHA','ID','DPD', 'RAW'
+;; Which homog type?
+;homogtype =  'ID'	;'PHA','ID','DPD', 'RAW'
 
 ; Which version?
-version =    '3.0.0.2016p'
+version =    '4.0.0.2017f'
 
 workingdir = 'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
 
@@ -211,31 +238,35 @@ MYlatlg = 5.
 MYlonlg = 5.
 grid =    strcompress(ROUND(MYlatlg),/remove_all)+'by'+strcompress(ROUND(MYlonlg),/remove_all)
 
-;JAN2017 stats
-; nstations: number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
-; nsubs: number of subzero stations to remove
-; nsats: number of supersaturated stations to remove
-tstats =   {stato,nstations:[9999,9999, 4039,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 0,0, 0,0, 0,0],$
-		  nsats:[0,0, 0,0, 0,0, 0,0]}
-dpdstats = {stato,nstations:[3659,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,  0, 0,0, 0,0, 0,0],$
-		  nsats:[227,0, 0,0, 0,0, 0,0]}
-tdstats =  {stato,nstations:[9999,9999, 9999,9999, 3506,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 0,0, 0,  0, 0,0],$
-		  nsats:[0,0, 0,0, 221,0, 0,0]}
-qstats =   {stato,nstations:[9999,9999, 4067,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 44,0, 0,0, 0,0],$
-		  nsats:[0,0, 38,0, 0,0, 0,0]}
-rhstats =  {stato,nstations:[9999,9999, 4110,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 0, 0, 0,0, 0,0],$
-		  nsats:[0,0, 38,0, 0,0, 0,0]}		  
-estats =   {stato,nstations:[9999,9999, 4066,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 45,0, 0,0, 0,0],$
-		  nsats:[0,0, 38,0, 0,0, 0,0]}
-twstats =  {stato,nstations:[9999,9999, 3201,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;;JAN2017 stats
+;; nstations: number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
+;; nsubs: number of subzero stations to remove
+;; nsats: number of supersaturated stations to remove
+statstats =  {stato,nstations:[9999,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
                   nsubs:[0,0, 0,  0, 0,0, 0,0],$
 		  nsats:[0,0, 949,0, 0,0, 0,0]}  
+
+;tstats =   {stato,nstations:[9999,9999, 4039,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 0,0, 0,0, 0,0],$
+;		  nsats:[0,0, 0,0, 0,0, 0,0]}
+;dpdstats = {stato,nstations:[3659,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,  0, 0,0, 0,0, 0,0],$
+;		  nsats:[227,0, 0,0, 0,0, 0,0]}
+;tdstats =  {stato,nstations:[9999,9999, 9999,9999, 3506,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 0,0, 0,  0, 0,0],$
+;		  nsats:[0,0, 0,0, 221,0, 0,0]}
+;qstats =   {stato,nstations:[9999,9999, 4067,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 44,0, 0,0, 0,0],$
+;		  nsats:[0,0, 38,0, 0,0, 0,0]}
+;rhstats =  {stato,nstations:[9999,9999, 4110,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 0, 0, 0,0, 0,0],$
+;		  nsats:[0,0, 38,0, 0,0, 0,0]}		  
+;estats =   {stato,nstations:[9999,9999, 4066,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 45,0, 0,0, 0,0],$
+;		  nsats:[0,0, 38,0, 0,0, 0,0]}
+;twstats =  {stato,nstations:[9999,9999, 3201,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
+;		  nsats:[0,0, 949,0, 0,0, 0,0]}  
 
 ; files and directories
 
@@ -259,7 +290,7 @@ CASE param OF
       infilend = '_hummonthQC.nc'
       outdat =  dirstat+'HadISDH.landDPD.'+version+'_FLATgridRAW'+grid+'_'+climchoice
     ENDIF
-    statstats = dpdstats
+;    statstats = dpdstats
   END
   'td': BEGIN
     param2 =     'Td'	
@@ -282,7 +313,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat =  dirstat+'HadISDH.landTd.'+version+'_FLATgridPHADPD'+grid+'_'+climchoice
     ENDELSE
-    statstats = tdstats
+;    statstats = tdstats
   END
   'tw': BEGIN
     param2 =     'Tw'	
@@ -305,7 +336,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat =  dirstat+'HadISDH.landTw.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice      
     ENDELSE
-    statstats = twstats
+;    statstats = twstats
   END
   't': BEGIN
     param2 =     'T'	
@@ -325,7 +356,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat = dirstat+'HadISDH.landT.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice  
     ENDELSE
-    statstats = tstats
+;    statstats = tstats
   END
   'rh': BEGIN
     param2 =     'RH'	
@@ -351,7 +382,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat =  dirstat+'HadISDH.landRH.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice
     ENDELSE
-    statstats = rhstats
+;    statstats = rhstats
   END
   'e': BEGIN
     param2 =     'e'	
@@ -377,7 +408,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat =  dirstat+'HadISDH.lande.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice 
     ENDELSE
-    statstats = estats
+;    statstats = estats
   END
   'q': BEGIN
     param2 =     'q'	
@@ -403,7 +434,7 @@ CASE param OF
       infilend = '_'+climchoice+'_homog'+thenmon+thenyear+'.nc'
       outdat =  dirstat+'HadISDH.landq.'+version+'_FLATgridIDPHA'+grid+'_'+climchoice 
     ENDELSE
-    statstats = qstats
+;    statstats = qstats
   END
 ENDCASE
 
@@ -454,52 +485,64 @@ inGBstats = {GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:flta
              dists:fltarr(100),weights:fltarr(100),nums:0}
 
 ; sort out station counts
-CASE homogtype OF
-  'PHA': BEGIN
-           IF (climchoice EQ 'anoms7605') THEN BEGIN
-	     nstations = statstats.nstations(0)
-	     nsubs = statstats.nsubs(0)
-	     nsats = statstats.nsats(0)
-	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
-	     nstations = statstats.nstations(1)
-	     nsubs = statstats.nsubs(1)
-	     nsats = statstats.nsats(1)
-	   ENDIF
-         END
-  'ID': BEGIN
-           IF (climchoice EQ 'anoms7605') THEN BEGIN
-	     nstations = statstats.nstations(2)
-	     nsubs = statstats.nsubs(2)
-	     nsats = statstats.nsats(2)
-	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
-	     nstations = statstats.nstations(3)
-	     nsubs = statstats.nsubs(3)
-	     nsats = statstats.nsats(3)
-	   ENDIF
-         END
-  'DPD': BEGIN
-           IF (climchoice EQ 'anoms7605') THEN BEGIN
-	     nstations = statstats.nstations(4)
-	     nsubs = statstats.nsubs(4)
-	     nsats = statstats.nsats(4)
-	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
-	     nstations = statstats.nstations(5)
-	     nsubs = statstats.nsubs(5)
-	     nsats = statstats.nsats(5)
-	   ENDIF
-         END
-  'PHA': BEGIN
-           IF (climchoice EQ 'anoms7605') THEN BEGIN
-	     nstations = statstats.nstations(6)
-	     nsubs = statstats.nsubs(6)
-	     nsats = statstats.nsats(6)
-	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
-	     nstations = statstats.nstations(7)
-	     nsubs = statstats.nsubs(7)
-	     nsats = statstats.nsats(7)
-	   ENDIF
-         END
-ENDCASE
+; Find the number of stations for the variable/homogtype
+spawn,'wc -l '+inlist,CountString
+nstations = int(strmid(CountString(0),0,7))
+IF (param EQ 'q') OR (param EQ 'e') THEN BEGIN
+  spawn,'wc -l '+inlistZ,CountString
+  nsubs = int(strmid(CountString(0),0,7))
+END ELSE nsubs = 0
+IF (param NE 't') THEN BEGIN
+  spawn,'wc -l '+inlistT,CountString
+  nsats = int(strmid(CountString(0),0,7))
+END ELSE nsats = 0
+
+;CASE homogtype OF
+;  'PHA': BEGIN
+;           IF (climchoice EQ 'anoms7605') THEN BEGIN
+;	     nstations = statstats.nstations(0)
+;	     nsubs = statstats.nsubs(0)
+;	     nsats = statstats.nsats(0)
+;	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+;	     nstations = statstats.nstations(1)
+;	     nsubs = statstats.nsubs(1)
+;	     nsats = statstats.nsats(1)
+;	   ENDIF
+;         END
+;  'ID': BEGIN
+;           IF (climchoice EQ 'anoms7605') THEN BEGIN
+;	     nstations = statstats.nstations(2)
+;	     nsubs = statstats.nsubs(2)
+;	     nsats = statstats.nsats(2)
+;	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+;	     nstations = statstats.nstations(3)
+;	     nsubs = statstats.nsubs(3)
+;	     nsats = statstats.nsats(3)
+;	   ENDIF
+;         END
+;  'DPD': BEGIN
+;           IF (climchoice EQ 'anoms7605') THEN BEGIN
+;	     nstations = statstats.nstations(4)
+;	     nsubs = statstats.nsubs(4)
+;	     nsats = statstats.nsats(4)
+;	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+;	     nstations = statstats.nstations(5)
+;	     nsubs = statstats.nsubs(5)
+;	     nsats = statstats.nsats(5)
+;	   ENDIF
+;         END
+;  'PHA': BEGIN
+;           IF (climchoice EQ 'anoms7605') THEN BEGIN
+;	     nstations = statstats.nstations(6)
+;	     nsubs = statstats.nsubs(6)
+;	     nsats = statstats.nsats(6)
+;	   ENDIF ELSE IF (climchoice EQ 'anoms8110') THEN BEGIN
+;	     nstations = statstats.nstations(7)
+;	     nsubs = statstats.nsubs(7)
+;	     nsats = statstats.nsats(7)
+;	   ENDIF
+;         END
+;ENDCASE
 
 ; number of stations to ignore because they go below zero (q) or above 100 (RH)
 IF (nsubs GT 0) THEN info_arrZ = {infoz,statid:strarr(nsubs)}
