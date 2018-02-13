@@ -16,6 +16,8 @@
 ; The standard deviation of the missed adjustment distribution is taken as the 1 sigma uncertainty
 ; remaining in the data from missed adjustments
 ;
+; Mean number of changepoints and distribution stats are output to file for read in by other programs
+;
 ; Plots are output and a list of stations and adjustments from largest to smallest.
 ; 
 ; <references to related published material, e.g. that describes data set>
@@ -59,6 +61,8 @@
 ; /data/local/hadkw/HADCRUH2/UPDATE2016/IMAGES/BUILD/HadISDH.landDPD.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
 ; outadjs: list of stations and adjustments from largest to smallest
 ; /data/local/hadkw/HADCRUH2/UDPATE2016/LISTS_DOCS/Largest_Adjs_landDPD.'+version+'_PHA_'+nowmon+nowyear+'.txt'  
+; outstats: for each variable/homogtype a list of stats is output
+; /data/local/hadkw/HADCRUH2/UDPATE2016/LISTS_DOCS/Adjs_Stats.'+version+'_'+nowmon+nowyear+'.txt'  
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
@@ -74,6 +78,11 @@
 ; at the command line rather than changed within the file before running.
 ;
 ; Now has param (variable) and homogtype called at the command line so you only need to edit the file once per year
+;
+; This now outputs a list of stats for each variable/homogtype to file (appends) so that other programs can read in
+;
+; This now has a 'KeptLarge' true/false switch to easily switch when running after the first inital run where you need
+; to use the _KeptLarge.txt station lists
 ;  
 ; Changes
 ;  
@@ -113,7 +122,7 @@ pro plot_HadISDH_adjs_JAN2015,param,homogtype
 ; 4.36 changepoints per station  (v sim to 2017)
 ; ABS mean=0.28, st dev=0.31     (v sim to 2017)
 ; Mean = -0.01, st dev=0.41      (v sim to 2017)
-; mean of diffs=-0.00, stdev=0.21 (v sim to 2017)
+; mean of diffs=-0.00, stdev=0.22 (v sim to 2017)
 ;
 ; e - ID
 ; 4.36 changepoints per station   (v sim to 2017)
@@ -138,6 +147,18 @@ pro plot_HadISDH_adjs_JAN2015,param,homogtype
 ; ABS mean=2.90, st dev=2.23     (v sim to 2017)
 ; Mean = 0.03, st dev=3.66       (v sim to 2017)
 ; mean of diffs=-0.08, stdev=1.32 (negative rather than positive and both larger than in 2017)
+;
+; DPD - PHA
+; 2.89 changepoints per station   (v sim to 2017)
+; ABS mean=0.97, st dev=0.67      (mean v sim, stdev lower than 2017)
+; Mean = -0.01, st dev=1.12       (mean v sim, stdev lower than 2017)
+; mean of diffs=-0.01, stdev=0.42 (mean smaller and stdev higher than 2017)
+;
+; Tw - ID 
+; 4.33 changepoints per station  (same as 2017)
+; ABS mean=0.31, st dev=0.30     (mean v sim, stdev lower than 2017)
+; Mean = -0.01, st dev=0.43      (mean same, stdev lower than 2017)
+; mean of diffs=-0.01, stdev=0.22 (v sim to 2017)
 
 
 
@@ -392,18 +413,22 @@ nowyear = '2018'
 
 version = '4.0.0.2017f'
 plotonly = 'FALSE'	; TRUE or FALSE
+KeptLarge = 'TRUE'	; TRUE (run with _KeptLarge station lists or FALSE (normal, first time run)
 
 ; *********************
 ; Set up file locations
 updateyear = strmid(strcompress(edyr,/remove_all),2,2)
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
 
+if (KeptLarge EQ 'TRUE') then KL = '_KeptLarge' else KL = ''
+
+outstats = workingdir+'/LISTS_DOCS/Adjs_Stats.'+version+'_'+nowmon+nowyear+'.txt'  
+
 CASE param OF
 
   'dpd': BEGIN
     param2   = 'DPD'	;'DPD','RH','Td','T','Tw','e','q
-    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+nowmon+nowyear+'.txt'
-;    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+nowmon+nowyear+'_KeptLarge.txt'
+    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHAdpd_'+nowmon+nowyear+KL+'.txt'
     inlog    = workingdir+'/LISTS_DOCS/HadISDH.landDPD.'+version+'_PHA_'+nowmon+nowyear+'.log' 
     outplots = workingdir+'/IMAGES/BUILD/HadISDH.landDPD.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
     outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landDPD.'+version+'_PHA_'+nowmon+nowyear+'.txt'  
@@ -416,8 +441,7 @@ CASE param OF
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
-;      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'_KeptLarge.txt'
+      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+KL+'.txt'
       inlog    = workingdir+'/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.log' 
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landRH.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
@@ -431,8 +455,7 @@ CASE param OF
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+'.txt'
-;      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+'_KeptLarge.txt'
+      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+KL+'.txt'
       inlog    = workingdir+'/LISTS_DOCS/HadISDH.landTd.'+version+'_PHADPD_'+nowmon+nowyear+'.log' 
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landTd.'+version+'_adjspread_PHADPD_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landTd.'+version+'_PHADPD_'+nowmon+nowyear+'.txt'
@@ -446,8 +469,7 @@ CASE param OF
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landT.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
-;      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'_KeptLarge.txt'
+      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+KL+'.txt'
       inlog    = workingdir+'/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.log' 
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landT.'+version+'_adjspread_IDPHAMG_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.txt'
@@ -455,16 +477,14 @@ CASE param OF
   END
   'tw': BEGIN
     param2   =  'Tw'	;'DPD','RH','Td','T','Tw','e','q
-    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+'.txt'
-;    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+'_KeptLarge.txt'
+    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+KL+'.txt'
     inlog    = workingdir+'/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.log' 
     outplots = workingdir+'/IMAGES/BUILD/HadISDH.landTw.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
     outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
   END
   'e': BEGIN
     param2   = 'e'	;'DPD','RH','Td','T','Tw','e','q
-    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+'.txt'
-;    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+'_KeptLarge.txt'
+    inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+KL+'.txt'
     inlog    = workingdir+'/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_'+nowmon+nowyear+'.log' 
     outplots = workingdir+'/IMAGES/BUILD/HadISDH.lande.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
     outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
@@ -477,8 +497,7 @@ CASE param OF
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_PHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landq.'+version+'_PHA_'+nowmon+nowyear+'.txt'
     ENDIF ELSE BEGIN
-      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+'.txt'
-;      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+'_KeptLarge.txt'
+      inlist   = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+KL+'.txt'
       inlog    = workingdir+'/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_'+nowmon+nowyear+'.log' 
       outplots = workingdir+'/IMAGES/BUILD/HadISDH.landq.'+version+'_adjspread_IDPHA_'+nowmon+nowyear+'.eps'
       outadjs  = workingdir+'/LISTS_DOCS/Largest_Adjs_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
@@ -605,16 +624,25 @@ close,5
   keep_adj_vals = adj_mags_act
   adj_mags_act  = adj_mags_act(SORT(adj_mags_act))
   nadjs         = n_elements(adj_mags_act)
+
+; OPen file to append stats info to - first put in variable and homogtype header on each line e.g. Q   IDPHA
+  openw,13,outstats,/append  
+
   
   abs_adj_mags_act = ABS(adj_mags_act)
   abs_adj_mags_act = abs_adj_mags_act(SORT(abs_adj_mags_act))
-  print,'ABSOLUTE MEAN: ',MEAN(abs_adj_mags_act),' ABSOLUTE MEDIAN: ',abs_adj_mags_act(ROUND(nadjs/2))
-  print,'ABSOLUTE ST DEV',STDDEV(abs_adj_mags_act)
-  print,'ABSOLUTE 2SIGMA, 5th, 95th',STDDEV(abs_adj_mags_act)*2,abs_adj_mags_act(ROUND(nadjs*0.05)),abs_adj_mags_act(ROUND(nadjs*0.95))
-  print,' '
-  print,'MEAN: ',MEAN(adj_mags_act),' MEDIAN: ',adj_mags_act(ROUND(nadjs/2))
-  print,'ST DEV',STDDEV(adj_mags_act)
-  print,'2SIGMA, 5th, 95th',STDDEV(adj_mags_act)*2,adj_mags_act(ROUND(nadjs*0.05)),adj_mags_act(ROUND(nadjs*0.95))
+  printf,13,param,homogtype,'ABS MEAN: ',MEAN(abs_adj_mags_act),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ABS MEDI: ',abs_adj_mags_act(ROUND(nadjs/2)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ABS STDV: ',STDDEV(abs_adj_mags_act),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ABS 2SIG: ',STDDEV(abs_adj_mags_act)*2,FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ABS 5pct: ',abs_adj_mags_act(ROUND(nadjs*0.05)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ABS 95pt: ',abs_adj_mags_act(ROUND(nadjs*0.95)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'MEAN    : ',MEAN(adj_mags_act),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'MEDIAN  : ',adj_mags_act(ROUND(nadjs/2)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'ST DEV  : ',STDDEV(adj_mags_act),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'2SIGMA  : ',STDDEV(adj_mags_act)*2,FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'5th pct : ',adj_mags_act(ROUND(nadjs*0.05)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,'95th pct: ',adj_mags_act(ROUND(nadjs*0.95)),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
 
   CASE param OF
     'rh':  letters = ['g)','h)']	
@@ -626,15 +654,17 @@ close,5
     'dpd': letters = ['e)','f)']	
   ENDCASE
 
-  CASE param OF
-    'rh':  IF (homogtype EQ 'PHA') THEN ymax = 1000 ELSE ymax = 1500	
-    'e':   ymax = 1000
-    'q':   ymax = 1500
-    't':   IF (homogtype EQ 'PHA') THEN ymax = 600 ELSE ymax = 1800
-    'tw':  ymax = 1500
-    'td':  ymax = 1000	
-    'dpd': ymax = 1000	
-  ENDCASE
+;  CASE param OF
+;    'rh':  IF (homogtype EQ 'PHA') THEN ymax = 1000 ELSE ymax = 1500	
+;    'e':   ymax = 1000
+;    'q':   ymax = 1500
+;    't':   IF (homogtype EQ 'PHA') THEN ymax = 600 ELSE ymax = 1800
+;    'tw':  ymax = 1500
+;    'td':  ymax = 1000	
+;    'dpd': ymax = 1000	
+;  ENDCASE
+  
+  ymax = 1800
   
   CASE param OF
     'rh': unitees = '%rh'
@@ -682,7 +712,7 @@ close,5
     't':   pseudomax = 2000
     'tw':  pseudomax = 2000
     'td':  pseudomax = 3000	;good - 2000 or 3000 makes no difference
-    'dpd': pseudomax = 3000	
+    'dpd': pseudomax = 4000	
   ENDCASE
   
   newhist(ROUND(n_elements(histacts)/2)) = pseudomax		;4000
@@ -708,8 +738,9 @@ close,5
       diffarr = [diffarr,garr]
     ENDELSE
   ENDFOR
-  print,'MEAN OF GAUSS DIFFS',MEAN(diffarr)
-  print,'ST DEV OF GAUSS DIFFS',STDDEV(diffarr)
+
+  printf,13,param,homogtype,'MN GSDFS: ',MEAN(diffarr),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+  printf,13,param,homogtype,' SDGSDFS: ',STDDEV(diffarr),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
 
   XYOUTS,1.,ymax*0.9,'MEAN: '+string(MEAN(diffarr),format='(f6.3)')+' '+unitees,/data,color=0,charsize=1.5
   XYOUTS,1.,ymax*0.8,'ST DEV: '+string(STDDEV(diffarr),format='(f6.3)')+' '+unitees,/data,color=0,charsize=1.5
@@ -759,7 +790,8 @@ orderadj = REVERSE(SORT(ABS(keep_adj_vals)))
 print,keep_adj_vals(orderadj(0:99))
 print,adj_wmos(orderadj(0:99))
 
-print, 'AVERAGE No. ADJ PER ALL STATIONS: ',n_elements(keep_adj_vals)/float(nstations)
+printf,13,param,homogtype,'MN ADJ N: ',n_elements(keep_adj_vals)/float(nstations),FORMAT = '(a3,x,a6,x,a13,x,f7.3)'
+close,13
 
 IF (plotonly EQ 'FALSE') THEN BEGIN
   openw,9,outadjs

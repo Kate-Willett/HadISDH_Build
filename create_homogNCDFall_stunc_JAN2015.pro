@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
+; Last update: 18 February 2018
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -36,13 +36,12 @@
 ;      inlistB =	    dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+thenmon+thenyear+'.txt'	;need to use these to remove stations from 'goods' - and copy
 ;      inhom =	    dirhomog+'IDPHAASCII/TDDIR/'	    ;***
 ;      inlog =	    dirlist+'HadISDH.landTd.'+version+'_PHADPD_'+thenmon+thenyear+'.log'     ;***
+;      inmissadj =  dirlist+'Adjs_Stats.<version>_JAN<yyyy>.txt'
 ; 
 ; -----------------------
 ; HOW TO RUN THE CODE
 ; -----------------------
-; First check that you have the up to date station counts input
-; And that you have the up to date missed adjustment uncertainty values
-; And that you have updated the end year, version etc.
+; Ensure that you have updated the end year, version, clim period etc.
 ;
 ; The variables should be run in a specific order:
 ; T first because homogenised t_abs is used to:
@@ -60,6 +59,15 @@
 ; e fifth because all dependencies are now complete
 ; td sixth because all dependencies are now complete
 ; tw zeventh because all dependencies are now complete
+;
+;>tidl
+;>.compile calc_evap
+;>.compile create_homogNCDFall_stunc_JAN2015
+;>create_homogNCDFall_stunc_JAN2015,'q','ID'
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
 ; 
 ; -----------------------
 ; OUTPUT
@@ -79,6 +87,21 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ;
+; Version 4 (8 February 2018)
+; ---------
+;  
+; Enhancements
+; Now reads in station counts and missed adjustment uncertainty automatically so no updating required.
+; Now runs variable/homogtype from the command line so no updating beyond year required
+;;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
+;  
+; Changes
+;  
+; Bug fixes
+;
 ; Version 3 (31 January 2017)
 ; ---------
 ;  
@@ -88,7 +111,6 @@
 ; Changes
 ;  
 ; Bug fixes
-;
 ; 
 ; Version 2 (12 August 2015)
 ; ---------
@@ -125,7 +147,12 @@
 ; -----------------------
 ;
 
-pro create_homogNCDFall_stunc_JAN2015
+pro create_homogNCDFall_stunc_JAN2015,param,homogtype
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
+
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
 
 ;*** UNCERTAINTY COMPONENT NEEDS SORTING FOR ALL ***
 
@@ -269,40 +296,41 @@ startee=' ' 	; fix as a station to restart
 
 ; Which year?
 MYstyr = 1973
-MYedyr = 2016
+MYedyr = 2017
 
 ; Which climatology?
-MYclst = 1976	; 1976, 1981
-MYcled = 2005	; 2005, 2010
+MYclst = 1981	; 1976, 1981
+MYcled = 2010	; 2005, 2010
 CLMlab = strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/remove_all),2,2)
 
-; Which variable? T first, RH, DPD, q, e, td, tw
-param =      'tw'
+;; Which variable? T first, RH, DPD, q, e, td, tw
+;param =      'tw'
 
-; Which homog type?
-homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
+;; Which homog type?
+;homogtype =  'ID'		;'ID','DPD' for Td, 'PHA' - req for DPD or PHA versions of all variables
 
 ; Which working file dates?
 nowmon =     'JAN'
-nowyear =    '2017'
+nowyear =    '2018'
 thenmon =    'JAN'
-thenyear =   '2017'
+thenyear =   '2018'
 
 ; Which version?
-version =    '3.0.0.2016p'
+version =    '4.0.0.2017f'
 
-; Missed adjustment uncertainty which has to be worked out each year
-; this is 1 sigma so needs to be multiplied by 1.65 to match adj_err
-;***MISSEDADJUNC***
-CASE param OF 
-  'dpd': missadjerr=0.36 		; PHA 2017
-  'rh':  IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=1.19 ; 2017 ID
-  'td':  missadjerr=0.33		; 2017 PHADPD
-  't':   missadjerr=0.30 		; 2017 ID		
-  'tw':  missadjerr=0.22		; 2017
-  'e':   missadjerr=0.25		; 2017
-  'q':   IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.20 ; 2017 ID
-ENDCASE
+; NOW READ IN FROM FILE
+;; Missed adjustment uncertainty which has to be worked out each year
+;; this is 1 sigma so needs to be multiplied by 1.65 to match adj_err
+;;***MISSEDADJUNC***
+;CASE param OF 
+;  'dpd': missadjerr=0.36 		; PHA 2017
+;  'rh':  IF (homogtype EQ 'PHA') THEN missadjerr=1.01 ELSE missadjerr=1.19 ; 2017 ID
+;  'td':  missadjerr=0.33		; 2017 PHADPD
+;  't':   missadjerr=0.30 		; 2017 ID		
+;  'tw':  missadjerr=0.22		; 2017
+;  'e':   missadjerr=0.25		; 2017
+;  'q':   IF (homogtype EQ 'PHA') THEN missadjerr=0.14 ELSE missadjerr=0.20 ; 2017 ID
+;ENDCASE
 
 ; files and directories
 updatedir =  'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
@@ -321,6 +349,17 @@ intmp =	      dirhomog+'IDPHANETCDF/TDIR/' ; for calculating Td
 ; RH (derived from T and Td) cannot be < 0 or > 100 unless forced to be so by adjustment
 insat =       dirhomog+'IDPHANETCDF/RHDIR/' ; SOME STATIONS WILL NOT BE THERE FOR RH
 
+; File with the missed adjustment uncertainty values in it
+inmissadj = dirlist+'Adjs_Stats.'+version+'_'+thenmon+thenyear+'.txt' 
+
+;stop
+
+; Get missed adjustment error for variable and homogtype
+MissString = string('"',param,homogtype,'"',format = '(a1,a3,x,a6,a1)')  
+spawn,'grep -a '+MissString+' '+inmissadj,MissStringLine   ;(a3,x,a6,x,a13,x,f7.3)'
+missadjerr = float(strmid(MissStringLine(13),25,7))
+
+;stop
 CASE param OF
   'td': BEGIN
     param2 =     'Td'		;'T','Td','q','e','RH','Tw','DPD'
