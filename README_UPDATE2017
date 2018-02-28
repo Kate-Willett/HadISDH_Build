@@ -869,7 +869,7 @@ create_homogNCDFall_stunc_JAN2015.pro (all variables seperately)
 RESULTS 2018 anoms81-10: 
 IDPHA, PHDdpd, PHDDPDtd	
     	goods	bads	subs	sats 	goods (no sats or subs)
-T    	4364	143	NA	NA	4039
+T    	4364	143	NA	NA	4221
 DPD 	4077	437	NA	212     3865   	
 Td	3928	1016?	NA	204  	3724 - why so few?
 q	4485	17	44	48	4393
@@ -878,7 +878,7 @@ e	4485	17	44	48	4393
 Tw	4488	17	NA	896	3592
 
 	
-RESULTS anoms76-05: 
+RESULTS 2017 anoms76-05: 
 IDPHA, PHDdpd, PHDDPDtd	
     	goods	bads	subs	sats 	goods (no sats or subs)
 T    	4039	132	NA	NA	4039
@@ -990,7 +990,25 @@ DONE Copy ASCII
 DONE check table - same
 DONE write update doc	
 
-21) hadcruh_uncertainties.py
+21) Build uncertainties for area averages
+    This first requires download and update of ERA-Interim q and RH
+    Go to: http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/
+    Log in with ECMWF log in details
+    This is REALLY TEDIOUS!!!
+    Download month by month - all hours, 0 time step, 2mT, 2mTdewpoint, Surface Pressure, 1x1 degree (select on second page!!!)
+    Each time you download change the filename to ERAINTERIM_6hr_1by1_MMYYYY.nc
+    Save to /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/OTHERDATA/
+    Copy previous years of monthly ERAINTERIM data from the previous UPDATE<yyyy>/OTHERDATA/<var>2m_monthly_1by1_ERA-Interim_data_1979<yyyy>.nc
+    to OTHERDATA/
+    Run MakeERAMonthlies.py to merge the new months of ERA with the old after making monthly means
+    >python2.7 MakeERAMonthlies.py
+    Run regridERA_HadISDH_MAY2015.pro to regrid ERA to 5by5 and create anomalies from desired climatology period (1981-2010)
+    >tidl
+    >.compile regridERA_HadISDH_MAY2015.pro (will need to convert to Python at some point)
+    >regridERA_HadISDH_MAY2015
+    To save space delete the previous <var>2m_monthly_1by1_ERA-Interim_data_1979<yyyy>.nc afterwards
+    
+hadcruh_uncertainties.py
 
 22) Put up new version on HadOBS (www.metoffice.gov.uk/hadobs/hadisdh)
 	- login as hadobs: ssh -Y hadobs@eld256 or ssh -Y hadobs@eldint01
