@@ -391,6 +391,7 @@ CASE param OF
       ; DPD bads should be identical to Td bads because homog Td is built from T-DPD (and DPD original from raw T-Td)
       ; But - after creation of DPD some T stations will have had sections removed which would make Td have sections removed
       ; relative to DPD - so a station could pass DPD but fail Td in terms of having enough months present over the climatology period
+      ; So we paste all DPD bads in and then append additional ones - there may be some duplicates!!!
       spawn,'cp '+inlistB+' '+outbads
       openw,99,outbads,/append
       printf,99,'END OF DPD DERIVED FAILURES',format='(a)'
@@ -419,9 +420,9 @@ CASE param OF
     inlog =	  dirlist+'HadISDH.landDPD.'+version+'_PHA_'+thenmon+thenyear+'.log'     ;***
     ; If we're doing DPD first then this won't be comppleted
     ;intdp =	  dirhomog+'IDPHANETCDF/TDDIR/' ; for calculating uncertainty in dpd
-    outlist =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-    outfunniesT = dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-    outbads =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+    outlist =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
+    outfunniesT = dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
+    outbads =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
     outdat =	  dirhomog+'PHANETCDF/DPDDIR/'
     outplots =	  dirhomog+'STAT_PLOTS/UNCPLOTS/DPDDIR/'
   END
@@ -1076,323 +1077,322 @@ WHILE NOT EOF(5) DO BEGIN
       max_unc = MAX(station_err(valid))
     ENDIF
 
-;write to netCDF file
-wilma = NCDF_CREATE(outdat+wmo+datsuffix,/clobber)
+    ;write to netCDF file
+    wilma = NCDF_CREATE(outdat+wmo+datsuffix,/clobber)
   
-tid =    NCDF_DIMDEF(wilma,'time',nmons)
-clmid =  NCDF_DIMDEF(wilma,'month',12)
-charid = NCDF_DIMDEF(wilma, 'Character', 3)
+    tid =    NCDF_DIMDEF(wilma,'time',nmons)
+    clmid =  NCDF_DIMDEF(wilma,'month',12)
+    charid = NCDF_DIMDEF(wilma, 'Character', 3)
   
-timesvar = NCDF_VARDEF(wilma,'times',[tid],/SHORT)
+    timesvar = NCDF_VARDEF(wilma,'times',[tid],/SHORT)
 
-CASE param OF 
-  'dpd': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'dpd_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'dpd_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'dpd_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'dpd_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'dpd_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'dpd_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'dpd_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'dpd_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'dpd_clims',[clmid],/FLOAT)
-  END
-  'td': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'td_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'td_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'td_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'td_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'td_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'td_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'td_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'td_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'td_clims',[clmid],/FLOAT)
-  END
-  't': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'t_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'t_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'t_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'t_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'t_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'t_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'t_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'t_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'t_clims',[clmid],/FLOAT)
-  END
-  'tw': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'tw_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'tw_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'tw_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'tw_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'tw_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'tw_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'tw_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'tw_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'tw_clims',[clmid],/FLOAT)
-  END
-  'q': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'q_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'q_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'q_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'q_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'q_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'q_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'q_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'q_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'q_clims',[clmid],/FLOAT)
-  END
-  'e': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'e_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'e_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'e_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'e_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'e_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'e_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'e_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'e_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'e_clims',[clmid],/FLOAT)
-  END
-  'rh': BEGIN
-    tanomvar = NCDF_VARDEF(wilma,'rh_anoms',[tid],/FLOAT)
-    tabsvar =  NCDF_VARDEF(wilma,'rh_abs',[tid],/FLOAT)
-    tadj =     NCDF_VARDEF(wilma,'rh_adjustments',[tid],/FLOAT)
-    tunc =     NCDF_VARDEF(wilma,'rh_uncertainty',[tid],/FLOAT)
-    tobserr =  NCDF_VARDEF(wilma,'rh_obserr',[tid],/FLOAT)
-    tadjerr =  NCDF_VARDEF(wilma,'rh_adjerr',[tid],/FLOAT)
-    tclmerr =  NCDF_VARDEF(wilma,'rh_clmerr',[tid],/FLOAT)
-    tsdvar =   NCDF_VARDEF(wilma,'rh_stds',[clmid],/FLOAT)
-    tclmvar =  NCDF_VARDEF(wilma,'rh_clims',[clmid],/FLOAT)
-  END
-  
-ENDCASE
+    CASE param OF 
+      'dpd': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'dpd_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'dpd_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'dpd_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'dpd_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'dpd_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'dpd_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'dpd_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'dpd_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'dpd_clims',[clmid],/FLOAT)
+      END
+      'td': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'td_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'td_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'td_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'td_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'td_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'td_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'td_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'td_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'td_clims',[clmid],/FLOAT)
+      END
+      't': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'t_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'t_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'t_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'t_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'t_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'t_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'t_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'t_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'t_clims',[clmid],/FLOAT)
+      END
+      'tw': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'tw_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'tw_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'tw_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'tw_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'tw_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'tw_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'tw_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'tw_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'tw_clims',[clmid],/FLOAT)
+      END
+      'q': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'q_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'q_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'q_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'q_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'q_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'q_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'q_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'q_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'q_clims',[clmid],/FLOAT)
+      END
+      'e': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'e_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'e_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'e_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'e_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'e_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'e_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'e_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'e_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'e_clims',[clmid],/FLOAT)
+      END
+      'rh': BEGIN
+        tanomvar = NCDF_VARDEF(wilma,'rh_anoms',[tid],/FLOAT)
+        tabsvar =  NCDF_VARDEF(wilma,'rh_abs',[tid],/FLOAT)
+        tadj =     NCDF_VARDEF(wilma,'rh_adjustments',[tid],/FLOAT)
+        tunc =     NCDF_VARDEF(wilma,'rh_uncertainty',[tid],/FLOAT)
+        tobserr =  NCDF_VARDEF(wilma,'rh_obserr',[tid],/FLOAT)
+        tadjerr =  NCDF_VARDEF(wilma,'rh_adjerr',[tid],/FLOAT)
+        tclmerr =  NCDF_VARDEF(wilma,'rh_clmerr',[tid],/FLOAT)
+        tsdvar =   NCDF_VARDEF(wilma,'rh_stds',[clmid],/FLOAT)
+        tclmvar =  NCDF_VARDEF(wilma,'rh_clims',[clmid],/FLOAT)
+      END  
+    ENDCASE
 
-climsvar = NCDF_VARDEF(wilma,'months',[charid,clmid],/CHAR)
+    climsvar = NCDF_VARDEF(wilma,'months',[charid,clmid],/CHAR)
 
-NCDF_ATTPUT,wilma,'times','long_name','time'
-NCDF_ATTPUT,wilma,'times','units','months beginning Jan 1973'
-NCDF_ATTPUT,wilma,'times','axis','T'
-NCDF_ATTPUT,wilma,'times','calendar','gregorian'
-NCDF_ATTPUT,wilma,'times','valid_min',0.
-NCDF_ATTPUT,wilma,'months','long_name','month'
-NCDF_ATTPUT,wilma,'months','units','months of the year'
+    NCDF_ATTPUT,wilma,'times','long_name','time'
+    NCDF_ATTPUT,wilma,'times','units','months beginning Jan 1973'
+    NCDF_ATTPUT,wilma,'times','axis','T'
+    NCDF_ATTPUT,wilma,'times','calendar','gregorian'
+    NCDF_ATTPUT,wilma,'times','valid_min',0.
+    NCDF_ATTPUT,wilma,'months','long_name','month'
+    NCDF_ATTPUT,wilma,'months','units','months of the year'
 
-NCDF_ATTPUT,wilma,tanomvar,'long_name','Monthly mean anomaly'
-NCDF_ATTPUT,wilma,tanomvar,'units',unitees
-NCDF_ATTPUT,wilma,tanomvar,'axis','T'
-NCDF_ATTPUT,wilma,tanomvar,'valid_min',min_anm
-NCDF_ATTPUT,wilma,tanomvar,'valid_max',max_anm
-NCDF_ATTPUT,wilma,tanomvar,'missing_value',mdi
-NCDF_ATTPUT,wilma,tabsvar,'long_name','Monthly mean absolutes'
-NCDF_ATTPUT,wilma,tabsvar,'units',unitees
-NCDF_ATTPUT,wilma,tabsvar,'axis','T'
-NCDF_ATTPUT,wilma,tabsvar,'valid_min',min_abs
-NCDF_ATTPUT,wilma,tabsvar,'valid_max',max_abs
-NCDF_ATTPUT,wilma,tabsvar,'missing_value',mdi
-NCDF_ATTPUT,wilma,tunc,'long_name','Monthly mean uncertainties'
-NCDF_ATTPUT,wilma,tunc,'units',unitees
-NCDF_ATTPUT,wilma,tunc,'axis','T'
-NCDF_ATTPUT,wilma,tunc,'valid_min',min_unc
-NCDF_ATTPUT,wilma,tunc,'valid_max',max_unc
-NCDF_ATTPUT,wilma,tunc,'missing_value',mdi
-NCDF_ATTPUT,wilma,tadj,'long_name','Monthly mean absjustments from NCDCs Pairwise'
-NCDF_ATTPUT,wilma,tadj,'units',unitees
-NCDF_ATTPUT,wilma,tadj,'axis','T'
-NCDF_ATTPUT,wilma,tadj,'missing_value',mdi
-NCDF_ATTPUT,wilma,tobserr,'long_name','Measurement error estimate'
-NCDF_ATTPUT,wilma,tobserr,'units',unitees
-NCDF_ATTPUT,wilma,tobserr,'axis','T'
-NCDF_ATTPUT,wilma,tobserr,'missing_value',mdi
-NCDF_ATTPUT,wilma,tadjerr,'long_name','Adjustment error estimate'
-NCDF_ATTPUT,wilma,tadjerr,'units',unitees
-NCDF_ATTPUT,wilma,tadjerr,'axis','T'
-NCDF_ATTPUT,wilma,tadjerr,'missing_value',mdi
-NCDF_ATTPUT,wilma,tclmerr,'long_name','Climatology error estimate'
-NCDF_ATTPUT,wilma,tclmerr,'units',unitees
-NCDF_ATTPUT,wilma,tclmerr,'axis','T'
-NCDF_ATTPUT,wilma,tclmerr,'missing_value',mdi
-NCDF_ATTPUT,wilma,tsdvar,'long_name','Monthly climatological st dev'
-NCDF_ATTPUT,wilma,tsdvar,'units',unitees
-NCDF_ATTPUT,wilma,tsdvar,'missing_value',mdi
-NCDF_ATTPUT,wilma,tclmvar,'long_name','Monthly climatology'
-NCDF_ATTPUT,wilma,tclmvar,'units',unitees
-NCDF_ATTPUT,wilma,tclmvar,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tanomvar,'long_name','Monthly mean anomaly'
+    NCDF_ATTPUT,wilma,tanomvar,'units',unitees
+    NCDF_ATTPUT,wilma,tanomvar,'axis','T'
+    NCDF_ATTPUT,wilma,tanomvar,'valid_min',min_anm
+    NCDF_ATTPUT,wilma,tanomvar,'valid_max',max_anm
+    NCDF_ATTPUT,wilma,tanomvar,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tabsvar,'long_name','Monthly mean absolutes'
+    NCDF_ATTPUT,wilma,tabsvar,'units',unitees
+    NCDF_ATTPUT,wilma,tabsvar,'axis','T'
+    NCDF_ATTPUT,wilma,tabsvar,'valid_min',min_abs
+    NCDF_ATTPUT,wilma,tabsvar,'valid_max',max_abs
+    NCDF_ATTPUT,wilma,tabsvar,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tunc,'long_name','Monthly mean uncertainties'
+    NCDF_ATTPUT,wilma,tunc,'units',unitees
+    NCDF_ATTPUT,wilma,tunc,'axis','T'
+    NCDF_ATTPUT,wilma,tunc,'valid_min',min_unc
+    NCDF_ATTPUT,wilma,tunc,'valid_max',max_unc
+    NCDF_ATTPUT,wilma,tunc,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tadj,'long_name','Monthly mean absjustments from NCDCs Pairwise'
+    NCDF_ATTPUT,wilma,tadj,'units',unitees
+    NCDF_ATTPUT,wilma,tadj,'axis','T'
+    NCDF_ATTPUT,wilma,tadj,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tobserr,'long_name','Measurement error estimate'
+    NCDF_ATTPUT,wilma,tobserr,'units',unitees
+    NCDF_ATTPUT,wilma,tobserr,'axis','T'
+    NCDF_ATTPUT,wilma,tobserr,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tadjerr,'long_name','Adjustment error estimate'
+    NCDF_ATTPUT,wilma,tadjerr,'units',unitees
+    NCDF_ATTPUT,wilma,tadjerr,'axis','T'
+    NCDF_ATTPUT,wilma,tadjerr,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tclmerr,'long_name','Climatology error estimate'
+    NCDF_ATTPUT,wilma,tclmerr,'units',unitees
+    NCDF_ATTPUT,wilma,tclmerr,'axis','T'
+    NCDF_ATTPUT,wilma,tclmerr,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tsdvar,'long_name','Monthly climatological st dev'
+    NCDF_ATTPUT,wilma,tsdvar,'units',unitees
+    NCDF_ATTPUT,wilma,tsdvar,'missing_value',mdi
+    NCDF_ATTPUT,wilma,tclmvar,'long_name','Monthly climatology'
+    NCDF_ATTPUT,wilma,tclmvar,'units',unitees
+    NCDF_ATTPUT,wilma,tclmvar,'missing_value',mdi
 
-NCDF_ATTPUT,wilma,/GLOBAL,'station_information','Where station is a composite the station id refers to the primary source used in the timestep and may not apply to all elements'
-current_time = SYSTIME()
+    NCDF_ATTPUT,wilma,/GLOBAL,'station_information','Where station is a composite the station id refers to the primary source used in the timestep and may not apply to all elements'
+    current_time = SYSTIME()
 ;PRINT,current_time
-NCDF_ATTPUT,wilma,/GLOBAL,'file_created',STRING(current_time)
-NCDF_CONTROL,wilma,/ENDEF
+    NCDF_ATTPUT,wilma,/GLOBAL,'file_created',STRING(current_time)
+    NCDF_CONTROL,wilma,/ENDEF
 
-NCDF_VARPUT, wilma,timesvar, int_mons
-NCDF_VARPUT, wilma,tanomvar,stat_anoms
-NCDF_VARPUT, wilma,tabsvar,stat_abs
-NCDF_VARPUT, wilma,tadj,stat_adjs
-NCDF_VARPUT, wilma,tunc,station_err
-NCDF_VARPUT, wilma,tadjerr,stat_adjs_err
-NCDF_VARPUT, wilma,tclmerr,stat_clims_err
-NCDF_VARPUT, wilma,tobserr,stat_obs_err
-NCDF_VARPUT, wilma,tabsvar,stat_abs
-NCDF_VARPUT, wilma,tsdvar,stat_sds
-NCDF_VARPUT, wilma,tclmvar,stat_clims
+    NCDF_VARPUT, wilma,timesvar, int_mons
+    NCDF_VARPUT, wilma,tanomvar,stat_anoms
+    NCDF_VARPUT, wilma,tabsvar,stat_abs
+    NCDF_VARPUT, wilma,tadj,stat_adjs
+    NCDF_VARPUT, wilma,tunc,station_err
+    NCDF_VARPUT, wilma,tadjerr,stat_adjs_err
+    NCDF_VARPUT, wilma,tclmerr,stat_clims_err
+    NCDF_VARPUT, wilma,tobserr,stat_obs_err
+    NCDF_VARPUT, wilma,tabsvar,stat_abs
+    NCDF_VARPUT, wilma,tsdvar,stat_sds
+    NCDF_VARPUT, wilma,tclmvar,stat_clims
 
-NCDF_VARPUT, wilma,climsvar,monarr
+    NCDF_VARPUT, wilma,climsvar,monarr
 
-NCDF_CLOSE,wilma
+    NCDF_CLOSE,wilma
 
-  set_plot,'PS'
-  device,filename=outplots+wmo+'_anoms'+CLMlab+'_stationstats'+nowmon+nowyear+'.eps',/color,/ENCAPSUL,xsize=20,ysize=26,/portrait,/helvetica,/bold
-  !P.Font =  0
-  !P.Thick = 4
-  !X.Thick = 4
-  !Y.thick = 4
-  x1pos =    0.08
-  x2pos =    0.98
-  y1pos =    [0.83,0.67,0.51,0.35,0.19,0.03]
-  y2pos =    [0.95,0.79,0.63,0.47,0.31,0.15]
-  
-  tvlct,100,100,100,1
+    set_plot,'PS'
+    device,filename=outplots+wmo+'_anoms'+CLMlab+'_stationstats'+nowmon+nowyear+'.eps',/color,/ENCAPSUL,xsize=20,ysize=26,/portrait,/helvetica,/bold
+    !P.Font =  0
+    !P.Thick = 4
+    !X.Thick = 4
+    !Y.thick = 4
+    x1pos =    0.08
+    x2pos =    0.98
+    y1pos =    [0.83,0.67,0.51,0.35,0.19,0.03]
+    y2pos =    [0.95,0.79,0.63,0.47,0.31,0.15]
+    
+    tvlct,100,100,100,1
   
 ;  restore_colours,'shortbow'
   
-  xarr =        indgen(nmons)
-  zeros =       intarr(nmons)
+    xarr =        indgen(nmons)
+    zeros =       intarr(nmons)
 
-  ymax =        max_anm*1.1
-  ymin =        min_anm*1.1
-  yrange =      ymax-ymin
-  !P.Position = [x1pos,y1pos(0),x2pos,y2pos(0)]
-  plot,xarr,stat_anoms,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=wmo+' Monthly Anomalies (homogenised)',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,stat_anoms,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  oplot,xarr,zeros,color=0,thick=1
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        max_anm*1.1
+    ymin =        min_anm*1.1
+    yrange =      ymax-ymin
+    !P.Position = [x1pos,y1pos(0),x2pos,y2pos(0)]
+    plot,xarr,stat_anoms,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=wmo+' Monthly Anomalies (homogenised)',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,stat_anoms,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    oplot,xarr,zeros,color=0,thick=1
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
 
-  ymax =        MAX(stat_adjs)*1.1
-  ymin =        MIN(stat_adjs)*1.1
-  IF (ymin EQ 0.) AND (ymax EQ 0.) THEN ymax = 1.
-  yrange =      ymax-ymin  
-  !P.Position = [x1pos,y1pos(1),x2pos,y2pos(1)]
-  plot,xarr,stat_adjs,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=' Monthly Adjustments',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,stat_adjs,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  oplot,xarr,zeros,color=0,thick=1
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        MAX(stat_adjs)*1.1
+    ymin =        MIN(stat_adjs)*1.1
+    IF (ymin EQ 0.) AND (ymax EQ 0.) THEN ymax = 1.
+    yrange =      ymax-ymin  
+    !P.Position = [x1pos,y1pos(1),x2pos,y2pos(1)]
+    plot,xarr,stat_adjs,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=' Monthly Adjustments',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,stat_adjs,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    oplot,xarr,zeros,color=0,thick=1
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
 
-  ymax =        MAX(stat_adjs_err)*1.1
-  ymin =        0.
-  yrange =      ymax-ymin
-  !P.Position = [x1pos,y1pos(2),x2pos,y2pos(2)]
-  plot,xarr,stat_adjs_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=' Monthly Adjustment Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,stat_adjs_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        MAX(stat_adjs_err)*1.1
+    ymin =        0.
+    yrange =      ymax-ymin
+    !P.Position = [x1pos,y1pos(2),x2pos,y2pos(2)]
+    plot,xarr,stat_adjs_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=' Monthly Adjustment Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,stat_adjs_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
 
-  ymax =        MAX(stat_obs_err)*1.1
-  ymin =        0.
-  yrange =      ymax-ymin  
-  !P.Position = [x1pos,y1pos(3),x2pos,y2pos(3)]
-  plot,xarr,stat_obs_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=' Monthly Observation Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,stat_obs_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        MAX(stat_obs_err)*1.1
+    ymin =        0.
+    yrange =      ymax-ymin  
+    !P.Position = [x1pos,y1pos(3),x2pos,y2pos(3)]
+    plot,xarr,stat_obs_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=' Monthly Observation Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,stat_obs_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
 
-  ymax =        MAX(stat_clims_err)*1.1
-  ymin =        0.
-  yrange =      ymax-ymin
-  !P.Position = [x1pos,y1pos(4),x2pos,y2pos(4)]
-  plot,xarr,stat_clims_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=' Monthly Climatology Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,stat_clims_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        MAX(stat_clims_err)*1.1
+    ymin =        0.
+    yrange =      ymax-ymin
+    !P.Position = [x1pos,y1pos(4),x2pos,y2pos(4)]
+    plot,xarr,stat_clims_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=' Monthly Climatology Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,stat_clims_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
 
-  ymax =        MAX(station_err)*1.1
-  ymin =        0.
-  yrange =      ymax-ymin
-  !P.Position = [x1pos,y1pos(5),x2pos,y2pos(5)]
-  plot,xarr,station_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
-       title=' Monthly Station Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
-  oplot,xarr,station_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
-  PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
-  FOR yy = 1,nyrs-1 DO BEGIN
-    mm = yy*12
-    IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
-    ENDIF ELSE BEGIN
-      PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
-      PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
-      XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
-    ENDELSE
-  ENDFOR
+    ymax =        MAX(station_err)*1.1
+    ymin =        0.
+    yrange =      ymax-ymin
+    !P.Position = [x1pos,y1pos(5),x2pos,y2pos(5)]
+    plot,xarr,station_err,min_value=-100,yrange=[ymin,ymax],ystyle=1,xstyle=5,psym=-5,symsize=0.3,$
+         title=' Monthly Station Uncertainty',ytitle=unitees,charsize=0.9,/nodata,/noerase
+    oplot,xarr,station_err,min_value=-100,color=1,psym=-5,symsize=0.3,thick=4
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymin,ymin],color=0
+    PLOTS,[xarr(0),xarr(nmons-1)],[ymax,ymax],color=0
+    FOR yy = 1,nyrs-1 DO BEGIN
+      mm = yy*12
+      IF ((((yy+styr)/5.)-FIX((yy+styr)/5.)) GT 0.) THEN BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.03*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.03*yrange)],color=0
+      ENDIF ELSE BEGIN
+        PLOTS,[xarr(mm),xarr(mm)],[ymin,ymin+(0.05*yrange)],color=0
+        PLOTS,[xarr(mm),xarr(mm)],[ymax,ymax-(0.05*yrange)],color=0    
+        XYOUTS,xarr(mm),ymin-(0.12*yrange),strcompress(string(yy+styr),/remove_all),alignment=0.5,color=0,charsize=0.8
+      ENDELSE
+    ENDFOR
   
-  device,/close
+    device,/close
  
     printf,55,wmo,lat,lon,elv,cid,namoo,mush,format='(a11,x,f8.4,x,f9.4,x,f6.1,x,a2,x,a29,x,a7)'  
 
   ENDIF ELSE BEGIN
     openw,99,outbads,/append
-    printf,99,wmo,'TOO FEW FOR CLIM: ',countcl,format='(a11,x,a18,i2)'
+    printf,99,wmo,'NO HOMOG FILE: ',countcl,format='(a11,x,a18,i2)'
     close,99
   ENDELSE
 

@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
+; Last update: 14 January 2018
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -40,7 +40,11 @@
 ; Make sure all of the EDITABLES are correct
 ; > tidl
 ; > .compile make_area_avg_ts
-; > make_area_avg_ts 
+; > make_area_avg_ts,param,homogtype
+; *** CHOOSE PARAMETER ***
+;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap'
+; *** CHOOSE TYPE OF DATA ***
+;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA' 
 ;
 ; -----------------------
 ; OUTPUT
@@ -55,6 +59,20 @@
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
+;
+; Version 3 (14 February 2018)
+; ---------
+;  
+; Enhancements
+; Now call variable and runtype from command line
+; *** CHOOSE PARAMETER ***
+;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap'
+; *** CHOOSE TYPE OF DATA ***
+;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
+;
+; Changes
+;  
+; Bug fixes
 ; 
 ; Version 2 (2 August 2016)
 ; ---------
@@ -94,7 +112,12 @@
 ;
 
 
-pro make_area_avg_ts
+pro make_area_avg_ts,param,homogtype
+;; *** CHOOSE PARAMETER ***
+;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap'
+;
+;; *** CHOOSE TYPE OF DATA ***
+;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
 
 ; to calculate area average - NO missing data tolerance - need a land/sea mask for that
 
@@ -109,26 +132,26 @@ mdi =        -1e+30
 
 ; *** CHOOSE CANDIDATE set up values
 styr =       1973	; 1850, 1973, 1950, 1880, 1979
-edyr =       2016	; 
+edyr =       2017	; 
 climst =     1981	; 1976 or 1981
 climed =     2010	; 2005 or 2010
 
 ; *** CHOOSE READ IN DATE ***
 thenmon =     'JAN'
-thenyear =    '2017'
+thenyear =    '2018'
 
 ; *** CHOOSE PRINT OUT DATE ***
 nowmon =     'JAN'
-nowyear =    '2017'
+nowyear =    '2018'
 
-; *** CHOOSE PARAMETER ***
-param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap'
-
-; *** CHOOSE TYPE OF DATA ***
-homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
+;; *** CHOOSE PARAMETER ***
+;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap';
+;
+;; *** CHOOSE TYPE OF DATA ***
+;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
 
 ; *** CHOOSE VERSION IF HadISDH ***
-version =    '1.0.0.2016p' ; 3.0.0.3016p 1.0.0.2016p
+version =    '4.0.0.2017f' ; 3.0.0.3016p 1.0.0.2016p
 
 ; *** CHOOSE WORKING DIRECTORY ***
 workingdir = 'UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
@@ -142,7 +165,7 @@ mclimst =     1976	; could be 1976 or 1981
 mclimed =     2005	; could be 2005 or 2010
 
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
-domain =     'marine'	; 'land','marine','blend'
+domain =     'land'	; 'land','marine','blend'
 
 ; *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
 isanom =     'true'	; 'false' for actual values, 'true' for anomalies

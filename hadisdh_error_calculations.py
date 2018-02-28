@@ -22,9 +22,9 @@ import copy
 
 # RJHD routines
 
-DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/"
-HADISDH_VER = "3.0.0.2016p"
-HADISDH_DATE = "JAN2017"
+DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE2017/STATISTICS/GRIDS/"
+HADISDH_VER = "4.0.0.2017f"
+HADISDH_DATE = "JAN2018"
 
 class Region(object):
 
@@ -225,14 +225,14 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 
     print variable
 
-    era_file = "{}2m_monthly_5by5_ERA-Interim_data_19792016_anoms1979-2005.nc".format(variable.lower())
+    era_file = "{}2m_monthly_5by5_ERA-Interim_data_19792017_anoms1981-2010.nc".format(variable.lower())
 
     if variable in ["RH","T","Tw","e","q"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridIDPHA5by5_anoms7605_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        hadisdh_file = "HadISDH.land{}.{}_FLATgridIDPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
     elif variable in ["DPD"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHA5by5_anoms7605_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
     elif variable in ["Td"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms7605_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
 
         
     # get hadisdh data and fix

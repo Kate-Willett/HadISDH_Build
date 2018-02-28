@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 15 January 2015
+; Last update: 14 February 2018
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -30,7 +30,12 @@
 ; >tidl
 ; >.compile median_pairwise
 ; >.compile make_MP_trends
-; >make_MP_trends
+; >make_MP_trends,param,homogtype
+;; Which variable?
+;param = 'dpd'	;'dpd','td','t','tw','e','q','rh'
+;
+;; Which homog type?
+;homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
 ; 
 ; -----------------------
 ; OUTPUT
@@ -41,6 +46,14 @@
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
+;
+; Version 3 (15 February 2018)
+; ---------
+;  
+; Enhancements
+; Now variable and homogtype are called from the command line - param, homogtype
+; param = 'dpd'	;'dpd','td','t','tw','e','q','rh'
+; homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
 ; 
 ; Version 2 (1 February 2017)
 ; ---------
@@ -65,7 +78,12 @@
 ; OTHER INFORMATION
 ; -----------------------
 ;
-pro make_MP_trends
+pro make_MP_trends,param,homogtype
+;; Which variable?
+;param = 'dpd'	;'dpd','td','t','tw','e','q','rh'
+;
+;; Which homog type?
+;homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
 
 ; to calculate trends - NO missing data tolerance - need a land/sea mask for that
 
@@ -85,31 +103,31 @@ pro make_MP_trends
 
 ; Which start/end year?
 styr = 1973	; 1973
-edyr = 2016
+edyr = 2017
 
 ; Which climatology period to work with?
-climST = 1976 	;1976 or 1981
-climED = 2005	;2005 or 2010
+climST = 1981 	;1976 or 1981
+climED = 2010	;2005 or 2010
 climBIT = 'anoms'+strmid(strcompress(climST,/remove_all),2,2)+strmid(strcompress(climED,/remove_all),2,2)
 
 ; Which TREND start/end year?
 sttrd = 1973  	; years over which to calculate trends
-edtrd = 2016  	;
+edtrd = 1999  	;
 
 ; Which working file dates?
 nowmon   = 'JAN'
-nowyear  = '2017'
+nowyear  = '2018'
 thenmon  = 'JAN'
-thenyear = '2017'
+thenyear = '2018'
 
-; Which variable?
-param = 'dpd'	;'dpd','td','t','tw','e','q','rh'
-
-; Which homog type?
-homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
+;; Which variable?
+;param = 'dpd'	;'dpd','td','t','tw','e','q','rh';;
+;
+;; Which homog type?
+;homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
 
 ; Which version (if not marine or OTHER???)
-version = '3.0.0.2016p'
+version = '4.0.0.2017f'
 
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
 

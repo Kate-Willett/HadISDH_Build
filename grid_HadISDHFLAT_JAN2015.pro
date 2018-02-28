@@ -242,9 +242,9 @@ grid =    strcompress(ROUND(MYlatlg),/remove_all)+'by'+strcompress(ROUND(MYlonlg
 ;; nstations: number of stations still having 15+ months after homog.AND after supersat and subzero removed!!!
 ;; nsubs: number of subzero stations to remove
 ;; nsats: number of supersaturated stations to remove
-statstats =  {stato,nstations:[9999,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
-                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
-		  nsats:[0,0, 949,0, 0,0, 0,0]}  
+;statstats =  {stato,nstations:[9999,9999, 9999,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
+;                  nsubs:[0,0, 0,  0, 0,0, 0,0],$
+;		  nsats:[0,0, 949,0, 0,0, 0,0]}  
 
 ;tstats =   {stato,nstations:[9999,9999, 4039,9999, 9999,9999, 9999,9999],$  ; (PHA7607, PHA8110, ID7605, ID8110, PHADPD7607, PHADPD8110, RAW7607, RAW8110) 
 ;                  nsubs:[0,0, 0,0, 0,0, 0,0],$
@@ -487,7 +487,7 @@ inGBstats = {GBstats,wmo:strarr(100),lats:fltarr(100),lons:fltarr(100),elvs:flta
 ; sort out station counts
 ; Find the number of stations for the variable/homogtype
 spawn,'wc -l '+inlist,CountString
-nstations = int(strmid(CountString(0),0,7))
+nALLstations = int(strmid(CountString(0),0,7))
 IF (param EQ 'q') OR (param EQ 'e') THEN BEGIN
   spawn,'wc -l '+inlistZ,CountString
   nsubs = int(strmid(CountString(0),0,7))
@@ -496,6 +496,11 @@ IF (param NE 't') THEN BEGIN
   spawn,'wc -l '+inlistT,CountString
   nsats = int(strmid(CountString(0),0,7))
 END ELSE nsats = 0
+
+nstations = nALLstations - nsats - nsubs
+
+;print,'RUN: ',param,homogtype,nstations,nsubs,nsats
+;stop
 
 ;CASE homogtype OF
 ;  'PHA': BEGIN
@@ -546,7 +551,6 @@ END ELSE nsats = 0
 
 ; number of stations to ignore because they go below zero (q) or above 100 (RH)
 IF (nsubs GT 0) THEN info_arrZ = {infoz,statid:strarr(nsubs)}
-; number of stations to ignore because they go below zero (q) or above 100 (RH)
 IF (nsats GT 0) THEN info_arrT = {infot,statid:strarr(nsats)}
 
 GBelvs =     make_array(nlons,nlats,/float,value=mdi)
@@ -616,6 +620,7 @@ ENDIF
 openr,5,inlist
 counter =  0
 countbad = 0
+countsats = 0
 WHILE NOT EOF(5) DO BEGIN
   wmo =                                      ''
   lat =                                      0.
@@ -635,8 +640,12 @@ WHILE NOT EOF(5) DO BEGIN
   ENDIF
   IF (nsats GT 0) THEN BEGIN
     findee=WHERE(info_arrT.statid EQ wmo,count)
-    IF (count GT 0) THEN print,info_arrT.statid(findee(0))
-    IF (count GT 0) THEN goto,endloop
+    IF (count GT 0) THEN BEGIN
+      print,info_arrT.statid(findee(0))
+      countsats = countsats+1
+;      stop,'GOT A SUBZERO'
+      goto,endloop
+    ENDIF
   ENDIF  
 
   stat_id.wmoids(counter) = wmo 
@@ -795,6 +804,8 @@ WHILE NOT EOF(5) DO BEGIN
 ENDWHILE
 close,5
 
+print,countsats
+stop
 ; loop through gridboxes
 counter = 0L
 actcount = 0L
