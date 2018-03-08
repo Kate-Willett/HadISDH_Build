@@ -21,8 +21,10 @@ import iris.coord_categorisation
 import copy
 
 # RJHD routines
-
-DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE2017/STATISTICS/GRIDS/"
+YEAREND = '2017'
+DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
+OUTDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
+OTHERDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/OTHERDATA/"
 HADISDH_VER = "4.0.0.2017f"
 HADISDH_DATE = "JAN2018"
 
@@ -195,7 +197,7 @@ def simple_outfile_write(filename, times, ts, sample, coverage, station, combine
  
     outfile.write("".join(["{:10s} "*6,"\n"]).format('#month','hadisdh','sample','coverage','station','combined'))
     outfile.write("# all 2-sigma errors\n")
-    outfile.write("# 1976-2005 anomaly period")
+    outfile.write("# 1981-2010 anomaly period")
     outfile.close()
 
     return # simple_outfile_write
@@ -214,7 +216,7 @@ def full_outfile_write(filename, times, ts, sample, coverage, station, combined)
 
     outfile.write("".join(["{:10s} "*10,"\n"]).format('#month','hadisdh','sample-','sample+','coverage-','coverage+','station-','station+','combined-','combined+'))
     outfile.write("# all 2-sigma errors\n")
-    outfile.write("# 1976-2005 anomaly period")
+    outfile.write("# 1981-2010 anomaly period")
     outfile.close()
 
     return # full_outfile_write
@@ -225,7 +227,7 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 
     print variable
 
-    era_file = "{}2m_monthly_5by5_ERA-Interim_data_19792017_anoms1981-2010.nc".format(variable.lower())
+    era_file = "{}2m_monthly_5by5_ERA-Interim_data_1979{}_anoms1981-2010.nc".format(variable.lower(), YEAREND)
 
     if variable in ["RH","T","Tw","e","q"]:
         hadisdh_file = "HadISDH.land{}.{}_FLATgridIDPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
@@ -249,7 +251,7 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 
 
     # get era data and fix
-    era_cube = iris.load(DATALOCATION + era_file)[-1]
+    era_cube = iris.load(OTHERDATALOCATION + era_file)[-1]
     
     # sort the coordinate system
     era_cube.coord('latitude').guess_bounds()
@@ -261,7 +263,7 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
     # lsm = iris.load(DATALOCATION + "new_coverpercentjul08.nc")[0]
     # lsm.data = np.flipud(lsm.data) # flip latitudes for new_coverpercentjul08.nc
 
-    lsm = iris.load(DATALOCATION + "HadCRUT.4.3.0.0.land_fraction.nc")[1]
+    lsm = iris.load(OTHERDATALOCATION + "HadCRUT.4.3.0.0.land_fraction.nc")[1]
     masked_lsm = np.ma.masked_where(lsm.data == 0, lsm.data)
     
     era_cube.data = np.ma.array(era_cube.data, mask = np.array([masked_lsm.mask for i in range(era_cube.data.shape[0])]))
@@ -347,11 +349,18 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 
             annual_ts_all_combined[year] = np.sqrt(np.sum(annual_ts_coverage[year]**2 + annual_ts_station[year]**2 + annual_ts_sample[year]**2))
 
-        simple_outfile_write(DATALOCATION + '{}_{}_ts_monthly.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
-        full_outfile_write(DATALOCATION + '{}_{}_monthly_full.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+#        simple_outfile_write(DATALOCATION + '{}_{}_ts_monthly.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+#        full_outfile_write(DATALOCATION + '{}_{}_monthly_full.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+##
+#
+#        simple_outfile_write(DATALOCATION + '{}_{}_ts_annual.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+#        full_outfile_write(DATALOCATION + '{}_{}_annual_full.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+
+        simple_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_ts_monthly_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+        full_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_monthly_full_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
 
 
-        simple_outfile_write(DATALOCATION + '{}_{}_ts_annual.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
-        full_outfile_write(DATALOCATION + '{}_{}_annual_full.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+        simple_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_ts_annual_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+        full_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_annual_full_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
 
