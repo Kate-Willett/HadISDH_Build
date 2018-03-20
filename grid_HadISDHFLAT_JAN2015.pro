@@ -88,6 +88,7 @@
 ; Changes
 ;  
 ; Bug fixes
+; NetCDF err outputs had wrong long_names
 ;
 ; Version 3 (1 February 2017)
 ; ---------
@@ -805,7 +806,7 @@ ENDWHILE
 close,5
 
 print,countsats
-stop
+;stop
 ; loop through gridboxes
 counter = 0L
 actcount = 0L
@@ -1201,7 +1202,7 @@ NCDF_ATTPUT,wilma,rhajerr,'reference_period','1976 to 2005'
 
 printf,19,'ADJUSTMENT UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhoberr,'long_name','Station uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhoberr,'long_name','Measurement uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhoberr,'units',unitees
 valid=WHERE(q_obserr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1216,7 +1217,7 @@ NCDF_ATTPUT,wilma,rhoberr,'reference_period','1976 to 2005'
 
 printf,19,'MEASUREMENT UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhcmerr,'long_name','Station uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhcmerr,'long_name','Climatological uncertainty over gridbox'
 NCDF_ATTPUT,wilma,rhcmerr,'units',unitees
 valid=WHERE(q_clmerr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1375,5 +1376,5 @@ printf,4,lats,format='(36f9.2)'
 close,2
 close,3
 close,4
-stop
+;stop
 end
