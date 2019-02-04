@@ -26,7 +26,7 @@ DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
 OUTDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
 OTHERDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/OTHERDATA/"
 HADISDH_VER = "4.0.0.2017f"
-HADISDH_DATE = "JAN2018"
+HADISDH_DATE = "MAR2018"
 
 class Region(object):
 
@@ -237,7 +237,7 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
         hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
 
         
-    # get hadisdh data and fix
+    # get hadisdh data and fix - this uses the long name!!!
     station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox')[0]
     sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Sampling uncertainty over gridbox')[0]
     combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Combined uncertainty over gridbox')[0]
