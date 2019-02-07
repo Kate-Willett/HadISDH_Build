@@ -73,6 +73,17 @@
 ; VERSION/RELEASE NOTES
 ; -----------------------
 ; 
+;
+; Version 5 (29 March 2018)
+; ---------
+;  
+; Enhancements
+;  
+; Changes
+;  
+; Bug fixes
+; Wrong FILE_SEARCH string was finding multiple files and therefore sometimes reading in the wrong one (with sats/subzeros or duplicate!)
+;
 ; Version 4 (13 February 2018)
 ; ---------
 ;  
@@ -219,7 +230,7 @@ MYclst =     1981	; could be 1976 or 1981
 MYcled =     2010	; could be 2005 or 2010
 
 ; Date of working files?
-nowmon =     'JAN'
+nowmon =     'MAR'
 nowyear =    '2018'
 thenmon =    'JAN'
 thenyear =   '2018'
@@ -655,7 +666,11 @@ WHILE NOT EOF(5) DO BEGIN
   stat_id.elevs(counter) =  elv 
 
  ; find file and read in to array 
-  filee = FILE_SEARCH(indat+strmid(wmo,0,5)+'*'+infilend,count=count)
+ ; *** OOOPS - this line is wrong and can find more than one file so using filee(0) sometimes reads in the WRONG FILE!!!
+ ;filee = FILE_SEARCH(indat+strmid(wmo,0,5)+'*'+infilend,count=count)
+ ; CORRECTED VERSION MARCH 2018!!!! No idea why I did it like this!!!
+  if (homogtype NE 'RAW') THEN filee = FILE_SEARCH(indat+wmo+infilend,count=count) $
+                          ELSE filee = FILE_SEARCH(indat+strmid(wmo,0,6)+'-'+strmid(wmo,6,5)+infilend,count=count)
   print,filee
   IF (count GT 0) THEN BEGIN
     inn=NCDF_OPEN(filee(0))
@@ -785,6 +800,15 @@ WHILE NOT EOF(5) DO BEGIN
     NCDF_CLOSE,inn
     
     stat_abs(counter,*) =    absols
+    
+;    ; Double check to find subzeros or sats!
+;    IF (param EQ 'dpd') THEN BEGIN
+;        sillies = where((stat_abs(counter,*) GT mdi) AND (stat_abs(counter,*) LT 0),countsillies)
+;	IF (countsillies GT 0) THEN BEGIN
+;	    print,'Got a silly sub zero DPD: ',countsillies, wmo
+;	    stop
+;	ENDIF 
+;    ENDIF
     stat_clims(counter,*) =  clims
     stat_anoms(counter,*) =  anoms
     IF (homogtype NE 'RAW') THEN BEGIN

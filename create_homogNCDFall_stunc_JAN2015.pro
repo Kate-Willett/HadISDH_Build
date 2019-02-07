@@ -359,6 +359,9 @@ MissString = string('"',param,homogtype,'"',format = '(a1,a3,x,a6,a1)')
 spawn,'grep -a '+MissString+' '+inmissadj,MissStringLine   ;(a3,x,a6,x,a13,x,f7.3)'
 missadjerr = float(strmid(MissStringLine(13),25,7))
 
+print,'PARAM and missadjerr: ',param,missadjerr
+stop
+
 ;stop
 CASE param OF
   'td': BEGIN

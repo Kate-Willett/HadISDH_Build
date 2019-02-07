@@ -97,11 +97,11 @@ climchoice = 'anoms'+CLMlab ; 'anoms7605','anoms8110'
 climchoiceOLD = 'anoms7605' ; Oh Dear - should compare with old anoms8110 but I haven't done it
 
 ; Which output date?
-nowmon     = 'JAN'
+nowmon     = 'MAR'
 nowyear    = '2018'
 
 ; Which input date?
-thenmon     = 'JAN'
+thenmon     = 'MAR'
 thenyear    = '2018'
 OLDthenmon     = 'JAN'
 OLDthenyear    = '2017'
@@ -117,7 +117,7 @@ version    = '4.0.0.2017f'
 OLDversion = '3.0.0.2016p'
 
 ; Which plot - compare old/new or raw/homog?
-typee      = 'OLD' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
+typee      = 'RAW' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
 
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
 oldindir   = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr-1,/remove_all),2,2)+'/STATISTICS/'
@@ -147,7 +147,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landTd.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landTd.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'DPD') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landTd.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -155,7 +155,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landTd.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landTd.'+OLDversion+'_FLATgridPHADPD5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landTd.'+OLDversion+'_FLATgridPHADPD5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='dew point temperature'
   END
@@ -169,7 +169,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landT.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landT.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landT.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landT.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -177,7 +177,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landT.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landT.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landT.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='temperature'
   END
@@ -191,7 +191,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landTw.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landTw.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landTw.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -199,7 +199,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landTw.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landTw.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='wet bulb temperature'
   END
@@ -213,7 +213,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landq.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landq.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -221,7 +221,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landq.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landq.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='specific humidity'
  END
@@ -235,7 +235,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.lande.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.lande.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.lande.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -243,7 +243,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.lande.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.lande.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='vapour pressure'
   END
@@ -257,7 +257,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landRH.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landRH.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
       inhomogmp = indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
@@ -265,7 +265,7 @@ CASE param OF
       inrawts   = indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landRH.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landRH.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
-      outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat_'+yearchoice+'.eps'
+      outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
     variname='relative humidity'
   END

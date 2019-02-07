@@ -2,7 +2,7 @@
 ; 
 ; Author: Kate Willett
 ; Created: 1 February 2013
-; Last update: 14 January 2018
+; Last update: 24 January 2019
 ; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
@@ -59,6 +59,16 @@
 ; -----------------------
 ; VERSION/RELEASE NOTES
 ; -----------------------
+; Version 3 (14 February 2018)
+; ---------
+;  
+; Enhancements
+; Automatically puts the styredyr string into the ERA filenames
+;
+; Changes
+;  
+; Bug fixes
+;
 ;
 ; Version 3 (14 February 2018)
 ; ---------
@@ -131,17 +141,18 @@ pro make_area_avg_ts,param,homogtype
 mdi =        -1e+30
 
 ; *** CHOOSE CANDIDATE set up values
-styr =       1973	; 1850, 1973, 1950, 1880, 1979
+styr =       1979	; 1850, 1973, 1950, 1880, 1979
 edyr =       2017	; 
+datestring = strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
 climst =     1981	; 1976 or 1981
 climed =     2010	; 2005 or 2010
 
 ; *** CHOOSE READ IN DATE ***
-thenmon =     'JAN'
+thenmon =     'MAR'
 thenyear =    '2018'
 
 ; *** CHOOSE PRINT OUT DATE ***
-nowmon =     'JAN'
+nowmon =     'MAR'
 nowyear =    '2018'
 
 ;; *** CHOOSE PARAMETER ***
@@ -161,8 +172,8 @@ mask =       'false'	; default = 'false', if 'true' then mask to HadISDH equival
 ; MASKFILE (HadISDH set up values)
 mstyr =       1973	; 1850, 1973, 1950, 1880
 medyr =       2016	; 2013, 2011
-mclimst =     1976	; could be 1976 or 1981
-mclimed =     2005	; could be 2005 or 2010
+mclimst =     1981	; could be 1976 or 1981
+mclimed =     2010	; could be 2005 or 2010
 
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
 domain =     'land'	; 'land','marine','blend'
@@ -220,10 +231,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-	    infile =  'dpd2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile =  'dpd2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+	    infile =  'dpd2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile =  'dpd2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'dpd2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'dpd2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -243,10 +254,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-	    infile = 'td2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile = 'td2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+	    infile = 'td2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile = 'td2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'td2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'td2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -269,10 +280,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-	    infile = 't2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile = 't2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+	    infile = 't2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile = 't2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 't2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 't2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landT.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -291,10 +302,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN 
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-            infile = 'tw2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005'
-	    infile = 'tw2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+            infile = 'tw2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005'
+	    infile = 'tw2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'tw2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'tw2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -314,10 +325,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN 
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-            infile = 'q2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile = 'q2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+            infile = 'q2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile = 'q2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'q2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'q2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -336,10 +347,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN 
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-            infile = 'e2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile = 'e2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+            infile = 'e2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile = 'e2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'e2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'e2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
@@ -359,10 +370,10 @@ CASE param OF
       CASE isanom OF
 	'true': BEGIN 
 	  IF (climchoice EQ 'anoms7605') OR (climchoice EQ 'anoms7905') THEN $
-            infile = 'rh2m_monthly_5by5_ERA-Interim_data_19792015_anoms1979-2005' ELSE $
-	    infile = 'rh2m_monthly_5by5_ERA-Interim_data_19792015_anoms1981-2010'
+            infile = 'rh2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1979-2005' ELSE $
+	    infile = 'rh2m_monthly_5by5_ERA-Interim_data_'+datestring+'_anoms1981-2010'
 	END
-	'false': infile = 'rh2m_monthly_5by5_ERA-Interim_data_19792015'
+	'false': infile = 'rh2m_monthly_5by5_ERA-Interim_data_'+datestring
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear

@@ -112,12 +112,12 @@ climBIT = 'anoms'+strmid(strcompress(climST,/remove_all),2,2)+strmid(strcompress
 
 ; Which TREND start/end year?
 sttrd = 1973  	; years over which to calculate trends
-edtrd = 1999  	;
+edtrd = 2017  	;
 
 ; Which working file dates?
-nowmon   = 'JAN'
+nowmon   = 'MAR'
 nowyear  = '2018'
-thenmon  = 'JAN'
+thenmon  = 'MAR'
 thenyear = '2018'
 
 ;; Which variable?
@@ -147,7 +147,7 @@ CASE param OF
     param2 = 'DPD'	;'DPD','Td','T','Tw','e','q','RH'
     unitees = 'deg C'
     IF (homogtype EQ 'PHA') THEN infile    = 'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landDPD.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landDPD.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
   END
   'td': BEGIN
@@ -155,7 +155,7 @@ CASE param OF
     unitees = 'deg C'
     IF (homogtype EQ 'PHA') THEN infile    = 'HadISDH.landTd.'+version+'_FLATgridPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'DPD') THEN infile    = 'HadISDH.landTd.'+version+'_FLATgridPHADPD5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landTd.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landTd.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
   END
   't': BEGIN
@@ -175,7 +175,7 @@ CASE param OF
     param2 = 'Tw'	;'DPD','Td','T','Tw','e','q','RH'
     unitees = 'deg C'
     IF (homogtype EQ 'ID') THEN infile     = 'HadISDH.landTw.'+version+'_FLATgridIDPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+''
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landTw.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
   END
   'q': BEGIN
@@ -183,7 +183,7 @@ CASE param OF
     unitees = 'g/kg'
     IF (homogtype EQ 'ID') THEN infile     = 'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'PHA') THEN infile    = 'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+''
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'BLEND') THEN infile  = 'BLEND_HadISDH.landq.2.1.0.2015p.marineq.QC0.0.0_OCT2016'
   END
@@ -191,7 +191,7 @@ CASE param OF
     param2 = 'e'	;'DPD','Td','T','Tw','e','q','RH'
     unitees = 'hPa'
     IF (homogtype EQ 'ID') THEN infile     = 'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+''
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.lande.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'ERAclimNBC_5x5_monthly_anomalies_from_daily_both_relax'
   END
   'rh': BEGIN
@@ -199,7 +199,7 @@ CASE param OF
     unitees = '%rh'
     IF (homogtype EQ 'ID') THEN infile     = 'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'PHA') THEN infile    = 'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
-    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+''
+    IF (homogtype EQ 'RAW') THEN infile    = 'HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climBIT+'_'+thenmon+thenyear+'_cf'
     IF (homogtype EQ 'MARINE') THEN infile = 'OBSclim2NBC_5x5_monthly_renorm19812010_anomalies_from_daily_both_relax'
     IF (homogtype EQ 'BLEND') THEN infile  = 'BLEND_HadISDH.landRH.2.1.0.2015p.marineRH.QC0.0.0_OCT2016'
   END
