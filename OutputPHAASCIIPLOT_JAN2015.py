@@ -162,14 +162,14 @@ AddLetter='a)'		#'---'
 
 # Set up initial run choices
 styr       = 1973
-edyr       = 2017
-param      = 'e'	# tw, q, e, rh, t, td, dpd
+edyr       = 2018
+param      = 'td'	# tw, q, e, rh, t, td, dpd
 nowmon     = 'JAN'
-nowyear    = '2018'
+nowyear    = '2019'
 thenmon    = 'JAN'
-thenyear   = '2018'
-version    = '4.0.0.2017f'
-homogtype  = 'PHA'	#'PHA','IDPHA','PHADPD'
+thenyear   = '2019'
+version    = '4.1.0.2018f'
+homogtype  = 'PHADPD'	#'PHA','IDPHA','PHADPD'
 updateyear = str(edyr)[2:4]
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
 
@@ -281,8 +281,8 @@ mdi=-99.99
 
 DATASTART=dt.datetime(styr,1,1,0,0)
 DATAEND=dt.datetime(edyr,12,1,0,0)
-clmst=1976
-clmed=2005
+clmst=1981
+clmed=2010
 clmsty=(clmst-styr)
 clmedy=(clmed-styr)
 clmstm=(clmst-styr)*12
@@ -303,7 +303,7 @@ NeighbourList=[] # nNstations list filled after reading in corr station list
 
 MyStation=[]	# filled after reading in candidate station
 MyRAWStation=[]	# filled after reading in candidate station
-MyClims=[]	# 12 element array of mean months 1976-2005
+MyClims=[]	# 12 element array of mean months 1981-2010
 MyAnomalies=[]	# filled with anomalies after subtracting climatology
 MyHomogAnoms=[] # filled with homogenised anomalies
 MyHomogAbs=[]	# filled with climatology+homogenised anomalies
@@ -809,7 +809,7 @@ for st in range(nstations):
     MyTStation      = []
     MyDPDStation    = []
     MyRAWStation    = []
-    MyClims         = []	# 12 element array of mean months 1976-2005
+    MyClims         = []	# 12 element array of mean months 1981-2010
     MyAnomalies     = [] # filled with anomalies after subtracting climatology
     MyHomogAnoms    = [] # filled with homogenised anomalies
     MyHomogAbs      = []  # filled with climatology+homogenised anomalies

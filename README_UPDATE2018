@@ -61,9 +61,9 @@ change years/versions in file where appropriate
 		-> OTHER
 	-> PROGS 
 	(may need some faffing with the git repositories as described below but a straightforward copy appears to work and is in makeHadISDHdirectories.sh!
-	This does then require all files to be added, committed and synced as they are seen as modifications:
+	This may (but didn't this time) then require all files to be added, committed and synced as they are seen as modifications:
 	    -> git add filename
-	    -> git config -m "This is the 2017 update"
+	    -> git commit -m "This is the 2017 update"
 	    -> git push HADISDHOrigin master
 	    -> git status THIS LETS YOU SEE WHAT NEEDS TO BE DONE)
 	So the below stuff about git can be ignored but I'm keeping the info just in case    
@@ -80,10 +80,13 @@ change years/versions in file where appropriate
 	 -> git fetch ClimExpOrigin
 	 -> git checkout master
 	 ***
+	 The PHA directories also appear to have copied across - so you'll need to empty them and reset to 2018
 	 -> mkdir PHA2015
 	 -> cd PHA2015
 	 -> scp -r ../UPDATE2014/PHA_2014/.* .
+	 change all years in pha52jgo/data/makePHAdirectories.sh then run.
 	  -> ./makePHAdirecotories.sh
+	  then remove the old .conf files and rm -R 73<yy><var> directories from hadisdh/
 	  -> set up the .conf files, incl files as described in README_KATEJAN2016
 	-> MONTHLIES 
 		-> ASCII -> TABS,TDABS,TWABS,QABS,EABS,RHABS,DPDABS,WSABS,SLPABS
@@ -114,7 +117,7 @@ change years/versions in file where appropriate
 		-> TIMESERIES
 		-> OTHER
 	-> OTHERDATA
-	  -> cp 20CR... files from UPDATE2016/OTHERDATA/
+	  -> cp 20CRv2c... files from UPDATE2016/OTHERDATA/
 
 ;------------------------------------------------------------------
 ORDER
@@ -166,9 +169,10 @@ ORDER
 	
 	
 RESULTS:
+2018 From 8103 stations we now have 4572 'good' stations and 3531 'too short' stations.	1981-2010 climatology
 2017 From 8103 stations we now have 4210 'good' stations and 3893 'too short' stations.	1976-2005 climatology
 2017 From 8103 stations we now have 4576 'good' stations and 3527 'too short' stations.	1981-2010 climatology
-2016 From 7877 stations we now have 4216 'good' stations and 3661 'too short' stations.	
+#2016 From 7877 stations we now have 4216 'good' stations and 3661 'too short' stations.	
 
 3) RUN DIRECT PHA FOR T and DPD (and all others to get corr files): 
 	- set up /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/all_code/source_expand/parm_includes/inhomog.parm.MNTHLY.TEST.incl
@@ -178,7 +182,7 @@ RESULTS:
 	OR
 	- compile from /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/all_code/source_expand
 	>make compile
-	- cp /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/all_code/source_expand/PHA* 
+	- cp /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/all_code/source_expand/PHA*TEST 
              /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/code/bin/
 	- edit /PROGS/HADISDH_BUILD/rewrite_stnlist.pro to work with latest year and run to rewrite goodforHadISDH.<version>_JAN<yyyy>.txt
 	  station lists and populate PHA directories with station lists and blank metadata files: 
@@ -221,11 +225,11 @@ issues last year but the filepath was different/shorter. For this reason I now u
 	- now copy the output on screen below and fill in the list of removed stations from /corr/meta*input_not_stnlist 
 
 RESULTS:
-('BAD DPD and T uniq stations: ', 11)
-('GOOD DPD and T uniq stations: ', 4565)
+('BAD DPD and T uniq stations: ', 10)
+('GOOD DPD and T uniq stations: ', 4562)
 (0, 'DPD')
 ('BAD Stations for: ', 'DPD', 8)
-('GOOD DPD uniq stations: ', 4568)
+('GOOD DPD uniq stations: ', 4564)
 61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
 68300099999 -26.68     15.25          139 WA LUDERITZ (DIAZ POINT)        
 68994099999 -46.88     37.87           22 SF MARION ISLAND                
@@ -234,28 +238,27 @@ RESULTS:
 89002099999 -70.67     -8.25           50 AY NEUMAYER                     
 89022099999 -75.61    -26.27           30 AY HALLEY                       
 89564099999 -67.60     62.87           16 AY MAWSON                       
-(1, 'T')
-('BAD Stations for: ', 'T', 4)
-('GOOD T uniq stations: ', 4572)
+1, 'T')
+('BAD Stations for: ', 'T', 3)
+('GOOD T uniq stations: ', 4569)
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 91245041606  19.28    166.65            3 WQ WAKE ISLAND AIRFLD           
-91925099999  -9.80   -139.03           53 FP HIVA-OA                      
 (2, 'q')
 ('BAD Stations for: ', 'q', 3)
-('GOOD q uniq stations: ', 4573)
+('GOOD q uniq stations: ', 4569)
 08501099999  39.46    -31.13           34 PO FLORES                       
 89642099999 -66.67    140.02           43 AY DUMONT D'URVILLE             
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 (3, 'e')
 ('BAD Stations for: ', 'e', 3)
-('GOOD e uniq stations: ', 4573)
+('GOOD e uniq stations: ', 4569)
 08501099999  39.46    -31.13           34 PO FLORES                       
 89642099999 -66.67    140.02           43 AY DUMONT D'URVILLE             
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 (4, 'RH')
 ('BAD Stations for: ', 'RH', 9)
-('GOOD RH uniq stations: ', 4567)
+('GOOD RH uniq stations: ', 4563)
 61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
 68300099999 -26.68     15.25          139 WA LUDERITZ (DIAZ POINT)        
 68994099999 -46.88     37.87           22 SF MARION ISLAND                
@@ -264,23 +267,21 @@ RESULTS:
 89002099999 -70.67     -8.25           50 AY NEUMAYER                     
 89022099999 -75.61    -26.27           30 AY HALLEY                       
 89564099999 -67.60     62.87           16 AY MAWSON                       
-91610099999   1.38    173.15            2 KR BONRIKI INTL                 
+91245041606  19.28    166.65            3 WQ WAKE ISLAND AIRFLD           
 (5, 'Tw')
 ('BAD Stations for: ', 'Tw', 4)
-('GOOD Tw uniq stations: ', 4572)
+('GOOD Tw uniq stations: ', 4568)
 08501099999  39.46    -31.13           34 PO FLORES                       
 68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 (6, 'Td')
-('BAD Stations for: ', 'Td', 7)
-('GOOD Td uniq stations: ', 4569)
+('BAD Stations for: ', 'Td', 5)
+('GOOD Td uniq stations: ', 4567)
 08501099999  39.46    -31.13           34 PO FLORES                       
-61901099999 -15.93     -5.67          436 SH ST. HELENA IS.               
 68906099999 -40.35     -9.88           54 SH GOUGH ISLAND                 
 68994099999 -46.88     37.87           22 SF MARION ISLAND                
 85469099999 -27.17   -109.42           69 CI MATAVERI INTL                
-89532099999 -69.00     39.58           21 AY SYOWA                        
 91066022701  28.20   -177.38            5 MQ HENDERSON FIELD AIRPORT      
 
 4) INFIL MDIs for MISSING YEARS, SAVE TO HOMOG ASCII DIRECTORY, PLOT RAW vs HOMOG with NEIGHBOURS, FOR T and DPD
@@ -291,15 +292,10 @@ OutputPHAASCIIPLOT_JAN2015.py
 RESULTS:
 DONE T
 DONE DPD
-DONE Td PHADPD (the version which creates Td from T - DPD) - started but it crashed after 010280!!! Station looks to have been completed ok though.
-Restarted at next station 010330 and it seems fine - odd - completed now.
+after IndirectPHA_JAN2015.py for t
+DONE Td PHADPD (the version which creates Td from T - DPD) 
 
 Non-essentials:
-DONE q
-DONE RH
-Td PHA
-DONE e
-Tw Plots will be oK!!!
 	
 5) RUN INDIRECT PHA FOR T (merge adjustment log), q, e, RH and Tw
 IndirectPHA_JAN2015.py	(all variables seperately)
@@ -314,56 +310,61 @@ IndirectPHA_JAN2015.py	(all variables seperately)
 
 RESULTS:
 DONE T
-4561 stations in goods
-4 noneighbours
+4556 stations in goods
+6 noneighbours
 08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    5 
+47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    5 
 68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    6 
 89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    6 
 91190022516 20.9000 -156.4290   15.5 US KAHULUI AIRPORT               NGHBRS:    6 
+91925099999 -9.8000 -139.0330   53.0 FP HIVA-OA                       NGHBRS:    5 
 
-4561 stations in goods for Td (all bad stations had been removed anyway by PHA T , PHA DPD and IDPHA T (noneighbours))
+4556 stations in goods for Td (all bad stations had been removed anyway by PHA T , PHA DPD and IDPHA T (noneighbours))
 
 DONE q
-4556 stations in goods
+4553 stations in goods
 9 noneighbours
 08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
-08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
 47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    6 
 68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    5 
-89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    5 
-89611099999-66.2830  110.5330   42.0 AY CASEY                         NGHBRS:    5 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    6 
+89571099999-68.5830   77.9670   23.0 AY DAVIS                         NGHBRS:    5 
 89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    0 
 91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
 91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
+91366040604  8.7330  167.7330    2.1 RM BUCHOLZ AAF KWAJALEIN KMR ATO NGHBRS:    6 
 
-DONE e
-4556 stations in goods
-9 noneighbours
-08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
-08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
-47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    6 
-68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    5 
-89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    5 
-89611099999-66.2830  110.5330   42.0 AY CASEY                         NGHBRS:    5 
-89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    0 
-91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
-91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
 
-DONE RH
-4556 stations in goods
-9 noneighbours
-62721099999 15.5890   32.5530  385.6 SU KHARTOUM                      NGHBRS:    6 
+DONE rh
+4552 stations in goods
+10 noneighbours
+61998099999-49.3500   70.2500   30.0 FS PORT-AUX-FRANCAIS (ILES KERGU NGHBRS:    6 
 64500099999  0.4590    9.4120   11.9 GB LEON M BA                     NGHBRS:    6 
 64501099999 -0.7120    8.7540    4.0 GB PORT GENTIL                   NGHBRS:    6 
-78767099999  9.9580  -83.0220    2.1 CS LIMON INTL                    NGHBRS:    6 
+84452099999 -6.7870  -79.8280   29.6 PE CAPT JOSE A  QUINONES GONZALE NGHBRS:    5 
 88963099999-63.4000  -56.9830   24.0 AY BASE ESPERANZA                NGHBRS:    6 
 89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    5 
 91218099999 13.5670  144.9170  162.0 GQ ANDERSEN AFB                  NGHBRS:    6 
-91610099999  1.3820  173.1470    2.7 KR BONRIKI INTL                  NGHBRS:    0 
+91610099999  1.3820  173.1470    2.7 KR BONRIKI INTL                  NGHBRS:    5 
 91943099999-14.4830 -145.0330    3.0 FP TAKAROA                       NGHBRS:    6 
+91958099999-27.6170 -144.3330    2.0 FP RAPA                          NGHBRS:    6 
+
+
+DONE e
+4553 stations in goods
+9 noneighbours
+08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
+47991099999 24.2900  153.9790    6.7 JA MINAMI TORISHIMA              NGHBRS:    6 
+68906099999-40.3500   -9.8830   54.0 SH GOUGH ISLAND                  NGHBRS:    5 
+89532099999-69.0000   39.5830   21.0 AY SYOWA                         NGHBRS:    6 
+89571099999-68.5830   77.9670   23.0 AY DAVIS                         NGHBRS:    5 
+89642099999-66.6670  140.0170   43.0 AY DUMONT D'URVILLE              NGHBRS:    0 
+91165022536 21.9840 -159.3410   30.5 US LIHUE AIRPORT                 NGHBRS:    6 
+91176022519 21.4500 -157.7680    7.3 US KANEOHE MCAS                  NGHBRS:    6 
+91366040604  8.7330  167.7330    2.1 RM BUCHOLZ AAF KWAJALEIN KMR ATO NGHBRS:    6 
 
 DONE Tw
-4559 stations in goods
+4556 stations in goods
 6 noneighbours
 08501099999 39.4550  -31.1310   34.1 PO FLORES                        NGHBRS:    0 
 08505099999 38.5200  -28.7160   36.0 PO HORTA                         NGHBRS:    6 
@@ -379,7 +380,7 @@ OutputPHAASCIIPLOT_JAN2014.py
 	further processing
 	NB: Future versions have an'IF NO NEIGHBOURS STILL OUTPUT FILE'
 	
-DONE
+DONE Td
 
 7) OBSELETE - I have automated this: Input station counts into plot_HadISDH_adjs_JAN2015.pro
 
@@ -408,64 +409,57 @@ NOTE: Not quite sure why the stations with largest adjs in q and e are not very 
 NOTE - NOW I'M REMOVING ALL STATIONS WHERE q>3 or RH>15 or T/TD > 5
 
 RESULTS:
-q,e,RH,Tw,T,Td - frequency of removals now increases over time and is less in the early years - more station neighbours? 
-DPD - goes up and then down more than before
-
+q,e,RH,Tw,T,Td - frequency of removals increases over time and is less in the early years - more station neighbours? 
+DPD - goes up and then down
   q     ID    ABS MEAN:    0.275
-  q     ID    ABS STDV:    0.309
-  q     ID    MEAN    :   -0.007
-  q     ID    ST DEV  :    0.414
-  q     ID    MN GSDFS:   -0.004
-  q     ID    *SDGSDFS:    0.215
-  q     ID    MN ADJ N:    4.358
-
-  e     ID    ABS MEAN:    0.428
-  e     ID    ABS STDV:    0.478
-  e     ID    MEAN    :   -0.010
-  e     ID    ST DEV  :    0.641
-  e     ID    MN GSDFS:    0.000
-  e     ID    *SDGSDFS:    0.260
-  e     ID    MN ADJ N:    4.358
- 
- rh     ID    ABS MEAN:    2.898
- rh     ID    ABS STDV:    2.228
- rh     ID    MEAN    :    0.029
- rh     ID    ST DEV  :    3.655
- rh     ID    MN GSDFS:   -0.084
- rh     ID    *SDGSDFS:    1.322
- rh     ID    MN ADJ N:    4.360
- 
- tw     ID    ABS MEAN:    0.317
- tw     ID    ABS STDV:    0.364
- tw     ID    MEAN    :   -0.015
- tw     ID    ST DEV  :    0.483
- tw     ID    MN GSDFS:   -0.013
- tw     ID    *SDGSDFS:    0.219
- tw     ID    MN ADJ N:    4.358
-
-  t     ID    ABS MEAN:    0.373
-  t     ID    ABS STDV:    0.476
-  t     ID    MEAN    :   -0.025
-  t     ID    ST DEV  :    0.605
-  t     ID    MN GSDFS:    0.023
-  t     ID    *SDGSDFS:    0.292
-  t     ID    MN ADJ N:    4.164
-
-dpd    PHA    ABS MEAN:    0.995
-dpd    PHA    ABS STDV:    0.729
-dpd    PHA    MEAN    :   -0.012
-dpd    PHA    ST DEV  :    1.233
-dpd    PHA    MN GSDFS:   -0.009
-dpd    PHA    *SDGSDFS:    0.430
-dpd    PHA    MN ADJ N:    2.916
-
- td PHADPD    ABS MEAN:    0.781
- td PHADPD    ABS STDV:    0.699
- td PHADPD    MEAN    :   -0.017
- td PHADPD    ST DEV  :    1.048
- td PHADPD    MN GSDFS:   -0.010
- td PHADPD    *SDGSDFS:    0.392
- td PHADPD    MN ADJ N:    4.244
+  q     ID    ABS STDV:    0.306
+  q     ID    MEAN    :   -0.006
+  q     ID    ST DEV  :    0.411
+  q     ID    MN GSDFS:   -0.018
+  q     ID     SDGSDFS:    0.216
+  q     ID    MN ADJ N:    4.404
+  e     ID    ABS MEAN:    0.427
+  e     ID    ABS STDV:    0.474
+  e     ID    MEAN    :   -0.009
+  e     ID    ST DEV  :    0.638
+  e     ID    MN GSDFS:    0.004
+  e     ID     SDGSDFS:    0.273
+  e     ID    MN ADJ N:    4.404
+ rh     ID    ABS MEAN:    2.894
+ rh     ID    ABS STDV:    2.242
+ rh     ID    MEAN    :    0.040
+ rh     ID    ST DEV  :    3.660
+ rh     ID    MN GSDFS:   -0.083
+ rh     ID     SDGSDFS:    1.400
+ rh     ID    MN ADJ N:    4.408
+ tw     ID    ABS MEAN:    0.316
+ tw     ID    ABS STDV:    0.362
+ tw     ID    MEAN    :   -0.014
+ tw     ID    ST DEV  :    0.480
+ tw     ID    MN GSDFS:   -0.001
+ tw     ID     SDGSDFS:    0.235
+ tw     ID    MN ADJ N:    4.405
+  t     ID    ABS MEAN:    0.374
+  t     ID    ABS STDV:    0.478
+  t     ID    MEAN    :   -0.024
+  t     ID    ST DEV  :    0.606
+  t     ID    MN GSDFS:    0.021
+  t     ID     SDGSDFS:    0.297
+  t     ID    MN ADJ N:    4.233
+dpd    PHA    ABS MEAN:    0.999
+dpd    PHA    ABS STDV:    0.733
+dpd    PHA    MEAN    :   -0.021
+dpd    PHA    ST DEV  :    1.239
+dpd    PHA    MN GSDFS:   -0.006
+dpd    PHA     SDGSDFS:    0.270
+dpd    PHA    MN ADJ N:    2.951
+ td    DPD    ABS MEAN:    0.789
+ td    DPD    ABS STDV:    0.703
+ td    DPD    MEAN    :   -0.009
+ td    DPD    ST DEV  :    1.056
+ td    DPD    MN GSDFS:   -0.040
+ td    DPD     SDGSDFS:    0.406
+ td    DPD    MN ADJ N:    4.308
 	
 DONE T ID:
 4.14 changepoints per station  (more than 2016)
@@ -473,13 +467,14 @@ ABS mean=0.38, st dev=0.53     (mean v sim, stdev higher than 2016)
 Mean = -0.02, st dev=0.65      (mean same, stdev higher than 2016)
 mean of diffs=0.03, stdev=0.30 (both slightly higher than 2016)
 Largest Adjustments (> 5 deg) - 6 unique stations!
-71749099999 -18.61
-71749099999  17.13
-71627899999  -9.01
-71627899999   8.38
-02096099999  -7.00
-16115099999   6.25
-11993099999  -5.87
+2018 larges (removals) 5
+71749099999 -18.62
+71749099999  17.20
+71627899999  -9.21
+71627899999   8.94
+02096099999  -7.06
+16115099999   6.06
+11993099999  -5.85
 
 2017 VAST MAJORITY (all except 535880) ARE MERGED - THIS IS TRUE RIGHT DOWN TO 3 deg ADJUSTMENTS (possibly lower too). Need to consider
 whether to ditch more stations with large adjustments - and to investigate the merge further - PHA might be an important
@@ -490,13 +485,6 @@ plausible that 'real' jumps of this magnitude could be in there but looks like a
 removals. For now we've increased removals by also removing q>3g/kg and RH>15%rh because many of these stations weren't being picked up
 by the 5deg threshold for T and Td.
 
-DONE T PHA:
-1.58 changepoints per station   (more than 2016)
-ABS mean=0.74, st dev=0.70      (mean v sim, stdev higher than 2016)
-Mean = -0.10, st dev=1.01       (v sim to 2016)
-mean of diffs=-0.01, stdev=0.23 (mean slightly lower, stdev higher than 2016)
-Largest Adjustments (> 5 deg) - 5 unique stations!
-
 DONE DPD - PHA
 2.90 changepoints per station   (more than 2016)
 ABS mean=0.99, st dev=0.72      (mean same, stdev slightly higher than 2016)
@@ -506,36 +494,45 @@ Largest Adjustments (> 5 deg) - note how ALL of these are different from the T o
 T BAD MERGES don't appear so clearly in DPD because the T and Td are merged simultaneously. The
 difference between the two (DPD) may not be as large as the difference in T or Td themselves.
 For example, the largest DPD adjustment for 718360 is 1.5 deg! Tiny compared to the -21.63 for T. 
-41128099999  -8.88
-41128099999   8.85
-44277099999   6.98
-76577099999  -6.85
-55664099999   6.84
-40377099999  -6.78
-40357099999  -6.68
-41128099999   6.60
-41136099999   6.40
-41128099999   6.39
-40420099999   6.27
-94346099999   6.17
-41061099999  -6.17
-17330099999   6.16
-55578099999   6.12
-41240099999   6.11
-94332099999   6.07
-40260099999   5.87
-41128099999  -5.79
-72520799999  -5.64
-61498099999   5.50
-55279099999   5.37
-04231099999  -5.37
-40310099999   5.33
-44287099999   5.30
-94238099999   5.29
-95492099999   5.23
-40809099999   5.19
-60580099999   5.07
-95482099999   5.03
+2018 larges 32 unique
+41128099999  -8.97
+41128099999   8.24
+41061099999  -7.65
+41128099999   7.02
+44277099999   6.96
+41136099999   6.82
+40377099999  -6.77
+40260099999   6.63
+55664099999   6.46
+40357099999  -6.46
+17330099999   6.26
+41128099999   6.16
+41240099999   6.05
+94346099999   5.95
+41128099999  -5.85
+41061099999  -5.83
+55578099999   5.80
+04231099999  -5.66
+41660099999   5.60
+94332099999   5.51
+95482099999   5.46
+55279099999   5.46
+41136099999  -5.46
+76665099999  -5.44
+95492099999   5.40
+40310099999   5.30
+41084099999   5.27
+71437099999  -5.21
+40809099999   5.21
+89571099999   5.15
+72365499999   5.14
+60775099999  -5.14
+44287099999   5.11
+44373099999  -5.09
+94510099999  -5.09
+44298099999   5.02
+94255099999  -5.01
+
 
 DONE Td - PHADPD
 4.22 changepoints per station   (more than 2016)
@@ -544,70 +541,65 @@ Mean = -0.01, st dev=1.07	(mean same, stdev slightly higher than 2016)
 mean of diffs=-0.02, stdev=0.33 (mean slightly lower, stdev slightly higher than 2016)
 Largest adjustments (> 5 deg) - note how there are many more than for T. (29 unique stations)
 * shows those that are larger than > 5 deg in T.
-71749099999  17.13
-71749099999 -15.76
-41128099999   9.22
-71627899999   7.42
-41128099999  -7.24
-76577099999   7.16
-02096099999  -7.00
-44277099999  -6.96
-61498099999  -6.93
-40377099999   6.93
-55664099999  -6.88
-71627899999  -6.61
-41136099999  -6.57
-17330099999  -6.32
-40420099999  -6.28
-41128099999  -6.27
-16115099999   6.25
-41128099999  -6.09
-40260099999  -5.88
-11993099999  -5.87
-55578099999  -5.78
-40310099999  -5.66
-72520799999   5.63
-41128099999   5.53
-40340099999  -5.38
-41240099999  -5.29
-40809099999  -5.23
-55279099999  -5.20
-60580099999  -5.17
-44373099999   5.16
-44287099999  -5.15
-94339099999   5.13
-41084099999  -5.07
-44298099999  -5.06
-
-DONE Td - PHA
-2.49 changepoints per station
-ABS mean=0.99, st dev=0.77
-Mean = -0.05, st dev=1.26
-mean of diffs=-0.01, stdev=0.37
-Largest adjustments (> 5 deg) - note how there are many more than for T.
-* shows those that are larger than > 5 deg in T.
+2018 larges (removals) 33 unique
+71749099999  17.20
+71749099999 -15.72
+41128099999   9.25
+71627899999   7.96
+41061099999   7.60
+41136099999  -7.06
+02096099999  -7.06
+41128099999  -7.01
+40377099999   6.90
+71627899999  -6.69
+44277099999  -6.69
+40260099999  -6.67
+55664099999  -6.58
+17330099999  -6.42
+41128099999  -6.40
+61498099999  -6.09
+16115099999   6.06
+11993099999  -5.85
+41128099999   5.83
+95482099999  -5.65
+41128099999  -5.47
+55578099999  -5.47
+76665099999   5.44
+94510099999   5.40
+40809099999  -5.38
+41136099999   5.37
+40310099999  -5.35
+71437099999   5.31
+55279099999  -5.27
+44373099999   5.27
+41084099999  -5.27
+72365499999  -5.26
+94339099999   5.25
+41240099999  -5.24
+41660099999  -5.23
+36982099999  -5.07
+44298099999  -5.04
+60580099999  -5.03
+44352099999  -5.01
 
 DONE q - ID 
 4.33 changepoints per station  (more than 2016)
 ABS mean=0.27, st dev=0.30     (v sim as 2016)
 Mean = -0.01, st dev=0.40      (identical to 2016)
 mean of diffs=0.01, stdev=0.20 (mean = -0.01 in 2016, stdev bigger now)
-Largest Adjustments (> 2 g/kg) 
+Largest Adjustments (> 3 g/kg) 
 NONE are the same as for T - nearest is 717490 at 2.16 g/kg
 Some are same as Td marked +
-76577099999   3.81
+2018 larges (removals) 7 unique
+76577099999   3.97
 41240099999  -3.54
-76577099999   3.52
-16115099999   3.49
-78367011706   3.40
-41128099999   3.37
-78397099999  -3.31
+16115099999   3.42
+41128099999   3.39
+78397099999  -3.36
+78367011706   3.33
+76577099999  -3.28
 78397099999   3.25
-41268099999  -3.16
-82281099999  -3.14
-76762099999  -3.13
-78520199999   3.06
-41128099999  -3.01
+76762099999  -3.10
 
 DONE RH - ID 
 4.42 changepoints per station  (more than 2016)
@@ -617,37 +609,35 @@ mean of diffs=0.05, stdev=1.19 (slightly larger than in 2016, esp stdev)
 Largest Adjustments (> 15%rh) 
 NONE are the same as for T
 Some are same as Td marked +
-36982099999 -24.25
+2018 larges (removals) 26 unique
+36982099999 -26.55
+44277099999 -23.69
 04231099999  23.54
-44277099999 -21.58
-71437099999  20.43
-76577099999  20.41
-71800099999  19.06
-44298099999 -18.78
+71437099999  21.04
+76577099999  20.62
+01406099999 -18.26
+71433099999  17.73
 71465099999  17.66
-78367011706  17.49
-76577099999  17.28
-01406099999 -17.16
-38545099999 -16.89
-60714099999 -16.69
-44287099999 -16.53
-76577099999 -16.36
-71433099999  16.30
-59948099999  16.15
-72393099999  16.02
-37432099999 -15.98
-72412799999  15.85
-41240099999 -15.84
-15481099999  15.82
-13615099999  15.80
-72446713930  15.62
-71800099999 -15.46
-76577099999 -15.45
-13579099999  15.43
-47122099999  15.32
-38001099999  15.29
-76423099999 -15.11
-72520799999  15.04
+44287099999 -17.16
+78367011706  17.12
+38545099999 -17.05
+61967070701 -16.81
+60714099999 -16.71
+59948099999  16.69
+44298099999 -16.33
+76577099999 -16.28
+44275099999 -16.23
+72412799999  15.86
+13615099999  15.85
+72393099999  15.82
+41240099999 -15.77
+37432099999 -15.68
+71800099999 -15.50
+71800099999  15.49
+85201099999  15.47
+13579099999  15.42
+72446713930  15.37
+72570099999  15.17
 
 DONE e - ID
 4.33 changepoints per station	(more than 2016)
@@ -657,27 +647,84 @@ mean of diffs=-0.00, stdev=0.25 (v sim to 2016, stdev slightly larger than in 20
 Largest Adjustments (> 4hPa) 
 Some are same as Td marked +
 NONE are the same as for T
-41240099999  -5.60
-78367011706   5.41
-78397099999  -5.26
-78397099999   5.21
-41268099999  -5.04
-82281099999  -4.97
-76577099999   4.92
-78520199999   4.89
-41128099999   4.74
-16115099999   4.48
-76577099999   4.47
-76762099999  -4.42
-78990099999   4.38
-61498099999   4.34
+41240099999  -5.61
+78397099999  -5.35
+78367011706   5.32
+78397099999   5.22
+76577099999   5.11
+41128099999   4.75
+40340099999  -4.71
+61967070701  -4.59
+78520199999   4.44
+76762099999  -4.40
+16115099999   4.37
 78388099999  -4.32
-41128099999  -4.24
-40340099999  -4.18
-91670099999  -4.14
-80421499999  -4.12
+41268099999  -4.31
+78990099999   4.26
+76577099999  -4.26
+61404099999  -4.10
 41218099999   4.09
-41061099999   4.01
+98324099999   4.08
+82281099999  -4.04
+80421499999  -4.04
+91670099999  -4.01
+80419099999   3.95
+80421499999  -3.93
+91170022508   3.92
+41128099999  -3.78
+61421099999   3.77
+76382099999  -3.76
+76342099999   3.65
+41061099999   3.63
+72211599999  -3.60
+82193099999  -3.56
+71749099999   3.56
+82281099999  -3.54
+78792099999  -3.54
+60714099999  -3.54
+40439099999  -3.53
+80415099999  -3.51
+76654099999  -3.48
+76654099999   3.45
+13615099999   3.45
+60765099999  -3.40
+78547011624   3.40
+81225099999  -3.37
+83746099999   3.36
+61052099999  -3.36
+71749099999  -3.36
+82917099999   3.34
+48565099999   3.34
+42647099999   3.34
+82899099999   3.33
+81225099999   3.33
+78482099999  -3.33
+62161099999   3.32
+94204099999  -3.31
+41218099999  -3.31
+40373099999   3.30
+16718099999  -3.26
+76459399999   3.25
+41128099999  -3.25
+91800099999  -3.19
+98429099999   3.18
+76649399999  -3.18
+76805699999   3.16
+43201099999  -3.16
+80421499999   3.16
+60030099999   3.15
+80410099999   3.13
+91170022508  -3.12
+82899099999  -3.12
+78367011706  -3.10
+91954099999   3.06
+94388099999  -3.04
+78990099999  -3.04
+78485099999  -3.04
+76491599999  -3.04
+61226099999   3.04
+02096099999  -3.02
+82579099999   3.00
 
 DONE Tw - ID 
 4.33 changepoints per station  (more than 2016)
@@ -686,15 +733,15 @@ Mean = -0.01, st dev=0.51      (v sim to 2016)
 mean of diffs=0.01, stdev=0.22 (slightly larger than in 2016)
 Largest Adjustments (> 5 deg) - ALL same as for T
 * = also in T
-71749099999 -16.56
+2018 larges (removals)
+71749099999 -16.55
 71749099999  16.31
-71627899999   7.73
-71627899999  -7.50
-02096099999  -6.48
-16115099999   5.35
+71627899999   8.24
+71627899999  -7.89
+02096099999  -6.49
+16115099999   5.49
 
-Overall - slightly higher frequency of changepoints per station
-and generally slightly larger stdevs. Means v similar.
+Overall - more large removals
 
 THINK ABOUT WHETHER TO REMOVE MORE STATIONS WITH VERY LARGE ADJUSTMENTS IN
 VARIABLES OTHER THAN T!!! IT WOULD SEEM SENSIBLE - ESP IF THEY ARE MERGES?
@@ -703,7 +750,64 @@ Td (PHADPD) that are larger than 5 degrees. I'm now also removing where q>3g/kg 
 This is still a little arbitrary but I'm 
 not sure where to draw the line. Even though PHA is good at removing large jumps it seems
 like evidence that the station is of poor quality if such a large jump is present.
-This results in 54 unique stations:
+This results in 55 (54 in 2017) unique stations:
+01406099999                                                           
+02096099999                                                           
+04231099999                                                           
+11993099999                                                           
+13579099999                                                           
+13615099999                                                           
+16115099999                                                           
+17330099999                                                           
+36982099999                                                           
+37432099999                                                           
+38545099999                                                           
+40260099999                                                           
+40310099999                                                           
+40377099999                                                           
+40809099999                                                           
+41061099999                                                           
+41084099999                                                           
+41128099999                                                           
+41136099999                                                           
+41240099999                                                           
+41660099999                                                           
+44275099999                                                           
+44277099999                                                           
+44287099999                                                           
+44298099999                                                           
+44352099999                                                           
+44373099999                                                           
+55279099999                                                           
+55578099999                                                           
+55664099999                                                           
+59948099999                                                           
+60580099999                                                           
+60714099999                                                           
+61498099999                                                           
+61967070701                                                           
+71433099999                                                           
+71437099999                                                           
+71465099999                                                           
+71627899999                                                           
+71749099999                                                           
+71800099999                                                           
+72365499999                                                           
+72393099999                                                           
+72412799999                                                           
+72446713930                                                           
+72570099999                                                           
+76577099999                                                           
+76665099999                                                           
+76762099999                                                           
+78367011706                                                           
+78397099999                                                           
+85201099999                                                           
+94339099999                                                           
+94510099999                                                           
+95482099999                                                           
+
+2017
 01406099999 NO MERGE, NOT IN T, NOT IN TD
 02096099999 		     MERGE, IN TD
 04231099999 NO MERGE, NOT IN T, NOT IN TD
@@ -774,16 +878,16 @@ from each of the goodstations*** files (IDPHA, PHAdpd and PHADPDtd).
 UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 
 RESULTS 2018:
-54 stations removed because of large adjustments	
+55 stations removed because of large adjustments	
 Updated station counts are now:
     	IDPHA	PHA	PHADPD	MISSED ADJ UNC
-T    	4507			0.292
-DPD 		4514        	0.430
-Td			4507    0.392
-q	4502	                0.215
-RH	4502	                1.322
-e	4502	                0.260
-Tw	4505	                0.219
+T    	4501			0.297
+DPD 		4501        	0.270
+Td			4501    0.406
+q	4498	                0.216
+RH	4497	                1.400
+e	4498	                0.273
+Tw	4501	                0.235
 
 OBSELETE - now automated 11) Put the missed adjustment uncertainty (st dev of differences) into
 create_homogNCDFall_stunc_JAN2015.pro
@@ -798,11 +902,23 @@ create_homogNCDFall_stunc_JAN2015.pro (all variables seperately)
 	Posthomog<ID>PHA<var>_badsHadISDH<version>_JAN2017.txt - move from sats/subzeros if station appears in bads and annotate bads with SATS or SUBS
 	   This is quite a long process - consider automating somehow - better for avoiding error too!
 
-
-RESULTS 2018 anoms81-10: 
+RESULTS 2018 anoms81-10: (not gone through to find sats and subs in bads yet)
 IDPHA, PHDdpd, PHDDPDtd	
     	goods	bads	subs	sats 	goods (no sats or subs)
 T    	4364	143	NA	NA	4364
+DPD 	4090	419	NA	209     3881 16 SATS IN BADS REMOVED 	
+Td	3914	587	NA	209  	3705 - no need to paste DPD removals in bads list as these are also in derived list
+q	4481	17	38	41	4402 NO SUBS/SUBS OR SATS IN BADS
+RH	4480	17	0	41	4439 NO SATS IN BADS
+e	4481	17	39	41	4401 NO SATS/SUBS IN BADS
+Tw	4484	17	NA	940	3544 NO SATS IN BADS
+
+NOT SORTED FOR Td YET
+
+RESULTS 2017 anoms81-10: 
+IDPHA, PHDdpd, PHDDPDtd	
+    	goods	bads	subs	sats 	goods (no sats or subs)
+T    	4354	147	NA	NA	4364
 DPD 	4077	437	NA	212     3865   	
 Td	3928	579	NA	204  	3724 - no need to paste DPD removals in bads list as these are also in derived list
 q	4485	17	44	48	4393
@@ -811,17 +927,6 @@ e	4485	17	44	48	4393
 Tw	4488	17	NA	896	3592
 
 	
-RESULTS 2017 anoms76-05: 
-IDPHA, PHDdpd, PHDDPDtd	
-    	goods	bads	subs	sats 	goods (no sats or subs)
-T    	4039	132	NA	NA	4039
-DPD 	3886	294	NA	227     3659   	
-Td	3727	444	NA	221  	3506
-q	4149	21	44	38	4067
-RH	4148	20	0	38	4110
-e	4149	21	45	38	4066
-Tw	4150	21	NA	949	3201
-
 OBSELETE - NOW AUTOMATICALLY READ IN 13) Propogate totals of goods (no sats and subs), sats, subzeros through to all other programs
 
 		
@@ -842,8 +947,10 @@ DONE RH ID
 DONE T ID
 DONE e ID
 DONE Tw ID
-DONE Td PHADPD
 DONE DPD PHA
+
+
+NOT DONE Td PHADPD
 
 15) CREATE RAW AND HOMOGENISED DECADAL TREND GRIDBOX FIELDS 
 make_MP_trends.pro
@@ -851,6 +958,9 @@ make_MP_trends.pro
 	You can do this for the full period, 1973-1999 and 2000-present.
 
 RESULTS:
+
+
+
 DONE q ID
 DONE RH ID
 DONE T ID

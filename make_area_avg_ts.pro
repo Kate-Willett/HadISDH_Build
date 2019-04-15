@@ -1,3 +1,5 @@
+; NOW REDUNDANT BECAUSE WE HAVE make_area_avg_ts.py in PROGS/PYTHON
+
 ; TIDL
 ; 
 ; Author: Kate Willett
@@ -141,19 +143,19 @@ pro make_area_avg_ts,param,homogtype
 mdi =        -1e+30
 
 ; *** CHOOSE CANDIDATE set up values
-styr =       1979	; 1850, 1973, 1950, 1880, 1979
-edyr =       2017	; 
+styr =       1973	; 1850, 1973, 1950, 1880, 1979
+edyr =       2018	; 
 datestring = strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
 climst =     1981	; 1976 or 1981
 climed =     2010	; 2005 or 2010
 
 ; *** CHOOSE READ IN DATE ***
-thenmon =     'MAR'
-thenyear =    '2018'
+thenmon =     'FEB'
+thenyear =    '2019'
 
 ; *** CHOOSE PRINT OUT DATE ***
-nowmon =     'MAR'
-nowyear =    '2018'
+nowmon =     'FEB'
+nowyear =    '2019'
 
 ;; *** CHOOSE PARAMETER ***
 ;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap';
@@ -162,7 +164,7 @@ nowyear =    '2018'
 ;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
 
 ; *** CHOOSE VERSION IF HadISDH ***
-version =    '4.0.0.2017f' ; 3.0.0.3016p 1.0.0.2016p
+version =    '1.0.0.2018f' ; 4.1.0.2018f 1.0.0.2018f
 
 ; *** CHOOSE WORKING DIRECTORY ***
 workingdir = 'UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
@@ -176,7 +178,7 @@ mclimst =     1981	; could be 1976 or 1981
 mclimed =     2010	; could be 2005 or 2010
 
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
-domain =     'land'	; 'land','marine','blend'
+domain =     'marine'	; 'land','marine','blend'
 
 ; *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
 isanom =     'true'	; 'false' for actual values, 'true' for anomalies
@@ -224,9 +226,9 @@ CASE param OF
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landDPD.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendDPD.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineDPD.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineDPD.'+version+'_BClocal5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendDPD.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineDPD.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineDPD.'+version+'_BClocalSHIP5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN
@@ -238,8 +240,8 @@ CASE param OF
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landDPD.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileM = maskdir+'HadISDH.marineDPD.'+version+'_FLATgrid5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileB = maskdir+'HadISDH.DPD.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileM = maskdir+'HadISDH.marineDPD.'+version+'_BClocalSHIP5by5both_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileB = maskdir+'HadISDH.DPD.'+version+'_FLATgridPHABClocalSHIPboth5by5_'+mclimchoice+'_'+thenmon+thenyear
   END
   'td': BEGIN
    param2 = 'Td'	
@@ -318,9 +320,9 @@ CASE param OF
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendq.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineq.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineq.'+version+'_BClocal5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendq.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineq.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineq.'+version+'_BClocalSHIP5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -332,8 +334,8 @@ CASE param OF
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileM = maskdir+'HadISDH.marineq.'+version+'_FLATgrid5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileB = maskdir+'HadISDH.q.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileM = maskdir+'HadISDH.marineq.'+version+'_BClocalSHIPboth5by5_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileB = maskdir+'HadISDH.q.'+version+'_FLATgridIDPHABClocalSHIPboth5by5_'+mclimchoice+'_'+thenmon+thenyear
   END
   'e': BEGIN
    param2 = 'e'	
@@ -355,7 +357,7 @@ CASE param OF
     ENDIF
     maskfileL = maskdir+'HadISDH.lande.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
     maskfileM = maskdir+'HadISDH.marinee.'+version+'_FLATgrid5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileB = maskdir+'HadISDH.e.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileB = maskdir+'HadISDH.e.'+version+'_FLATgridPHABClocalSHIPboth5by5_'+mclimchoice+'_'+thenmon+thenyear
   END
   'rh': BEGIN
    param2 = 'RH'	
@@ -363,9 +365,9 @@ CASE param OF
     IF (homogtype EQ 'PHA')    THEN infile = 'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'RAW')    THEN infile = 'HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLEND')  THEN infile = 'HadISDH.blendRH.'+version+'_FULL_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineRH.'+version+'_OBSclim2BClocal_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINE') THEN infile = 'HadISDH.marineRH.'+version+'_BClocal5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'BLENDship')  THEN infile = 'HadISDH.blendRH.'+version+'_FULLship_'+climchoice+'_'+thenmon+thenyear
-    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineRH.'+version+'_OBSclim2BClocalship_'+climchoice+'_'+thenmon+thenyear
+    IF (homogtype EQ 'MARINEship') THEN infile = 'HadISDH.marineRH.'+version+'_BClocalSHIP5by5both_'+climchoice+'_'+thenmon+thenyear
     IF (homogtype EQ 'ERA') THEN BEGIN
       CASE isanom OF
 	'true': BEGIN 
@@ -377,8 +379,8 @@ CASE param OF
       ENDCASE
     ENDIF
     maskfileL = maskdir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileM = maskdir+'HadISDH.marineRH.'+version+'_FLATgrid5by5_'+mclimchoice+'_'+thenmon+thenyear
-    maskfileB = maskdir+'HadISDH.RH.'+version+'_FLATgridPHA5by5_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileM = maskdir+'HadISDH.marineRH.'+version+'_BClocalSHIP5by5both_'+mclimchoice+'_'+thenmon+thenyear
+    maskfileB = maskdir+'HadISDH.RH.'+version+'_FLATgridIDPHABClocalSHIPboth5by5_'+mclimchoice+'_'+thenmon+thenyear
   END
   'w': BEGIN
    param2 = 'w'	
@@ -508,6 +510,15 @@ NCDF_VARGET,filee,lats_varid,lats
 NCDF_VARGET,filee,longs_varid,longs
 NCDF_VARGET,filee,tims_varid,dayssince
 NCDF_CLOSE,filee
+
+; If we're working with blended or marine then this has been written in python and mdi is higher than IDL -1e30
+; so need to reset to IDL mdi
+IF (homogtype EQ 'MARINE') OR (homogtype EQ 'MARINEship') THEN BEGIN
+  ;mdi = min(q_values)
+  stop
+  gots = where(q_values LT -10000,count)
+  q_values(gots) = mdi
+END
 
 ;If (homogtype EQ 'MARINE') THEN BEGIN
 ;  q_values = reverse(q_values,2)

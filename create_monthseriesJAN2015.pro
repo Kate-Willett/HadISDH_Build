@@ -196,18 +196,18 @@
 ;-----------------------------------
 pro create_monthseriesJAN2015
 
-newstart=long(0)   	    ;long(0) or long(010010) etc	; use this to restart the program at a specified place 
+newstart=long(062900)   	    ;long(0) or long(010010) etc	; use this to restart the program at a specified place 
 nowmon='JAN'
-nowyear='2018'
-;version='3.0.1.2017f'
-version='4.0.0.2017f'
-thisyear=2017
+nowyear='2019'
+version='4.1.0.2018f'
+thisyear=2018
 strthisyear=strcompress(thisyear,/remove_all)
 strsubyear=strmid(strcompress(thisyear,/remove_all),2,2)
 
 
-indir='/media/Kate1Ext3/HadISD.2.0.2.2017p/hadisd.2.0.2.2017p_19310101-20171231_'
-inlists='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'
+indir='/data/users/hadkw/HadISD/HadISD.3.0.0.2018f/hadisd.3.0.0.2018f_19310101-20190101_' ; not sure why this goes to Jan 1st
+;indir='/media/Kate1Ext3/HadISD.2.0.2.2017p/hadisd.2.0.2.2017p_19310101-20171231_'
+inlists='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/HadISD.3.0.0.2018f_candidate_stations_details.txt'
 inCIDs='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
 
 ;------------------------------------------------------------------

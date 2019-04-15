@@ -103,7 +103,7 @@ pro make_MP_trends,param,homogtype
 
 ; Which start/end year?
 styr = 1973	; 1973
-edyr = 2017
+edyr = 2018
 
 ; Which climatology period to work with?
 climST = 1981 	;1976 or 1981
@@ -112,13 +112,13 @@ climBIT = 'anoms'+strmid(strcompress(climST,/remove_all),2,2)+strmid(strcompress
 
 ; Which TREND start/end year?
 sttrd = 1973  	; years over which to calculate trends
-edtrd = 2017  	;
+edtrd = 2018  	;
 
 ; Which working file dates?
-nowmon   = 'MAR'
-nowyear  = '2018'
-thenmon  = 'MAR'
-thenyear = '2018'
+nowmon   = 'JAN'
+nowyear  = '2019'
+thenmon  = 'JAN'
+thenyear = '2019'
 
 ;; Which variable?
 ;param = 'dpd'	;'dpd','td','t','tw','e','q','rh';;
@@ -127,9 +127,9 @@ thenyear = '2018'
 ;homogtype = 'PHA'	;'PHA','ID','DPD', 'RAW','OTHER', 'BLEND', 'MARINE'
 
 ; Which version (if not marine or OTHER???)
-version = '4.0.0.2017f'
+version = '4.1.0.2018f'
 
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
 
 indir  = workingdir+'/STATISTICS/'
 outdir = workingdir+'/STATISTICS/'
@@ -139,7 +139,7 @@ IF (homogtype EQ 'OTHER') THEN BEGIN
 ENDIF ELSE IF (homogtype EQ 'MARINE') THEN BEGIN
     indir  = workingdir+'/OTHERDATA/'
 ;    indir = '/project/hadobs2/hadisdh/marine/ICOADS.2.5.1/GRIDS3/'
-    outdir = '/data/local/hadkw/HADCRUH2/MARINE/DATA/'
+    outdir = '/data/users/hadkw/WORKING_HADISDH/MARINE/DATA/'
 ENDIF
 
 CASE param OF

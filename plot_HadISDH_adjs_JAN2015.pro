@@ -399,7 +399,7 @@ startee = ' ' 	; fix as a station to restart
 
 ; The start year and end year to run through
 styr = 1973
-edyr = 2017
+edyr = 2018
 
 ; Which type of product - DPD (Td), PHA (DPD or others) or ID (q, RH, T, e, Tw)?
 ;homogtype = 'ID'	;'PHA' or 'ID' or 'DPD'
@@ -409,11 +409,11 @@ edyr = 2017
 
 ; Month and Year label of file 
 nowmon  = 'JAN'
-nowyear = '2018'
+nowyear = '2019'
 
-version = '4.0.0.2017f'
+version = '4.1.0.2018f'
 plotonly = 'FALSE'	; TRUE or FALSE
-KeptLarge = 'TRUE'	; TRUE (run with _KeptLarge station lists or FALSE (normal, first time run)
+KeptLarge = 'FALSE'	; TRUE (run with _KeptLarge station lists or FALSE (normal, first time run)
 
 ; *********************
 ; Set up file locations

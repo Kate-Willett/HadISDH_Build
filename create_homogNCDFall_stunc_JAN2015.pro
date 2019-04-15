@@ -296,7 +296,7 @@ startee=' ' 	; fix as a station to restart
 
 ; Which year?
 MYstyr = 1973
-MYedyr = 2017
+MYedyr = 2018
 
 ; Which climatology?
 MYclst = 1981	; 1976, 1981
@@ -311,12 +311,12 @@ CLMlab = strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/
 
 ; Which working file dates?
 nowmon =     'JAN'
-nowyear =    '2018'
+nowyear =    '2019'
 thenmon =    'JAN'
-thenyear =   '2018'
+thenyear =   '2019'
 
 ; Which version?
-version =    '4.0.0.2017f'
+version =    '4.1.0.2018f'
 
 ; NOW READ IN FROM FILE
 ;; Missed adjustment uncertainty which has to be worked out each year

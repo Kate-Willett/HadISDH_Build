@@ -85,7 +85,7 @@ pro plot_HadISDH_trendsscat_JAN2015,param,homogtype
 
 ; Which start/end year?
 styr = 1973
-edyr = 2017
+edyr = 2018
 yearchoice = strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
 OLDyearchoice = strcompress(styr,/remove_all)+strcompress(edyr-1,/remove_all)
 
@@ -94,17 +94,17 @@ climst = 1981 	; 1976 or 1981
 climed = 2010	; 2005 or 2010
 CLMlab =     strmid(strcompress(climst,/remove_all),2,2)+strmid(strcompress(climed,/remove_all),2,2)
 climchoice = 'anoms'+CLMlab ; 'anoms7605','anoms8110'
-climchoiceOLD = 'anoms7605' ; Oh Dear - should compare with old anoms8110 but I haven't done it
+climchoiceOLD = 'anoms8110' ; Oh Dear - should compare with old anoms8110 but I haven't done it
 
 ; Which output date?
-nowmon     = 'MAR'
-nowyear    = '2018'
+nowmon     = 'JAN'
+nowyear    = '2019'
 
 ; Which input date?
-thenmon     = 'MAR'
-thenyear    = '2018'
-OLDthenmon     = 'JAN'
-OLDthenyear    = '2017'
+thenmon     = 'JAN'
+thenyear    = '2019'
+OLDthenmon     = 'MAR'
+OLDthenyear    = '2018'
 
 ; Which variable?
 ;param      = 't'	;'dpd','td','t','tw','e','q','rh';
@@ -113,11 +113,11 @@ OLDthenyear    = '2017'
 ;homogtype  = 'ID'	;'PHA','ID','DPD', 'RAW'
 
 ; Which versions?
-version    = '4.0.0.2017f'
-OLDversion = '3.0.0.2016p'
+version    = '4.1.0.2018f'
+OLDversion = '4.0.0.2017f'
 
 ; Which plot - compare old/new or raw/homog?
-typee      = 'RAW' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
+typee      = 'OLD' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
 
 workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
 oldindir   = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr-1,/remove_all),2,2)+'/STATISTICS/'

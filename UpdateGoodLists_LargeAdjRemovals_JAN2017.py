@@ -105,14 +105,14 @@ from subprocess import call
 
 # Set up initial run choices
 # End year
-edyr       = 2017
+edyr       = 2018
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2018'
+nowyear    = '2019'
 
 # Dataset version
-version    = '4.0.0.2017f'
+version    = '4.1.0.2018f'
 
 # Set up file locations
 updateyear = str(edyr)[2:4]

@@ -227,11 +227,11 @@ FOR lnn=0,nlns-1 DO BEGIN
         GBdists=REFORM(GBdists(gots),count)
         sortcorrs=GBcorrs(REVERSE(SORT(GBcorrs)))
         sortdists=GBdists(REVERSE(SORT(GBcorrs)))
-        lows=WHERE(sortcorrs LE (1./EXP(1)),countlows)
-        IF (countlows GT 0) THEN Xo(lnn,ltt)=sortdists(lows(0)) ELSE Xo(lnn,ltt)=sortdists(n_elements(sortdists)-1)
-        plot,sortdists,sortcorrs,psym=5,symsize=0.6
-        print,countlows,Xo(lnn,ltt)
-	xdist=indgen(30)*500	; distances from 0 to 30000km
+        ;lows=WHERE(sortcorrs LE (1./EXP(1)),countlows)
+        ;IF (countlows GT 0) THEN Xo(lnn,ltt)=sortdists(lows(0)) ELSE Xo(lnn,ltt)=max(sortdists)
+        ;plot,sortdists,sortcorrs,psym=5,symsize=0.6
+        ;print,countlows,Xo(lnn,ltt)
+	xdist=indgen(30)*500	; distances from 0 to 15000km
 	ycorrs=fltarr(30)
 	ycorrs(0)=1.	;always 500km
 	FOR i=1,29 DO BEGIN
@@ -367,7 +367,7 @@ FOR lnn=0,nlns-1 DO BEGIN
 	rbar(lnn,ltt)=GBrbar(gots(0))
       ENDIF ELSE BEGIN	    	; FILL WITH ARBITRARY POOR VALUES
 	sbarSQ(lnn,ltt)=10.    
-	rbar(lnn,ltt)=0.1      
+	rbar(lnn,ltt)=0.8 ; This was 0.1 but this gives a small SE      
       ENDELSE
 ;now get SE^2 = (sbar^2*rbar)	WHEN n=0
       gotcounts=WHERE(statcounts(lnn,ltt,*) GT 0,countcounts)

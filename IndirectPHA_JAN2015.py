@@ -165,22 +165,22 @@ from subprocess import check_output
 from LinearTrends import MedianPairwise
 
 # RESTART VALUE
-Restarter = '------'				#'------'		#'681040'
+Restarter = '702610'				#'------'		#'681040'
 
 # Set up initial run choices
 # Start and end years
 styr       = 1973
-edyr       = 2017
+edyr       = 2018
 
 # Variable
 param      = 'tw'	# tw, q, e, rh, t
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2018'
+nowyear    = '2019'
 
 # Dataset version
-version    = '4.0.0.2017f'
+version    = '4.1.0.2018f'
 
 # Climatology start and end years
 clmst = 1981   #1976
@@ -259,7 +259,7 @@ elif param == 't':
     GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
     TDGOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_PHADPDtd_'+nowmon+nowyear+'.txt'
     OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDIR/'
-    TDBADSFILE        = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'t/corr/badlist.txt'
+    TDBADSFILE        = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'td/corr/badlist.txt'
 
 # Set up variables and arrays needed
 

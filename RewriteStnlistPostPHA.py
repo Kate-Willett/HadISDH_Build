@@ -110,14 +110,14 @@ from subprocess import call
 # Variables
 # Set up initial run choices
 # End year - CHECK
-edyr       = 2017
+edyr       = 2018
 
 # Working file month and year - CHECK
 nowmon     = 'JAN'
-nowyear    = '2018'
+nowyear    = '2019'
 
 # Dataset version - CHECK THE VERSION
-version    = '4.0.0.2017f'
+version    = '4.1.0.2018f'
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
@@ -125,18 +125,22 @@ workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
 phadir     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear
 
 # PHA Run string - CHECK THE DATETIME STRING DPD, T, Q, E, RH, TW, TD
-PHAID = ['1801310936','1801310936','1801310936','1801310936','1801310936','1801310936','1801310936']
+# from PHA2015/phav52jgo/data/hadisdh/
+# > ls 731*/output/P*
+PHAID = ['1902111949','1902111949','1902111949','1902111949','1902111949','1902111949','1902111949']
 
 # In Filepaths - CHECK THE NUMBER OF input_not_stnlist IS CORRECT
-BadFiles   = [[phadir+'dpd/corr/meta.7317dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist'],
-              [phadir+'t/corr/meta.7317t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist'],
-              [phadir+'q/corr/meta.7317q.tavg.r00.'+PHAID[2]+'.1.input_not_stnlist'],
-              [phadir+'e/corr/meta.7317e.tavg.r00.'+PHAID[3]+'.1.input_not_stnlist'],
-              [phadir+'rh/corr/meta.7317rh.tavg.r00.'+PHAID[4]+'.1.input_not_stnlist',
-               phadir+'rh/corr/meta.7317rh.tavg.r00.'+PHAID[4]+'.2.input_not_stnlist'],
-	      [phadir+'tw/corr/meta.7317tw.tavg.r00.'+PHAID[5]+'.1.input_not_stnlist'],
-              [phadir+'td/corr/meta.7317td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist',
-               phadir+'td/corr/meta.7317td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
+# from PHA2015/phav52jgo/data/hadisdh/
+# > ls 731*/corr/m*
+BadFiles   = [[phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist'],
+              [phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist'],
+              [phadir+'q/corr/meta.73'+updateyear+'q.tavg.r00.'+PHAID[2]+'.1.input_not_stnlist'],
+              [phadir+'e/corr/meta.73'+updateyear+'e.tavg.r00.'+PHAID[3]+'.1.input_not_stnlist'],
+              [phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.1.input_not_stnlist',
+               phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.2.input_not_stnlist'],
+	      [phadir+'tw/corr/meta.73'+updateyear+'tw.tavg.r00.'+PHAID[5]+'.1.input_not_stnlist'],
+              [phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist',
+               phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
 
 InAll       = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_JAN'+nowyear+'.txt' 
 
@@ -339,7 +343,7 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
     GOODStationListMonths   = []
     
     # Copy corr files to corr.log within each directory
-    InCorrFile  = phadir+LittleVarLoop[vv]+'/corr/corr.7317'+LittleVarLoop[vv]+'.tavg.r00.'+PHAID[vv]
+    InCorrFile  = phadir+LittleVarLoop[vv]+'/corr/corr.73'+updateyear+LittleVarLoop[vv]+'.tavg.r00.'+PHAID[vv]
     OutCorrFile = phadir+LittleVarLoop[vv]+'/corr/corr.log'
     call(['cp',InCorrFile,OutCorrFile])
     #pdb.set_trace()

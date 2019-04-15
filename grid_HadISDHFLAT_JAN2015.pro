@@ -223,23 +223,23 @@ pro grid_HadISDHFLAT_JAN2015,param,homogtype
 ;
 ; Which start year/end year?
 MYstyr =     1973
-MYedyr =     2017
+MYedyr =     2018
 
 ; Which climatologye period?
 MYclst =     1981	; could be 1976 or 1981
 MYcled =     2010	; could be 2005 or 2010
 
 ; Date of working files?
-nowmon =     'MAR'
-nowyear =    '2018'
+nowmon =     'JAN'
+nowyear =    '2019'
 thenmon =    'JAN'
-thenyear =   '2018'
+thenyear =   '2019'
 
 ;; Which homog type?
 ;homogtype =  'ID'	;'PHA','ID','DPD', 'RAW'
 
 ; Which version?
-version =    '4.0.0.2017f'
+version =    '4.1.0.2018f'
 
 workingdir = 'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
 
