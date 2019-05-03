@@ -1,14 +1,96 @@
 #!/usr/local/sci/bin/python
 #*****************************
+#!/usr/local/sci/bin/python
+# PYTHON3
+# 
+# Author: Kate Willett (was RObert Dunn)
+# Created: 2 May 2019 (From RObert Dunn's code)
+# Last update: 2 May 2019
+# Location: /data/users/hadkw/WORKING_HADISDH/UPDATE201?/PROGS/HADISDH_BUILD/	
+# GitHub: https://github.com/Kate-Willett/HadISDH_Build					
+# -----------------------
+# CODE PURPOSE AND OUTPUT
+# -----------------------
+# Produces area average time series of each variable and uncertainty components for monthly and annual means and global, northern
+# hemisphere, tropics and southern hemisphere land and marine time series.
 #
-# Calculate the HadISDH (and other) error timeseries.
+# <references to related published material, e.g. that describes data set>
+# 
+# -----------------------
+# LIST OF MODULES
+# -----------------------
+# inbuilt:
+# import datetime as dt
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from matplotlib.dates import date2num,num2date
+# import sys, os
+# from scipy.optimize import curve_fit,fsolve,leastsq
+# from scipy import pi,sqrt,exp
+# from scipy.special import erf
+# import scipy.stats
+# from math import sqrt,pi
+# import struct
+# import pdb
+# 
+# -----------------------
+# DATA
+# -----------------------
+# reads in netCDF grids 
+# '/data/users/hadkw/WORKING_HADISDH/UPDATE2018/STATISTICS/GRIDS/HadISDH.<domain><var>.<VER>_DOMAINBLURB_anoms181-2010_<thenmon
+# inCIDs='/data/local/hadkw/HADCRUH2/UPDATE2017/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
+# 20CR SLP data for making climatological SLP for humidity calculation
+# inSLP='/data/local/hadkw/HADCRUH2/UPDATE2017/OTHERDATA/'	#20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
 #
+# -----------------------
+# HOW TO RUN THE CODE
+# -----------------------
+# 
+# Makie sure you have selected the domain of interest (land or marine)
+# Make sure the HADISDH_VER and HADISDH_DATE are correct
+# module load scitools/default-current
+# python hadisdh_error_calculations.py
+#
+# -----------------------
+# OUTPUT
+# -----------------------
+# ASCII monthly and annual time series 
+# /data/users/hadkw/WORKING_HADISDH/UPDATE2018/STATISTICS/TIMESERIES/HadISDH.<DOMAIN><var>.<VER>_region_annual_full_anoms8110_<mon><year>.dat'
+# /data/users/hadkw/WORKING_HADISDH/UPDATE2018/STATISTICS/TIMESERIES/HadISDH.<DOMAIN><var>.<VER>_region_monthyl_full_anoms8110_<mon><year>.dat'
+# /data/users/hadkw/WORKING_HADISDH/UPDATE2018/STATISTICS/TIMESERIES/HadISDH.<DOMAIN><var>.<VER>_region_ts_annual_anoms8110_<mon><year>.dat'
+# /data/users/hadkw/WORKING_HADISDH/UPDATE2018/STATISTICS/TIMESERIES/HadISDH.<DOMAIN><var>.<VER>_region_ts_monthly_anoms8110_<mon><year>.dat'
+# 
+# -----------------------
+# VERSION/RELEASE NOTES
+# -----------------------
+#
+# Version 2 (2nd May 2019)
+# ---------
+#  
+# Enhancements
+# Updated to deal with marine and new ERA files
+#  
+# Changes
+# Now Python 3
+#  
+# Bug fixes
+
+#
+# Version 1 (15 January 2015)
+# ---------
+#  
+# Enhancements
+#  
+# Changes
+#  
+# Bug fixes
+#  
+# -----------------------
+# OTHER INFORMATION
+# -----------------------
 #
 #************************************************************************
-#                    SVN Info
-#$Rev:: 72                                            $:  Revision of last commit
-#$Author:: rdunn                                      $:  Author of last commit
-#$Date:: 2015-05-20 15:21:59 +0100 (Wed, 20 May 2015) $:  Date of last commit
+#                                 START
 #************************************************************************
 
 import numpy as np
@@ -19,14 +101,25 @@ import datetime as dt
 import iris
 import iris.coord_categorisation
 import copy
+import pdb
 
 # RJHD routines
-YEAREND = '2017'
-DATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
-OUTDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
-OTHERDATALOCATION = "/data/local/hadkw/HADCRUH2/UPDATE"+YEAREND+"/OTHERDATA/"
-HADISDH_VER = "4.0.0.2017f"
-HADISDH_DATE = "MAR2018"
+YEAREND = '2018'
+DATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
+OUTDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
+OTHERDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/OTHERDATA/"
+DOMAIN = 'land'
+
+if (DOMAIN == 'land'):
+
+    HADISDH_VER = "4.1.0.2018f"
+    HADISDH_DATE = "JAN2019"
+
+elif (DOMAIN == 'marine'):
+
+    HADISDH_VER = "1.0.0.2018f"
+    HADISDH_DATE = "FEB2019"
+
 
 class Region(object):
 
@@ -127,8 +220,8 @@ def compute_coverage_error_annual(observations, reanalysis):
     '''
     
 
-    offset = np.zeros(len(observations.coord("time").points)/12)
-    st_dev = np.zeros(len(observations.coord("time").points)/12)
+    offset = np.zeros(np.int(len(observations.coord("time").points)/12))
+    st_dev = np.zeros(np.int(len(observations.coord("time").points)/12))
 
     # add year into data
     iris.coord_categorisation.add_year(reanalysis, 'time', name = 'year')
@@ -189,7 +282,8 @@ def simple_outfile_write(filename, times, ts, sample, coverage, station, combine
     Write outfile of uncertainties
     '''
 
-    outfile = file(filename,'w')
+#    outfile = file(filename,'w')
+    outfile = open(filename,'w')
 
     for d in range(len(ts)):
 
@@ -208,7 +302,8 @@ def full_outfile_write(filename, times, ts, sample, coverage, station, combined)
     Write outfile with full range of uncertainties for ease of plotting
     '''
 
-    outfile = file(filename,'w')
+#    outfile = file(filename,'w')
+    outfile = open(filename,'w')
 
     for d in range(len(ts)):
 
@@ -223,25 +318,48 @@ def full_outfile_write(filename, times, ts, sample, coverage, station, combined)
 
 
 #*******************************
-for variable in ["RH","Tw","e","T","Td","q","DPD"]:
+#for variable in ["q","RH","T","Td","Tw","e","DPD"]:
+for variable in ["DPD"]:
 
-    print variable
+    print(variable)
 
-    era_file = "{}2m_monthly_5by5_ERA-Interim_data_1979{}_anoms1981-2010.nc".format(variable.lower(), YEAREND)
+    era_file = "{}2m_5by5_monthly_anoms1981-2010_ERA-Interim_data_1979{}.nc".format(variable.lower(), YEAREND)
 
-    if variable in ["RH","T","Tw","e","q"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridIDPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
-    elif variable in ["DPD"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
-    elif variable in ["Td"]:
-        hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+    if (DOMAIN == 'land'):
+
+        if variable in ["RH","T","Tw","e","q"]:
+            hadisdh_file = "HadISDH.land{}.{}_FLATgridIDPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        elif variable in ["DPD"]:
+            hadisdh_file = "HadISDH.land{}.{}_FLATgridPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        elif variable in ["Td"]:
+            hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
 
         
-    # get hadisdh data and fix - this uses the long name!!!
-    station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox')[0]
-    sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Sampling uncertainty over gridbox')[0]
-    combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Combined uncertainty over gridbox')[0]
-    hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly mean anomaly')[0]
+        # get hadisdh data and fix - this uses the long name!!!
+        station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox')[0]
+        sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Sampling uncertainty over gridbox')[0]
+        combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Combined uncertainty over gridbox')[0]
+        hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly mean anomaly')[0]
+
+    elif (DOMAIN == 'marine'):
+
+        hadisdh_file = "HadISDH.marine{}.{}_BClocalSHIP5by5both_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+	
+        VarDict = {'q':'Specific Humidity',
+	           'RH':'Relative Humidity',
+		   'Tw':'Wet Bulb Temperature',
+		   'e':'Vapor Pressure',
+		   'T':'Marine Air Temperature',
+		   'Td':'Dew Point Temperature',
+		   'DPD':'Dew Point Pepression'} # THIS NEEDS CORRECTING IN THE FILES!
+
+        
+        # get hadisdh data and fix - this uses the long name!!!
+        station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies total observation uncertainty (2 sigma)')[0]
+        sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies gridbox sampling uncertainty (2 sigma)')[0]
+        combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies full gridbox uncertainty (2 sigma)')[0]
+        hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies')[0]
+
 
     for cube in [station_error_cube, sampling_error_cube, combined_error_cube, hadisdh_anoms_cube]:
         cube.coord('latitude').guess_bounds()
@@ -251,7 +369,40 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 
 
     # get era data and fix
-    era_cube = iris.load(OTHERDATALOCATION + era_file)[-1]
+    # Silly Iris doesn't distinguiss by var_name if the units isn't something it likes - %rh not ok apparently! so we need to guess which field is the complete coverage anomalies, read in and double check
+#    era_cube = iris.load(OTHERDATALOCATION + era_file)[-1]
+#    era_cube = iris.load(OTHERDATALOCATION + era_file)[3]
+    tmp_era_cube = iris.load(OTHERDATALOCATION + era_file)
+    
+    mdi = -1e+30
+    Cube_Counts = [len(np.where(tmp_era_cube[i].data > mdi)[0]) for i in np.arange(len(tmp_era_cube))]
+    GetCube = np.where(Cube_Counts == np.max(Cube_Counts))[0]
+#    pdb.set_trace()
+    era_cube = tmp_era_cube[GetCube[0]] # hope that this is anoms not actuals but check for that later
+    tmp_era_cube=[]
+
+    # Now check that there are 72 values present at the north and south pole to see if this is the complete field
+    if (len(np.where(era_cube.data[0,0,:] > mdi)[0]) == 0):
+        print('Wrong ERA field - no data at South Pole')
+        pdb.set_trace()
+
+    if (len(np.where(era_cube.data[0,35,:] > mdi)[0]) == 0):
+        print('Wrong ERA field - no data at North Pole')
+        pdb.set_trace()
+
+    # Now check that there are values below zero to see if this is the anomaly field
+    if (np.min(era_cube.data) > 0.):
+        print('Doesnt look like ERA-Interim anomalies')
+        pdb.set_trace()	
+	
+    # Noe check that there are more than 12 time elements to make sure its not clim or stdev
+    if (len(era_cube.data[:,0,0]) < 24):
+        print('Looks like climatology or stdev field')
+        pdb.set_trace()	
+                                                  
+    #OK = carry on!
+    
+#    pdb.set_trace()                                           
     
     # sort the coordinate system
     era_cube.coord('latitude').guess_bounds()
@@ -264,13 +415,21 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
     # lsm.data = np.flipud(lsm.data) # flip latitudes for new_coverpercentjul08.nc
 
     lsm = iris.load(OTHERDATALOCATION + "HadCRUT.4.3.0.0.land_fraction.nc")[1]
-    masked_lsm = np.ma.masked_where(lsm.data == 0, lsm.data)
+    
+    if (DOMAIN == 'land'):
+    
+        masked_lsm = np.ma.masked_where(lsm.data == 0, lsm.data)
+    
+    elif (DOMAIN == 'marine'):
+
+        masked_lsm = np.ma.masked_where(lsm.data == 1, lsm.data)
+    
     
     era_cube.data = np.ma.array(era_cube.data, mask = np.array([masked_lsm.mask for i in range(era_cube.data.shape[0])]))
 
     for region in [global_region, nh_region, tropic_region, sh_region]:
 
-        print region.name
+        print(region.name)
 
         hadisdh_anoms = hadisdh_anoms_cube.extract(latConstraint([region.coords[x] for x in (1,3)]))
         station_error = station_error_cube.extract(latConstraint([region.coords[x] for x in (1,3)]))
@@ -356,11 +515,11 @@ for variable in ["RH","Tw","e","T","Td","q","DPD"]:
 #        simple_outfile_write(DATALOCATION + '{}_{}_ts_annual.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 #        full_outfile_write(DATALOCATION + '{}_{}_annual_full.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
-        simple_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_ts_monthly_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
-        full_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_monthly_full_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+        simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_monthly_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+        full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_monthly_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
 
 
-        simple_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_ts_annual_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
-        full_outfile_write(OUTDATALOCATION + 'HadISDH.land{}.{}_{}_annual_full_anoms8110_{}.dat'.format(variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+        simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_annual_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+        full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_annual_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
 
