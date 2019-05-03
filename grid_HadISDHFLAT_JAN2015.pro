@@ -282,9 +282,9 @@ grid =    strcompress(ROUND(MYlatlg),/remove_all)+'by'+strcompress(ROUND(MYlonlg
 
 ; files and directories
 
-dirlist =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/LISTS_DOCS/'
-dirdat =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/MONTHLIES/'
-dirstat =  '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/GRIDS/'
+dirlist =  '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/LISTS_DOCS/'
+dirdat =   '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/MONTHLIES/'
+dirstat =  '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/STATISTICS/GRIDS/'
 
 CASE param OF
   'dpd': BEGIN

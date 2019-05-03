@@ -165,7 +165,7 @@ GBdists=make_array(nlns,nlts,/float,value=mdi)
 clst=cllms(0)*12
 cled=(cllms(1)+1)*12 ; +1 to capture all 12 months of last year BUG FIX SEPTEMBER 2016
 
-inLSmask='/data/local/hadkw/HADCRUH2/OTHERDATA/new_coverpercentjul08.nc'
+inLSmask='/data/users/hadkw/WORKING_HADISDH/UPDATE2018/OTHERDATA/new_coverpercentjul08.nc'
 ; lat goes from 87.5 to -87.5 so flip array to match input data
 inLS=NCDF_OPEN(inLSmask)
 LSid=NCDF_VARID(inLS,'pct_land')
