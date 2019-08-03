@@ -136,7 +136,7 @@ NOTE:
 May be some issue with length of filepath maxing out fortran line length. I had
 problems with hadisdh7314dpd but not hadisdh7314t or hadisdh7314q. I had no
 issues last year but the filepath was different/shorter. For this reason I have
-abreviated the following:
+abbreviated the following:
 dpd = p STILL NOT WORKING
 rh = r DONE
 tw = w DONE
