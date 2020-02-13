@@ -60,9 +60,12 @@
 # from math import sqrt,pi
 # import struct
 # import pdb
+# import netCDF4 as nc4
 #
 # Kates:
 # import CalcHums - written by kate Willett to calculate humidity variables
+# import ReadNetCDF
+# from GetNiceTimes import MakeDaysSince 
 # from MakeMonths import SimpleMonths - written by Kate Willett to calculate monthly means - spitting out stations with too few obs.
 # 
 # -----------------------
@@ -110,8 +113,21 @@
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
-# 
-# Version 4 (24 January 2018)
+#
+# Version 5 (3 February 2020)
+# ---------
+#  
+# Enhancements
+# Now python 3
+#  
+# Changes
+# Now month climatology catch kicks out if there are fewer than 1344 obs - 80% of days with at least 4 obs per day and 15 years of climatology (Feb has 28 days so ((28*4)*0.8) * 15
+# Its also kicked out if there are fewer than 20 years of data with 4 obs on at least 300 days (24000)
+#  
+# Bug fixes
+#
+#
+#Version 4 (24 January 2018)
 # ---------
 #  
 # Enhancements
@@ -163,6 +179,35 @@
 # -----------------------
 # OTHER INFORMATION
 # -----------------------
+# AS of 7th Feb 2020 this runs and appears to output sensible values
+# HOWEVER - these values to not match the IDL values either for anomalies or absolutes.
+# They are close but not the same, sometimes even a few numbers out (whole numbers not just decimal precision)
+# Could this be the humidity calculation?
+# Could this be the month means - have I changed anything that might have altered the climatologies
+# If it also affects T and Td then its not just the humidity calculations - IT DOES NOT - SO IT IS SOMETHING TO DO WITH CALCHUMS....precision? Method? Ice bulb method?
+# I have cross-checked IDL calc_evap.pro and python 3 CalcHums.py and they produce identical values to at least 4 decimal places.
+# Maybe its the pressure read in? - 20CR values for 010010-99999 are very slightly different
+# HOwever, I've just tested tolerance and its very small, even for very low temperatures.
+# Now check both codes at variable conversion and then again at monthly means
+# SOOO - there were twobugs in IDL
+# - the pull out and reformat of 20CR slp data was wrong because the shift() term did not have a 0 for the second axis.
+#   all data were rolling through as a vector rather than an array
+#   This is an error but would not have lead to very different values because sensitivity to pressure is small
+# - the calculation of RH was done only with respect to water even when tw <= 0.
+#   this only affected RH values but the difference could be large
+#
+# On complete run through Python kicks out 18 more stations than IDL
+# Some stations kicked out by IDL are retained by python and vice versa and stations have slightly different numbers of months in some cases.
+# I think this comes down to the make_months_oddtimes or MakeMonths functions
+#
+# In Python we calculate clims where there are >= 15 years over clim period but IDL is just > 15 so Python keeps more stations for this
+# Still trying to find out why python kicks out others that make it in IDL
+# Found ANOTHER bug in the IDL code in make_months_oddtimesJAN2015.pro
+# - to create a climatology there must be at least 15 years of data AND at least 1 year in each decade
+# - in IDL the decade counter was wrong  - rather than the decade goin 0-9 and 10-19 and 20-29 of the climatology it
+# started at the start year 1973 so any year within the first 17 was counted even though a subarray of only the climatology years had been created
+#
+# SOOOO - my python code that kicks out more stations but keeps some that were kicked out in IDL is CORRECT!!!
 #
 #-------------------------------------------------------------------------
 # JAN 2015
@@ -205,8 +250,8 @@
 #************************************************************************
 #                                 START
 #************************************************************************
-# USE python2.7
-# python2.7 CreateMonthSeriesfromHadISD.py
+# USE python3
+# python3 CreateMonthSeriesfromHadISD.py
 #
 # For debugging
 # ipython
@@ -231,40 +276,38 @@ import scipy.stats
 from math import sqrt,pi
 import struct
 import pdb
+import netCDF4 as nc4
 
 import CalcHums 
-from MakeMonths import SimpleMonths 
+import ReadNetCDF
+from GetNiceTimes import MakeDaysSince
 
 # RESTART VALUE
-Restarter = '------'				#'------'		#'681040'
+Restarter = '------				#'------'		#'681040'
 
 # Set up initial run choices
 # Start and end years
-styr       = 1973
-edyr       = 2017
+styear       = 1973
+edyear       = 2019
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2018'
+nowyear    = '2020'
 
 # Dataset version
-version    = '4.0.0.2017f'
-#version    = '3.0.1.2017f'
+version    = '4.2.0.2019f'
 
 # Climatology start and end years
-clmst      = 1981
-clmed      = 2010
-#clmst      = 1976
-#clmed      = 2005
+clims = [1981,2010]
 
 # Set up file locations
-updateyy  = str(edyr)[2:4]
-updateyyyy  = str(edyr)
-workingdir  = '/data/local/hadkw/HADCRUH2/UPDATE'+updateyyyy
-INSTATLIST  = workingdir+'/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'
-INDIR       = '/media/Kate1Ext3/HadISD.2.0.2.2017p/hadisd.2.0.2.2017p_19310101-20171231_'
+updateyy  = str(edyear)[2:4]
+updateyyyy  = str(edyear)
+workingdir  = '/data/users/hadkw/WORKING_HADISDH/UPDATE'+updateyyyy
+INSTATLIST  = workingdir+'/LISTS_DOCS/HadISD.3.1.0.2019f_candidate_stations_details.txt'
+INDIR       = '/data/users/hadkw/WORKING_HADISDH/HadISD/hadisd.3.1.0.2019f_19310101-20200101_'
 INCIDs      = workingdir+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
-INSLP       = workingdir+'/OTHERDATA/20CR'	#20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc or 20CRv2cJan19812010_SLP_Jan2018.nc
+INSLP       = workingdir+'/OTHERDATA/'	#20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc or 20CRv2cJan19812010_SLP_Jan2018.nc
 
 OUTASC      = workingdir+'/MONTHLIES/ASCII/'
 OUTRAWq     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'q/monthly/raw/'
@@ -288,248 +331,79 @@ ABSSUFFIX   = 'monthQCabs.raw'
 NCSUFFIX    = '_hummonthQC.nc' 
 
 # Set up variables
-mdi = -1e+30
-stationid = ''
-stationelv = 0.
-;*** at some point add all the header info from the new HadISD files***
+MDI = -1e+30
+#*** at some point add all the header info from the new HadISD files***
 
 # date and time stuff
-monarr   = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-styear   = styr
+MonArr   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 stday    = 1
 stmon    = 1
-stjul    = dt.date(styear,stmon,stday).toordinal() + 1721424.5   #JULDAY(stmon,stday,styear,0)
-edyear   = edyr 
-edday    = 1
-edmon    = 1
-edjul    = JULDAY(edmon,edday,edyear+1, 0)
-edactjul = JULDAY(12,31,edyear,23)
-
+stjul    = dt.date(styear,stmon,stday).toordinal() # 00:00 hrs not set for hours just integer days + 1721424.5   #JULDAY(stmon,stday,styear,0)
+edday    = 31
+edmon    = 12
+#edjul    = dt.date(edyear+1,edmon,edday).toordinal()  # 00:00 hrs not sure why this is year + 1 but still with Dec 31st
+edjul    = dt.date(edyear+1,1,1).toordinal()  # 00:00 hrs not sure why this is year + 1 but still with Dec 31st
+# Should it not be dt.date(edyear+1,1,1)
+edactjul = dt.date(edyear,edmon,edday).toordinal() # should be 11pm 23:00
+# Will have to *24 to get bours 
 
 # Using JULIAN DAYS to get at number of hours - doesn't need to be Julian days!
-ntims=LONG((edjul-stjul)*24.)
-nmons=(edyear-styear+1)*12
-nyrs=edyear-styear+1
-actyears=indgen(nyrs)+styear
-ndays=LONG(edjul-stjul)
-; ISD times are now HOURS since 1931-01-01 00:00 rather than DAYS since 1973-01-01 00:00 so we need to extract
-; this is a little complicated as they are provided as integers rather than decimals of a whole day (1./24.)
-; set up an array of time pointers from 1973 onwards in HadISD time language (hours since 1931-01-01 00:00)
-; 753887 hours since 1931 comes out as Dec 31st 2016 at 23:00 - which is correct!!!
-; 24 * (JULDAY(12,31,2016,23) - JULDAY(1,1,1931,0) = 753887
-; 24 * (JULDAY(1,1,1973,0) - JULDAY(1,1,1931,0) = 368184
-isdstyear=1931
-isdstjul=JULDAY(stmon,stday,isdstyear,0) ; this gives a number in days 2426342.5
-isd_full_times=int(24. * (TIMEGEN(ntims,UNIT='Hours',START=stjul)-isdstjul)) ; all times from 1973 to 2016 but zero'd to jan 1st 1931, midnight?
-full_times=(TIMEGEN(ntims,UNIT='Hours',START=stjul)-stjul) ; zero'd to jan 1st 1973, midnight?
-int_times=lindgen(ntims)
-times=TIMEGEN(nmons,UNIT='Months',START=stjul)
-int_mons=indgen(nmons)
-fulltemp_arr=make_array(ntims,/float,value=mdi)
-fulldewp_arr=make_array(ntims,/float,value=mdi)
-fullddep_arr=make_array(ntims,/float,value=mdi)
-fulltwet_arr=make_array(ntims,/float,value=mdi)
-fullevap_arr=make_array(ntims,/float,value=mdi)
-fullesat_arr=make_array(ntims,/float,value=mdi)
-fullqhum_arr=make_array(ntims,/float,value=mdi)
-fullqsat_arr=make_array(ntims,/float,value=mdi)
-fullrhum_arr=make_array(ntims,/float,value=mdi)
-fullws_arr=make_array(ntims,/float,value=mdi)
-fullslp_arr=make_array(ntims,/float,value=mdi)
+ntims = (edjul - stjul) * 24 # time points in hours
+nmons = ((edyear + 1) - styear) * 12 # time points in months
+nyrs = (edyear + 1) - styear # time points in years
+actyears = np.arange(styear, (edyear + 1)) # array of integer years
+ndays = (edjul - stjul)
+# ISD times are HOURS since 1931-01-01 00:00 rather than DAYS since 1973-01-01 00:00 so we need to extract
+# this is a little complicated as they are provided as integers rather than decimals of a whole day (1./24.)
+# set up an array of time pointers from 1973 onwards in HadISD time language (hours since 1931-01-01 00:00)
+# 753887 hours since 1931 comes out as Dec 31st 2016 at 23:00 - which is correct!!!
+# 24 * (JULDAY(12,31,2016,23) - JULDAY(1,1,1931,0) = 753887
+# 24 * (JULDAY(1,1,1973,0) - JULDAY(1,1,1931,0) = 368184
+isdstyear = 1931
+isdstjul = dt.date(isdstyear,stmon,stday).toordinal()  # JULDAY(stmon,stday,isdstyear,0) ; this gives a number in days 2426342.5
+hrssince1931 = (stjul - isdstjul) * 24 # hours since Jan 1st 1931 for Jan 1st 1973 00:00
+isd_full_times = np.arange(ntims) + hrssince1931 # array for each hour from Jan 1st 1973 00:00 starting count at hours since jan 1st 1931 00:00
+full_times = np.arange(0, ntims) # array for each hour from Jan 1st 1973 00:00 starting at 0
 
-; create array of half year counts taking into account leap years
-; i.e., 1973 June 30th = 181st day Dec 31st = 365th day (184)
-; i.e., 1974 June 30th = 181st day Dec 31st = 365th day (184)
-; i.e., 1975 June 30th = 181st day Dec 31st = 365th day (184)
-; i.e., 1976 June 30th = 182nt day Dec 31st = 366th day (184)
-; leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012,2016
-; leap if divisible by four by not 100, unless also divisible by 400 i.e. 1600, 2000
+# create array of half year counts taking into account leap years
+# These are for analysing the station data for shifts in resolution or frequency
+# i.e., 1973 June 30th = 181st day Dec 31st = 365th day (184)
+# i.e., 1974 June 30th = 181st day Dec 31st = 365th day (184)
+# i.e., 1975 June 30th = 181st day Dec 31st = 365th day (184)
+# i.e., 1976 June 30th = 182nt day Dec 31st = 366th day (184)
+# leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012,2016
+# leap if divisible by four by not 100, unless also divisible by 400 i.e. 1600, 2000
 
-tots={structots,hd:[181,184]}
-alltots=REPLICATE(tots,nyrs)
-founds=WHERE(((actyears/4.)-FIX(actyears/4.) EQ 0.0) AND $
-             (((actyears/100.)-FIX(actyears/100.) NE 0.0) OR $
-	     ((actyears/400.)-FIX(actyears/400.) EQ 0.0)),count)
-halfyrtots=REFORM(alltots.hd,2,nyrs)
-halfyrtots(0,founds)=182
-halfyrtots=REFORM(halfyrtots,nyrs*2)
-leapsids=intarr(nyrs)
-leapsids(founds)=1  ;1s identify leap years
-JANpoint=indgen(744)
-FEBpoint=indgen(696)+744 ; always includes a potential leap year
-MARpoint=indgen(744)+1440
-APRpoint=indgen(720)+2184
-MAYpoint=indgen(744)+2904
-JUNpoint=indgen(720)+3648
-JULpoint=indgen(744)+4368
-AUGpoint=indgen(744)+5112
-SEPpoint=indgen(720)+5856
-OCTpoint=indgen(744)+6576
-NOVpoint=indgen(720)+7320
-DECpoint=indgen(744)+8040
+# IDentify the leap years
+founds = np.where( ((actyears/4.) - np.floor(actyears/4.) == 0.0) & ( ((actyears/100.) - np.floor(actyears/100.) != 0.0) | ((actyears/400.) - np.floor(actyears/400.) == 0.0)))
+leapsids = np.repeat(0,nyrs)
+leapsids[founds] = 1  #1s identify leap years
 
-dates=[stjul,edactjul]
-;clims=[1976,2005]
-clims=[1981,2010]
-stclim=clims(0)-styear
-edclim=clims(1)-styear
-climsum=(edclim+1)-stclim
-CLIMstjul=JULDAY(stmon,stday,clims(0),0)
-CLIMedjul=JULDAY(edmon,edday,clims(1)+1, 0)
-CLIMedactjul=JULDAY(12,31,clims(1),23)
-CLIMtims=LONG((CLIMedjul-CLIMstjul)*24.)
-CLIMstpoint = LONG((CLIMstjul - stjul) * 24.)
-clpointies=lindgen(CLIMtims) +CLIMstpoint    ;an array from 3 to 32?
-;stop,'check these clims'
+HrDict = {'JanHrs':np.arange(744),
+          'FebHrs':np.arange(696)+744, # THIS INCLUDES 29th FEB!!!
+	  'MarHrs':np.arange(744)+1440,
+          'AprHrs':np.arange(720)+2184,
+          'MayHrs':np.arange(744)+2904,
+          'JunHrs':np.arange(720)+3648,
+          'JulHrs':np.arange(744)+4368,
+          'AugHrs':np.arange(744)+5112,
+          'SepHrs':np.arange(720)+5856,
+          'OctHrs':np.arange(744)+6576,
+          'NovHrs':np.arange(720)+7320,
+          'DecHrs':np.arange(744)+8040}
 
-;station hist arrays
-tmp=make_array(1000,/string,value=' ')
-tmpi=make_array(1000,/int,value=0)
-histarr={histee,source:tmp,$		; 0 to 3
-                wmoid:tmp,$		; 999999
-		perst:tmp,$		; yyyymmdd
-		pered:tmp,$		; yyyymmdd
-		ltdeg:tmpi,$		; -999
-		ltmin:tmpi,$		; 99
-		ltsec:tmpi,$		; 99
-		lndeg:tmpi,$		; -999
-		lnmin:tmpi,$		; 99
-		lnsec:tmpi,$		; 99
-                chdist:tmp,$ 		; 999
-		chdisttp:tmp,$		; MI ,YD , 
-		chdir:tmp,$		;   N,
-		stelevft:tmp,$		; 99999
-		itelevft:tmp,$		; 9999 HM, TP
-		obtimsHUM:tmp,$		; 06
-		obtimsTMP:tmp,$		; HR this means all obs taken every 6 hours
-		itlist:tmp}		; 99999 99999 99999
-
-#*********************************************************************************************
-# SUBROUTINES
-#*********************************************************************************************
-read netcdf
-
-write netcdf
-
-get SLP (select file and convert)
-
-read ascii
-
-write ascii
-
-
-
-
-
-STATSUFFIXOUT = '_IDPHAadj.txt'
-
-if param == 'rh':
-    param2            = 'RH'	# Tw, q, e, RH, T
-    unit              = '%rh'	# 'degrees C','g/kg','hPa','%'
-    CORRFIL           = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'rh/corr/corr.log'
-    INRAW             = workingdir+'/MONTHLIES/ASCII/RHABS/'
-    STATSUFFIXIN      = '_RHmonthQCabs.raw'
-    OUTHOM            = workingdir+'/MONTHLIES/HOMOG/IDPHAASCII/RHDIR/'
-    BREAKSINFO        = workingdir+'/LISTS_DOCS/HadISDH.landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_landRH.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHArh_'+nowmon+nowyear+'.txt'
-    OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/RHDIR/'
-
-elif param == 'q':
-    param2            = 'q'	# Tw, q, e, RH, T
-    unit              = 'g/kg'	# 'degrees C','g/kg','hPa','%'
-    CORRFIL           = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'q/corr/corr.log' 
-    INRAW             = workingdir+'/MONTHLIES/ASCII/QABS/'
-    STATSUFFIXIN      = '_qmonthQCabs.raw'
-    OUTHOM            = workingdir+'/MONTHLIES/HOMOG/IDPHAASCII/QDIR/'
-    BREAKSINFO        = workingdir+'/LISTS_DOCS/HadISDH.landq.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_landq.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAq_'+nowmon+nowyear+'.txt'
-    OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/QDIR/'
-
-elif param == 'tw':
-    param2            = 'Tw'	# Tw, q, e, RH, T
-    unit              = 'dewgrees C'	# 'degrees C','g/kg','hPa','%'
-    CORRFIL           = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'tw/corr/corr.log'
-    INRAW             = workingdir+'/MONTHLIES/ASCII/TWABS/'
-    STATSUFFIXIN      = '_TwmonthQCabs.raw'
-    OUTHOM            = workingdir+'/MONTHLIES/HOMOG/IDPHAASCII/TWDIR/'
-    BREAKSINFO        = workingdir+'/LISTS_DOCS/HadISDH.landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_landTw.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAtw_'+nowmon+nowyear+'.txt'
-    OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TWDIR/'
-
-elif param == 'e':
-    param2            ='e'	# Tw, q, e, RH, T
-    unit              ='hPa'	# 'degrees C','g/kg','hPa','%'
-    CORRFIL           = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'e/corr/corr.log'
-    INRAW             = workingdir+'/MONTHLIES/ASCII/EABS/'
-    STATSUFFIXIN      = '_emonthQCabs.raw'
-    OUTHOM            = workingdir+'/MONTHLIES/HOMOG/IDPHAASCII/EDIR/'
-    BREAKSINFO        = workingdir+'/LISTS_DOCS/HadISDH.lande.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_lande.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAe_'+nowmon+nowyear+'.txt'
-    OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/EDIR/'
-
-elif param == 't':
-    param2            = 'T'	# Tw, q, e, RH, T
-    unit              = 'degrees C'	# 'degrees C','g/kg','hPa','%'
-    CORRFIL           = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear+'t/corr/corr.log' 
-    INRAW             = workingdir+'/MONTHLIES/ASCII/TABS/'	# a different file name and format to read in
-    INPHA             = workingdir+'/MONTHLIES/HOMOG/PHAASCII/TDIR/'	# a different file name and format to read in
-    STATSUFFIXIN      = '_TmonthQCabs.raw'
-    OUTHOM            = workingdir+'/MONTHLIES/HOMOG/IDPHAASCII/TDIR/'
-    BREAKSINFO        = workingdir+'/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHA_'+nowmon+nowyear+'.log'
-    BREAKSINFOMERGE   = workingdir+'/LISTS_DOCS/HadISDH.landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.log'
-    NONEIGHBOURSLIST  = workingdir+'/LISTS_DOCS/noneighbours_landT.'+version+'_IDPHA_'+nowmon+nowyear+'.txt'
-    GOTNEIGHBOURSLIST = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAt_'+nowmon+nowyear+'.txt'
-    OUTPLOT           = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/IDADJCOMP/TDIR/'
-
-# Set up variables and arrays needed
-
-mdi=-99.99
-
-DATASTART = dt.datetime(styr,1,1,0,0)
-DATAEND   = dt.datetime(edyr,12,1,0,0)
-clmsty    = (clmst-styr)
-clmedy    = (clmed-styr)
-clmstm    = (clmst-styr)*12
-clmedm    = ((clmed-styr)*12)+11
-CLIMSTART = dt.datetime(clmst,1,1,0,0)
-CLIMEND   = dt.datetime(clmed,12,1,0,0)
-nmons     = ((edyr+1)-styr)*12
-monarr    = range(nmons)
-nyrs      = (edyr-styr)+1
-yrarr     = range(nyrs)
-
-nstations       = 0	# defined after reading in station list
-StationListWMO  = []	# nstations list filled after reading in station list
-StationListWBAN = []	# nstations list filled after reading in station list
-
-nNstations    = 0	# defined after reading corr station list
-NeighbourList = [] # nNstations list filled after reading in corr station list
-
-nBreaks      = 0	# defined after finding and reading in break locs
-BreakLocs    = []	# nBreaks list of locations filled after reading in break locs list
-BreakSize    = []	# nBreaks list of sizes filled after reading in break locs list
-BreakUncs    = []	# nBreaks list of uncertainties filled after reading in break locs list
-NewBreakDist = []	# filled each time a break size is found from all neighbour difference series
-NewBreakList = []	# nBreaks by 4 array for mean adjustment relative to next most recent HSP, 1.65sigma unc, total adjustment relative to most recent HSP, total 1.65sigma unc
-MyBreakLocs  = []      # nBreaks+2 month locations for each break including month 1 if needed and last month
-
-MyStation       = []	# filled after reading in candidate station
-MyClims         = []	# 12 element array of mean months 1976-2005
-MyAnomalies     = []	# filled with anomalies after subtracting climatology
-MyHomogAnoms    = [] # filled with homogenised anomalies
-MyHomogAbs      = []	# filled with climatology+homogenised anomalies
-MyClimMeanShift = [] # flat value across complete climatology period that the homogenised values differ from zero by - to rezero anoms and adjust clims/abs
-
-NeighbourStations      = []	# nNstations by nmons array filled after reading in all neighbour stations
-NeighbourAnomsStations = []	# nNstations by nmons array filled after anomalising all neighbour stations relative to climatology
-NeighbourClimsStations = []	# nNstations by nmons array filled after anomalising all neighbour stations relative to climatology
-NeighbourDiffStations  = []	# nNstations by nmons array filled after creating candidate minus neighbour difference series
-
-MyFile = ' '	#string containing file name
+dates = [stjul,edactjul] # this is Jan 1st 1973 to end-year, Dec 31st so the day counts will need +1 to be correct
+stclim = clims[0] - styear
+edclim = clims[1] - styear
+climsum = (edclim + 1) - stclim
+CLIMstjul = dt.date(clims[0],stmon,stday).toordinal()      #JULDAY(stmon,stday,clims(0),0)
+# Can't understand why I did clims(1)+1, edmon,edday
+CLIMedjul = dt.date(clims[1]+1,stmon,stday).toordinal()    #JULDAY(edmon,edday,clims(1)+1, 0)
+CLIMtims = (CLIMedjul - CLIMstjul) * 24.
+CLIMstpoint = (CLIMstjul - stjul) * 24.
+clpointies = (np.arange(CLIMtims) + CLIMstpoint).astype(int)    
+#print('check these clims')
+#pdb.set_trace()
 
 #************************************************************************
 # Subroutines
@@ -540,1704 +414,1222 @@ def ReadData(FileName,typee,delimee):
     ''' Need to specify format as it is complex '''
     ''' outputs an array of tuples that in turn need to be subscripted by their names defaults f0...f8 '''
 
-    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee) # ReadData
+    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee,encoding='latin-1') # ReadData 
+
+#************************************************************************
+#ReadSLPdata
+def ReadSLPdata(TheMDI):
+    ''' REad in 1981-2010 climatological SLP from 20CRv2 data '''
+    ''' REform lats and lons accordingly '''
+    ''' Compile 12 month clim to one array '''
+    ''' Data are 2 x 2 degrees '''
+    
+    TheData = np.empty((12,91,180))
+    TheData.fill(TheMDI)
+    
+    LatInfo = ['lat']
+    LonInfo = ['lon']
+    ReadInfo = ['VAR']
+    
+    # Loop through each month to read in and append data into array
+    MonArr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    
+    for mm,mon in enumerate(MonArr):
+    
+        TmpData,TmpLats,TmpLons = ReadNetCDF.GetGrid(INSLP+'20CRv2c'+mon+'19812010_SLP_Jan2018.nc',ReadInfo,LatInfo,LonInfo)
+        # A time, lat, lon data numpy array
+    
+        # If this is January then sort out lats and lons
+        if (mm == 0):
+    
+            # Make lats the northern-most boundary and reverse to go 91 to - 89
+            TheLats = np.flip(np.copy(TmpLats))
+            TheLats = TheLats + 1
+        
+	    # Make the lons the western-most boundary from -179 to 179 
+            TheLons = np.roll(np.copy(TmpLons) - 1,89)
+            TheLons[np.where(TheLons >= 180)] = -(360 - TheLons[np.where(TheLons >= 180)])
+    
+        TheData[mm,:,:] = np.flipud(np.roll(np.copy(TmpData),89,axis=1)) # lons were 0 to 358 and are now  to -179 to 179 (gridbox centres)
+    
+    #print('Check this reformatting')
+    #pdb.set_trace()
+
+    return TheData,TheLats,TheLons
+
+#************************************************************************
+# GetHadISD
+def GetHadISD(TheFilee,TheHTimes,TheMDI):
+    ''' THis reads in the data from netCDF and pulls out the correct time period '''
+    
+    # Build correct time arrays
+    TheTempArr = np.repeat(TheMDI, len(TheHTimes)) 
+    TheDewpArr = np.repeat(TheMDI, len(TheHTimes)) 
+    TheWSArr = np.repeat(TheMDI, len(TheHTimes)) 
+    TheSLPArr = np.repeat(TheMDI, len(TheHTimes)) 
+    TheObsSource = np.empty((len(TheHTimes),12),dtype='|S1') 
+    
+    # Read the time, t, td, slp and ws (and obs source) data from the netcdf file
+    ncf = nc4.Dataset(TheFilee,'r')
+    tims = np.copy(ncf.variables['time'][:]).astype(int) # hours wince 1931, 1, 1, 00:00 - these are doubles so convert to integer
+    # Now find the start of the period we're interested and only copy that data
+    StartPoint = np.where(tims >= TheHTimes[0])[0]
+
+    # Catch station if there is no data in desired period and return with empty arrays
+    if (len(StartPoint) == 0):
+    
+        return TheTempArr,TheDewpArr,TheWSArr,TheSLPArr,tims,TheObsSource
+	
+    #StartPoint = np.where(tims >= TheHTimes[0])[0][0]
+    tims = tims[StartPoint[0]:]
+    
+    temps = np.copy(ncf.variables['temperatures'][StartPoint[0]:])
+    dewps = np.copy(ncf.variables['dewpoints'][StartPoint[0]:])
+    slp = np.copy(ncf.variables['slp'][StartPoint[0]:])
+    ws = np.copy(ncf.variables['windspeeds'][StartPoint[0]:])
+    #tims = tims.astype(int)
+    sourceids = np.copy(ncf.variables['input_station_id'][StartPoint[0]:,:]) # time,long_character_length (12) - comes out is byte array b'0' etc
+    # needs to be converted to string and then concatenated
+    #pdb.set_trace()
+    # Trying to convert byte character array into a joined string array but FAR TOO SLOWWWW
+    #sourceids = np.array([]) # a blank numpy array to append to
+    #for row in range(len(tmp[:,0])):
+    #    #print(row)
+    #    #sourceids = np.append(sourceids,''.join([''.join(i) for i in tmp[row,:].astype('U')])) # TOOOOOOOO SLOW!!!!
+    #    sourceids = np.append(sourceids,tmp[row,:].astype('U'))
+    
+    # pull out the HadISDH data period
+    # Which points in the HadISD data match the desired times for HadISDH TheHTimes
+    # np.isin gave IndexError when run from script but not from pdb - np.intersect1d seems more efficient anyway
+    Mush,ISDMap,HISDMap = np.intersect1d(tims,TheHTimes,assume_unique=True,return_indices=True)
+    TheTempArr[HISDMap] = np.copy(temps[ISDMap])
+    TheDewpArr[HISDMap] = np.copy(dewps[ISDMap])
+    TheWSArr[HISDMap] = np.copy(ws[ISDMap])
+    TheSLPArr[HISDMap] = np.copy(slp[ISDMap])
+    TheObsSource[HISDMap,:] = np.copy(sourceids[ISDMap,:])
+    #print('Check mapping has worked: ISDcounts = ',len(ISDMap),' HISDCounts = ',len(HISDMap))
+    #pdb.set_trace()
+    
+    # Convert all flagged -2e30 and missing -1e30 valuess to missing
+    TheTempArr[np.where(TheTempArr <= TheMDI)] = TheMDI
+    TheDewpArr[np.where(TheDewpArr <= TheMDI)] = TheMDI
+    TheWSArr[np.where(TheWSArr <= TheMDI)] = TheMDI
+    TheSLPArr[np.where(TheSLPArr <= TheMDI)] = TheMDI
+    #print('check the mdi catching has worked') # may need [0] at end of np.where()
+    #pdb.set_trace()
+
+    return TheTempArr,TheDewpArr,TheWSArr,TheSLPArr,tims,TheObsSource
+
+#**************************************************************************
+# MakeMonths
+def MakeMonths(TheDataArr,TheDates,TheMDI):
+    ''' Code converted from IDL make_months_oddtimesJAN2015.pro '''
+    ''' COMPLEX method makes month hour means, substracts month hour climatology, makes month hour anomaly'''
+    ''' Importantly this removes the diurnal cycle before averaging so reduces biasing from uneven temporal sampling '''
+
+    # Set up the times
+    nhhrs = len(TheDataArr) # number of hours in record - complete years of data including leap years
+    nddys = (dates[1] - dates[0]) + 1 # number of days in the record - should be nhhrs / 24 so this is a check
+    #print('Number of days/hours check: ',nhhrs/24, nddys)
+    #pdb.set_trace()
+    
+    TheStYr = dt.date.fromordinal(dates[0]).year
+    TheEdYr = dt.date.fromordinal(dates[1]).year
+    nyyrs = (TheEdYr - TheStYr) + 1 # number of years of record
+    nmms = nyyrs * 12 # number of months of record
+    
+    clim_points = [clims[0]-TheStYr,clims[1]-TheStYr] # remember in python that if we're getting a range the last value needs to be +1
+    climlength = (clims[1] - clims[0]) + 1 # should be 30
+    #print('Number of years in clim (30?) check: ',climlength)
+    #pdb.set_trace()
+    
+    # Set up leap year stuff
+    # This is already in the code above so may just be referencable but by putting it here this could be a stand alone function
+    ActYears = np.arange(TheStYr, (TheEdYr + 1)) # array of integer years
+    LeapIDs = np.repeat(0,nyyrs)
+    LeapIDs[np.where( ((ActYears/4.) - np.floor(ActYears/4.) == 0.0) & ( ((ActYears/100.) - np.floor(ActYears/100.) != 0.0) | ((ActYears/400.) - np.floor(ActYears/400.) == 0.0)))] = 1  #1s identify leap years
+    #print('Check the LeapIDs are correct')
+    #pdb.set_trace()
+
+    # SEt up the final arrays
+    TheAnoms = np.repeat(MDI,nmms)
+    TheAbs = np.repeat(MDI,nmms)
+    TheSDs = np.repeat(MDI,nmms)
+    TheClims = np.repeat(MDI,12)    
+    TheClimSDs = np.repeat(MDI,12)    
+    
+    # Set up the working arrays
+    mm_hr_abs   = np.empty((nmms,24)) # month mean for each hour
+    mm_hr_abs.fill(MDI)
+    mm_hr_anoms = np.empty((nmms,24)) # month mean anomaly for each hour
+    mm_hr_anoms.fill(MDI)
+    mm_hr_clims = np.empty((12,24))   # month climatological mean for each hour
+    mm_hr_clims.fill(MDI)
+    
+    # MAKE MONTH HOUR MEANS FOR ALL YEARS - OK WITH LEAP YEARS
+    # chunk by years then work through each month - allows us to easily ID leap years
+    MCount = 0 # counter for months
+    stpoint = 0
+    edpoint = 0
+    for yy,year in enumerate(ActYears): # loops through with 0,1973 1,1974 etc
+    
+        if (LeapIDs[yy] == 0): # not a leap year
+        
+            MonDays = [31,28,31,30,31,30,31,31,30,31,30,31]
+
+        else:
+	    
+            MonDays = [31,29,31,30,31,30,31,31,30,31,30,31]
+	    
+        #print('Check leap year ID')
+        #pdb.set_trace()    
+	
+	# Now loop through each month    
+        for mm in range(12):    
+	
+	    # Extract month of data and reform to hrs,days array
+            edpoint = stpoint + (MonDays[mm]*24)
+            HrDayArr = np.reshape(TheDataArr[stpoint:edpoint],(MonDays[mm],24)) # each row is a day, each column is an hour
+	
+            #print('Check stpoint and edpoint and extraction')
+            #pdb.set_trace()
+	        
+	    # Loop through the hours in the day
+            for hh in range(24):
+
+                # *** Get month hour means where there are AT LEAST 15 days present within the month
+                # THIS COULD HAVE BEEN 20 BUT THEN STATIONS WITH CHANGES TO GMT REPORTING WITHIN A MONTH i.e. Australia MAY 
+                # HAVE EVERY e.g. MARCH and SEPTEMBER REMOVED.
+                if (len(np.where(HrDayArr[:,hh] > TheMDI)[0]) >= 15):
+
+                    mm_hr_abs[MCount,hh] = np.mean(HrDayArr[np.where(HrDayArr[:,hh] > TheMDI)[0],hh])
+	
+  	    # *** If there are at least 4 hrs means within the day and one in each tercile [0-7,8-15,16-23] then Fill TheAbs and TheSDs[MCount]
+            if ((len(np.where(mm_hr_abs[MCount,:] > TheMDI)[0]) >= 4) & 
+                (len(np.where(mm_hr_abs[MCount,0:8] > TheMDI)[0]) > 0) & 
+                (len(np.where(mm_hr_abs[MCount,8:16] > TheMDI)[0]) > 0) & 
+                (len(np.where(mm_hr_abs[MCount,16:24] > TheMDI)[0]) > 0)):
+	    
+                TheSDs[MCount] = np.std(HrDayArr[np.where(HrDayArr > TheMDI)])
+                TheAbs[MCount] = np.mean(mm_hr_abs[MCount,np.where(mm_hr_abs[MCount,:] > TheMDI)[0]])
+		# potentially we could have a value for TheAbs but not TheAnoms so need to make sure the 15 days minimum is also applied there
+		# Later, if one month fails for climatology the whole station is dumped
+	    
+            stpoint = edpoint
+            MCount = MCount + 1
+            
+            #print('Check hour sampling and means')
+            #pdb.set_trace()
+	    	    
+    # MAKE MONTH HOUR CLIMS AND THEN MONTH CLIMS - if one month fails then this station will be ditched
+    # Firstextract clim years and reshape the mm_hr_abs from nmms,24 to climlength,12,24
+    mm_hr_abs_clim = np.reshape(mm_hr_abs[(clim_points[0]*12):((clim_points[1]+1)*12),:],(climlength,12,24))
+    #print('Check extraction of climatological months - 360')
+    #pdb.set_trace()
+
+    for mm in range(12):
+    
+        for hh in range(24):
+	
+            # *** There should be at least 15 years (50% of climlength) and one year in each decade
+	    # NOTE THAT IN IDL THIS WAS JUST GT 15 NOT GE 15!!! SO WE KEEP MORE STATIONS HERE AT LEAST
+            if ((len(mm_hr_abs_clim[np.where(mm_hr_abs_clim[:,mm,hh] > TheMDI)[0],mm,hh]) >= climlength*0.5) & 
+                (len(mm_hr_abs_clim[np.where(mm_hr_abs_clim[0:10,mm,hh] > TheMDI)[0],mm,hh]) > 0) & 
+                (len(mm_hr_abs_clim[np.where(mm_hr_abs_clim[10:20,mm,hh] > TheMDI)[0],mm,hh]) > 0) & 
+                (len(mm_hr_abs_clim[np.where(mm_hr_abs_clim[20:30,mm,hh] > TheMDI)[0],mm,hh]) > 0)):
+	    
+                mm_hr_clims[mm,hh] = np.mean(mm_hr_abs_clim[np.where(mm_hr_abs_clim[:,mm,hh] > TheMDI)[0],mm,hh])	
+                #print('Check the month hr clim')
+                #pdb.set_trace()		    
+
+	# *** If there are at least 4 hrs means within the day and one in each tercile [0-7,8-15,16-23] then Fill TheClims and TheClimSDs[MCount]
+        if ((len(np.where(mm_hr_clims[mm,:] > TheMDI)[0]) >= 4) & 
+	    (len(np.where(mm_hr_clims[mm,0:8] > TheMDI)[0]) > 0) & 
+	    (len(np.where(mm_hr_clims[mm,8:16] > TheMDI)[0]) > 0) & 
+	    (len(np.where(mm_hr_clims[mm,16:24] > TheMDI)[0]) > 0)):
+ 
+            TheClims[mm] = np.mean(mm_hr_clims[mm,np.where(mm_hr_clims[mm,:] > TheMDI)])	
+            monthstash = mm_hr_abs_clim[:,mm,:]    
+            TheClimSDs[mm] = np.std(monthstash[np.where(monthstash > TheMDI)])	    
+
+            #print('Check the month clim and sd')
+            #pdb.set_trace()		    
+     
+        # This month does not have enough data so we need to ditch the station
+        else:
+	
+            #pdb.set_trace()
+            return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs # exit with empty / incomplete return arrays
+
+    # NOW BUILD THE month hr anoms and TheAnoms
+    # chunk by years then work through each month - allows us to easily ID leap years
+    MCount = 0 # counter for months
+    stpoint = 0
+    edpoint = 0
+    for yy,year in enumerate(ActYears): # loops through with 0,1973 1,1974 etc
+    
+        if (LeapIDs[yy] == 0): # not a leap year
+        
+            MonDays = [31,28,31,30,31,30,31,31,30,31,30,31]
+
+        else:
+	    
+            MonDays = [31,29,31,30,31,30,31,31,30,31,30,31]
+	    
+	# Now loop through each month    
+        for mm in range(12):    
+	
+	    # Extract month of data and reform to hrs,days array
+            edpoint = stpoint + (MonDays[mm]*24)
+            HrDayArr = np.reshape(TheDataArr[stpoint:edpoint],(MonDays[mm],24)) # each row is a day, each column is an hour
+	
+	    # Loop through the hours in the day
+            for hh in range(24):
+
+                # *** Get month hour mean anoms where there are AT LEAST 15 days present within the month
+                # THIS COULD HAVE BEEN 20 BUT THEN STATIONS WITH CHANGES TO GMT REPORTING WITHIN A MONTH i.e. Australia MAY 
+                # HAVE EVERY e.g. MARCH and SEPTEMBER REMOVED.
+                if ((len(np.where(HrDayArr[:,hh] > TheMDI)[0]) >= 15) & (mm_hr_clims[mm,hh] > TheMDI)):
+
+                    mm_hr_anoms[MCount,hh] = np.mean((HrDayArr[np.where(HrDayArr[:,hh] > TheMDI)[0],hh] - mm_hr_clims[mm,hh]))
+	
+	    # *** If there are at least 4 hrs means within the day and one in each tercile [0-7,8-15,16-23] then Fill TheAnoms
+            if ((len(np.where(mm_hr_anoms[MCount,:] > TheMDI)[0]) >= 4) & 
+                (len(np.where(mm_hr_anoms[MCount,0:8] > TheMDI)[0]) > 0) & 
+                (len(np.where(mm_hr_anoms[MCount,8:16] > TheMDI)[0]) > 0) & 
+                (len(np.where(mm_hr_anoms[MCount,16:24] > TheMDI)[0]) > 0)):
+	    
+                TheAnoms[MCount] = np.mean(mm_hr_anoms[MCount,np.where(mm_hr_anoms[MCount,:] > TheMDI)[0]])
+	    
+            stpoint = edpoint
+            MCount = MCount + 1
+
+    # Add a final check that if the station is still good (has all 12 months of climatology) there are sufficient numbers of absolute values to calculate a climatology
+    TheAbsClims = np.reshape(TheAbs,(len(ActYears),12))[clim_points[0]:clim_points[1]+1,:]
+    for mm in range(12):
+    
+        if (len(TheAbsClims[np.where(TheAbsClims[:,mm] > TheMDI),mm]) < 15):
+	
+	# this is bad so fail everything
+            TheClims[:] = TheMDI
+            return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs
+            
+    return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs
+    
+#************************************************************************
+# WriteNetCDF
+def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObject,GlobAttrObject,OLDMDI):
+    ''' WRites NetCDF4 '''
+    ''' Sort out the date/times to write out and time bounds '''
+    ''' Convert variables using the obtained scale_factor and add_offset: stored_var=int((var-offset)/scale) '''
+    ''' Write to file, set up given dimensions, looping through all potential variables and their attributes, and then the provided dictionary of global attributes '''
+
+    # Attributes and things common to all vars
+    add_offset = -100.0 # storedval=int((var-offset)/scale)
+    scale_factor = 0.01
+    
+    # Sort out date/times to write out
+    TimPoints,TimBounds = MakeDaysSince(TheStYr,1,TheEdYr,12,'month',Return_Boundaries = True)
+    nTims = len(TimPoints)
+    MonthName = ['January   ',
+             'February  ',
+	     'March     ',
+	     'April     ',
+	     'May       ',
+	     'June      ',
+	     'July      ',
+	     'August    ',
+	     'September ',
+	     'October   ',
+	     'November  ',
+	     'December  ']
+	
+    # No need to convert float data using given scale_factor and add_offset to integers - done within writing program (packV = (V-offset)/scale
+    # Not sure what this does to float precision though...
+    # Change mdi into an integer -999 because these are stored as integers
+    NEWMDI = -999
+    for vv in range(len(TheDataList)):
+        TheDataList[vv][np.where(TheDataList[vv] == OLDMDI)] = NEWMDI
+
+    # Create a new netCDF file - have tried zlib=True,least_significant_digit=3 (and 1) - no difference
+    ncfw = nc4.Dataset(FileName,'w',format='NETCDF4_CLASSIC') # need to try NETCDF4 and also play with compression but test this first
+    
+    # Write out the global attributes
+    if ('description' in GlobAttrObject):
+        ncfw.description = GlobAttrObject['description']
+	#print(GlobAttrObject['description'])
+	
+    if ('File_created' in GlobAttrObject):
+        ncfw.File_created = GlobAttrObject['File_created']
+
+    if ('Title' in GlobAttrObject):
+        ncfw.Title = GlobAttrObject['Title']
+
+    if ('Institution' in GlobAttrObject):
+        ncfw.Institution = GlobAttrObject['Institution']
+
+    if ('History' in GlobAttrObject):
+        ncfw.History = GlobAttrObject['History']
+
+    if ('Licence' in GlobAttrObject):
+        ncfw.Licence = GlobAttrObject['Licence']
+
+    if ('Project' in GlobAttrObject):
+        ncfw.Project = GlobAttrObject['Project']
+
+    if ('Processing_level' in GlobAttrObject):
+        ncfw.Processing_level = GlobAttrObject['Processing_level']
+
+    if ('Acknowledgement' in GlobAttrObject):
+        ncfw.Acknowledgement = GlobAttrObject['Acknowledgement']
+
+    if ('Source' in GlobAttrObject):
+        ncfw.Source = GlobAttrObject['Source']
+
+    if ('Comment' in GlobAttrObject):
+        ncfw.Comment = GlobAttrObject['Comment']
+
+    if ('References' in GlobAttrObject):
+        ncfw.References = GlobAttrObject['References']
+
+    if ('Creator_name' in GlobAttrObject):
+        ncfw.Creator_name = GlobAttrObject['Creator_name']
+
+    if ('Creator_email' in GlobAttrObject):
+        ncfw.Creator_email = GlobAttrObject['Creator_email']
+
+    if ('Version' in GlobAttrObject):
+        ncfw.Version = GlobAttrObject['Version']
+
+    if ('doi' in GlobAttrObject):
+        ncfw.doi = GlobAttrObject['doi']
+
+    if ('Conventions' in GlobAttrObject):
+        ncfw.Conventions = GlobAttrObject['Conventions']
+
+    if ('netcdf_type' in GlobAttrObject):
+        ncfw.netcdf_type = GlobAttrObject['netcdf_type']
+	
+    # Loop through and set up the dimension names and quantities
+    for vv in range(len(DimObject[0])):
+        ncfw.createDimension(DimObject[0][vv],DimObject[1][vv])
+	
+    # Go through each dimension and set up the variable and attributes for that dimension if needed
+    for vv in range(len(DimObject)-2): # ignore first two elements of the list but count all other dictionaries
+        print(DimObject[vv+2]['var_name'])
+	
+	# NOt 100% sure this works in a loop with overwriting
+	# initiate variable with name, type and dimensions
+        MyVar = ncfw.createVariable(DimObject[vv+2]['var_name'],DimObject[vv+2]['var_type'],DimObject[vv+2]['var_dims'])
+        
+	# Apply any other attributes
+        if ('standard_name' in DimObject[vv+2]):
+            MyVar.standard_name = DimObject[vv+2]['standard_name']
+	    
+        if ('long_name' in DimObject[vv+2]):
+            MyVar.long_name = DimObject[vv+2]['long_name']
+	    
+        if ('units' in DimObject[vv+2]):
+            MyVar.units = DimObject[vv+2]['units']
+		   	 
+        if ('axis' in DimObject[vv+2]):
+            MyVar.axis = DimObject[vv+2]['axis']
+
+        if ('calendar' in DimObject[vv+2]):
+            MyVar.calendar = DimObject[vv+2]['calendar']
+
+        if ('start_year' in DimObject[vv+2]):
+            MyVar.start_year = DimObject[vv+2]['start_year']
+
+        if ('end_year' in DimObject[vv+2]):
+            MyVar.end_year = DimObject[vv+2]['end_year']
+
+        if ('start_month' in DimObject[vv+2]):
+            MyVar.start_month = DimObject[vv+2]['start_month']
+
+        if ('end_month' in DimObject[vv+2]):
+            MyVar.end_month = DimObject[vv+2]['end_month']
+
+        if ('bounds' in DimObject[vv+2]):
+            MyVar.bounds = DimObject[vv+2]['bounds']
+	
+	# Provide the data to the variable
+        if (DimObject[vv+2]['var_name'] == 'time'):
+            MyVar[:] = TimPoints
+
+        if (DimObject[vv+2]['var_name'] == 'bounds_time'):
+            MyVar[:,:] = TimBounds
+
+        if (DimObject[vv+2]['var_name'] == 'month'):
+
+            for mm in range(12):
+                MyVar[mm,:] = nc4.stringtochar(np.array(MonthName[mm],dtype='S10'))
+
+    # Go through each variable and set up the variable attributes
+    for vv in range(len(AttrObject)): # ignore first two elements of the list but count all other dictionaries
+
+        print(AttrObject[vv]['var_name'])
+
+        # NOt 100% sure this works in a loop with overwriting
+	# initiate variable with name, type and dimensions
+        MyVar = ncfw.createVariable(AttrObject[vv]['var_name'],AttrObject[vv]['var_type'],AttrObject[vv]['var_dims'],fill_value = NEWMDI)
+        
+	# Apply any other attributes
+        if ('long_name' in AttrObject[vv]):
+            MyVar.long_name = AttrObject[vv]['long_name']
+	    
+        if ('units' in AttrObject[vv]):
+            MyVar.units = AttrObject[vv]['units']
+
+        MyVar.add_offset = add_offset
+        MyVar.scale_factor = scale_factor
+
+        if ('valid_min' in AttrObject[vv]):
+            MyVar.valid_min = AttrObject[vv]['valid_min']
+
+        if ('valid_max' in AttrObject[vv]):
+            MyVar.valid_max = AttrObject[vv]['valid_max']
+
+        MyVar.reference_period = str(TheClims[0])+', '+str(TheClims[1])
+
+	# Provide the data to the variable - depending on howmany dimensions there are
+        MyVar[:] = TheDataList[vv]
+	    
+    ncfw.close()
+   
+    return # WriteNCCF
+
+#************************************************************************
+# WriteASCII
+def WriteAscii(TheFilee,TheData,TheID,TheStYr,TheEdYr):
+    ''' Write out to text file '''
+    
+    nyrs = (TheEdYr - TheStYr) + 1
+    
+    filee = open(TheFilee,'a+')
+    
+    for y,yy in enumerate(np.arange(TheStYr,TheEdYr+1)):
+
+        #DataString = '   '.join(['%6i' % (i) for i in TheData[y,:]])
+        #pdb.set_trace()
+        filee.write('%11s %4s%105s\n' % (TheID,str(yy),'   '.join(['%6i' % (i) for i in TheData[y,:]]))) # 105 is 12 * 6 + 11 * 3
+
+    filee.close()
+
+    return
+
+#************************************************************************
+# FailureMode
+def FailureMode(FailType,Message,Counter,StationID):
+    '''This function prints out the failure mode, stationID and Counter to 
+       screen and to relevant file then returns '''
+    '''TheMessage should be a string of maximum 30 characters '''
+    '''Counter should be max of 999999 '''
+
+    if (FailType == 'TooFewHours'):
+        print('Too few hours in month climatology')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    elif (FailType == 'SubzeroDPD'):
+        print('Subzero values in DPD data')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    elif (FailType == 'EarlyRecord'):
+        print('No data in desired time period')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    elif (FailType == 'TooFewMonths'):
+        print('Too few months with enough data for climatology')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    elif (FailType == 'TooFewClims'):
+        print('Too few climatological months')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    elif (FailType == 'ShortStation'):
+        print('Too few months in record')
+    
+        filee = open(OUTDITCH,'a+')
+        filee.write('%12s %32s %6i \n' % (StationID,Message+': ',Counter))
+        filee.close()
+
+    return
 
 #************************************************************************
 # MAIN
 #************************************************************************
-#
+# Read in the SLP data from netCDF
+CR20arr,CR20lats,CR20lons = ReadSLPdata(MDI)
 
+# Open and read in station list 
+#MyTypes = str
+MyTypes         = ("|U6","|U1","|U5","|U1","|U30","|U1","float","|U1","float","|U1","float","|U1","|U21")
+#MyTypes         = ("|S6","|S1","|S5","|S1","|S30","|S1","float","|S1","float","|S1","float","|S1","|S21")
+#MyTypes         = ("str","str","str","str","str","str","float","str","float","str","float","str","str")
+#MyTypes         = (str,str,str,str,str,str,float,str,float,str,float,str,str)
+#MyTypes         = "|U5"
+# Could try:
+#MyTypes         = ("|S6","x","|S5","x","|S30","x","float","x","float","x","float","x","|S21")
+MyDelimiters    = [6,1,5,1,30,1,7,1,8,1,7,1,21]
+RawData         = ReadData(INSTATLIST,MyTypes,MyDelimiters)
+StationListWMO  = np.array(RawData['f0'])
+StationListWBAN = np.array(RawData['f2'])
+StationListLat  = np.array(RawData['f6'])
+StationListLon  = np.array(RawData['f8'])
+StationListElev = np.array(RawData['f10'])
+StationListCID  = np.repeat('XX',len(StationListWMO)) # added later
+StationListName = np.array(RawData['f4'])
+nstations       = len(StationListWMO)
+#print('Test to see if station read in has worked correctly and whether there is a more efficient method')
+#pdb.set_trace()
 
+# loop through station by station
+for st in range(nstations):
 
+# check if restart necessary
+    if Restarter != '------' and Restarter != StationListWMO[st]:
+        continue
 
-#-------------------------------------------------------------------------
-# EDITABLES!!!
-#-----------------------------------
-pro create_monthseriesJAN2015
+    Restarter     = '------'
 
-newstart=long(298460)   	    #long(0) or long(010010) etc	# use this to restart the program at a specified place 
-nowmon='JAN'
-nowyear='2018'
-version='3.0.1.2017p'
-thisyear=2017
-strthisyear=strcompress(thisyear,/remove_all)
-strsubyear=strmid(strcompress(thisyear,/remove_all),2,2)
+    stationid = StationListWMO[st]+'-'+StationListWBAN[st]	# New ISD will have different filenames
+    outstationid = StationListWMO[st]+StationListWBAN[st]	# New ISD will have different filenames
 
+    print('Working on ',stationid)
 
-indir='/media/Kate1Ext3/HadISD.2.0.2.2017p/hadisd.2.0.2.2017p_19310101-20171231_'
-inlists='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'
-inCIDs='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
-
-#------------------------------------------------------------------
-# END OF EDITABLES
-#--------------------------------------
-
-inSLP='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/OTHERDATA/'	#20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
-outdirASC='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/ASCII/'
-outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'q/monthly/raw/'
-outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'e/monthly/raw/'
-outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'t/monthly/raw/'
-outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'dpd/monthly/raw/'
-outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'td/monthly/raw/'
-outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'tw/monthly/raw/'
-outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'rh/monthly/raw/'
-outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'ws/monthly/raw/'
-outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'slp/monthly/raw/'
-outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/HISTORY/'
-outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/NETCDF/'
-ditchfile='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-keepfile='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-
-# variables
-mdi=-1e+30
-stationid=''
-stationelv=0.
-#*** at some point add all the header info from the new HadISD files***
-
-#times
-monarr=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-styear=1973
-stday=1
-stmon=1
-stjul=JULDAY(stmon,stday,styear,0)
-edyear=thisyear 
-edday=1
-edmon=1
-edjul=JULDAY(edmon,edday,edyear+1, 0)
-edactjul=JULDAY(12,31,edyear,23)
-
-ntims=LONG((edjul-stjul)*24.)
-nmons=(edyear-styear+1)*12
-nyrs=edyear-styear+1
-actyears=indgen(nyrs)+styear
-ndays=LONG(edjul-stjul)
-# ISD times are now HOURS since 1931-01-01 00:00 rather than DAYS since 1973-01-01 00:00 so we need to extract
-# this is a little complicated as they are provided as integers rather than decimals of a whole day (1./24.)
-# set up an array of time pointers from 1973 onwards in HadISD time language (hours since 1931-01-01 00:00)
-# 753887 hours since 1931 comes out as Dec 31st 2016 at 23:00 - which is correct!!!
-# 24 * (JULDAY(12,31,2016,23) - JULDAY(1,1,1931,0) = 753887
-# 24 * (JULDAY(1,1,1973,0) - JULDAY(1,1,1931,0) = 368184
-isdstyear=1931
-isdstjul=JULDAY(stmon,stday,isdstyear,0) # this gives a number in days 2426342.5
-isd_full_times=int(24. * (TIMEGEN(ntims,UNIT='Hours',START=stjul)-isdstjul)) # all times from 1973 to 2016 but zero'd to jan 1st 1931, midnight?
-full_times=(TIMEGEN(ntims,UNIT='Hours',START=stjul)-stjul) # zero'd to jan 1st 1973, midnight?
-int_times=lindgen(ntims)
-times=TIMEGEN(nmons,UNIT='Months',START=stjul)
-int_mons=indgen(nmons)
-fulltemp_arr=make_array(ntims,/float,value=mdi)
-fulldewp_arr=make_array(ntims,/float,value=mdi)
-fullddep_arr=make_array(ntims,/float,value=mdi)
-fulltwet_arr=make_array(ntims,/float,value=mdi)
-fullevap_arr=make_array(ntims,/float,value=mdi)
-fullesat_arr=make_array(ntims,/float,value=mdi)
-fullqhum_arr=make_array(ntims,/float,value=mdi)
-fullqsat_arr=make_array(ntims,/float,value=mdi)
-fullrhum_arr=make_array(ntims,/float,value=mdi)
-fullws_arr=make_array(ntims,/float,value=mdi)
-fullslp_arr=make_array(ntims,/float,value=mdi)
-
-# create array of half year counts taking into account leap years
-# i.e., 1973 June 30th = 181st day Dec 31st = 365th day (184)
-# i.e., 1974 June 30th = 181st day Dec 31st = 365th day (184)
-# i.e., 1975 June 30th = 181st day Dec 31st = 365th day (184)
-# i.e., 1976 June 30th = 182nt day Dec 31st = 366th day (184)
-# leaps are 1976,1980,1984,1988,1992,1996,2000,2004,2008,2012,2016
-# leap if divisible by four by not 100, unless also divisible by 400 i.e. 1600, 2000
-
-tots={structots,hd:[181,184]}
-alltots=REPLICATE(tots,nyrs)
-founds=WHERE(((actyears/4.)-FIX(actyears/4.) EQ 0.0) AND $
-             (((actyears/100.)-FIX(actyears/100.) NE 0.0) OR $
-	     ((actyears/400.)-FIX(actyears/400.) EQ 0.0)),count)
-halfyrtots=REFORM(alltots.hd,2,nyrs)
-halfyrtots(0,founds)=182
-halfyrtots=REFORM(halfyrtots,nyrs*2)
-leapsids=intarr(nyrs)
-leapsids(founds)=1  #1s identify leap years
-JANpoint=indgen(744)
-FEBpoint=indgen(696)+744 # always includes a potential leap year
-MARpoint=indgen(744)+1440
-APRpoint=indgen(720)+2184
-MAYpoint=indgen(744)+2904
-JUNpoint=indgen(720)+3648
-JULpoint=indgen(744)+4368
-AUGpoint=indgen(744)+5112
-SEPpoint=indgen(720)+5856
-OCTpoint=indgen(744)+6576
-NOVpoint=indgen(720)+7320
-DECpoint=indgen(744)+8040
-
-# Creating pointers for hours to include in the climatology period
-dates=[stjul,edactjul]
-clims=[1976,2005]
-stclim=clims(0)-styear
-edclim=clims(1)-styear
-climsum=(edclim+1)-stclim
-CLIMstjul=JULDAY(stmon,stday,clims(0),0)
-CLIMedjul=JULDAY(edmon,edday,clims(1)+1, 0)
-CLIMedactjul=JULDAY(12,31,clims(1),23)
-CLIMtims=LONG((CLIMedjul-CLIMstjul)*24.)
-CLIMstpoint = LONG((CLIMstjul - stjul) * 24.)
-clpointies=lindgen(CLIMtims) +CLIMstpoint    #an array from 3 to 32?
-#stop,'check these clims'
-
-#station hist arrays
-tmp=make_array(1000,/string,value=' ')
-tmpi=make_array(1000,/int,value=0)
-histarr={histee,source:tmp,$		# 0 to 3
-                wmoid:tmp,$		# 999999
-		perst:tmp,$		# yyyymmdd
-		pered:tmp,$		# yyyymmdd
-		ltdeg:tmpi,$		# -999
-		ltmin:tmpi,$		# 99
-		ltsec:tmpi,$		# 99
-		lndeg:tmpi,$		# -999
-		lnmin:tmpi,$		# 99
-		lnsec:tmpi,$		# 99
-                chdist:tmp,$ 		# 999
-		chdisttp:tmp,$		# MI ,YD , 
-		chdir:tmp,$		#   N,
-		stelevft:tmp,$		# 99999
-		itelevft:tmp,$		# 9999 HM, TP
-		obtimsHUM:tmp,$		# 06
-		obtimsTMP:tmp,$		# HR this means all obs taken every 6 hours
-		itlist:tmp}		# 99999 99999 99999
-
-#-----------------------------------------------------------------------------
-# IF SLP conversion method 3 then read in CR20 data
-CR20arr=make_array(180,91,12,/float,value=mdi)
-inn=NCDF_OPEN(inSLP+'20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc')
-lonid=NCDF_VARID(inn,'lon') 	#centre points of 2deg boxes from 0 to 358.
-latid=NCDF_VARID(inn,'lat') 	#centre points of 2deg boxes from 90 to -90
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,lonid,CR20lons
-NCDF_VARGET,inn,latid,CR20lats
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,0)=CR20vals/100.
-#make lats the northern most boundary
-CR20lats=CR20lats+1.
-#make lons the western most boundary starting from -180
-CR20lons=CR20lons-1
-CR20lons(WHERE(CR20lons GE 180))=-(360.-CR20lons(WHERE(CR20lons GE 180)))
-CR20lons=SHIFT(CR20lons,89) # they now go from -179 to 179
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-
-inn=NCDF_OPEN(inSLP+'20CRFeb7605MSLP_yycompos.151.170.240.10.37.8.12.55.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,1)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRMar7605MSLP_yycompos.151.170.240.10.37.8.13.49.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,2)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRApr7605MSLP_yycompos.151.170.240.10.37.8.14.40.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,3)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRMay7605MSLP_yycompos.151.170.240.10.37.8.15.32.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,4)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRJun7605MSLP_yycompos.151.170.240.10.37.8.16.16.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,5)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRJul7605MSLP_yycompos.151.170.240.10.37.8.17.0.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,6)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRAug7605MSLP_yycompos.151.170.240.10.37.8.17.54.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,7)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRSep7605MSLP_yycompos.151.170.240.10.37.8.18.36.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,8)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CROct7605MSLP_yycompos.151.170.240.10.37.8.19.23.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,9)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRNov7605MSLP_yycompos.151.170.240.10.37.8.20.1.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,10)=CR20vals/100.
-
-inn=NCDF_OPEN(inSLP+'20CRDec7605MSLP_yycompos.151.170.240.10.37.8.20.54.nc')
-varid=NCDF_VARID(inn,'prmsl')
-NCDF_VARGET,inn,varid,CR20vals
-NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) # lons now go gtom -179 to 179
-CR20arr(*,*,11)=CR20vals/100.
-
-
-#--------------------------------------------------------------------------------
-# open station list and begin to loop through
-openr,5,inlists
-WHILE NOT EOF(5) DO BEGIN
-  wmoid=''
-  wbanid=''
-  namoo=''
-#  cid=''
-  lat=0.
-  lon=0.
-  stationelv=0.
-  mush=''
-#  readf,5,wmoid,wbanid,namoo,cid,lat,lon,stationelv,format='(a6,x,a5,2x,a29,x,a2,x,f7.3,x,f8.3,x,f6.1)'
-  readf,5,wmoid,wbanid,namoo,lat,lon,stationelv,mush,format='(a6,x,a5,x,a30,x,f7.3,x,f8.3,x,f7.1,x,a21)'
-  IF (LONG(wmoid) LT LONG(newstart)) THEN continue
-  
-  # make sure the loop then carries on after a restart 
-  newstart = LONG(0)
-  
-  stationid=wmoid+'-'+wbanid	# New ISD will have different filenames
-  outstationid=wmoid+wbanid	# New ISD will have different filenames
-  
-#  IF (wmoid NE 722486) THEN continue
-
-  print,'Working on ',stationid
-
-  # Find the CID from the ish-history file
-  spawn,'grep ^'+wmoid+' '+inCIDs, ishline 
-  cid = strmid(ishline(0),43,2)		# (0) in case there are more than one entries for that station in the inventory e.g. 037970
-  print,'CID for this station: ',cid
-  #stop
-  
-# open the file----------------------------------------------------------
-
-#  filee=indir+stationid+'_mask2.nc.gz'
-#  filee=indir+stationid+'_mask.nc.gz'
-  filee=indir+stationid+'.nc.gz'
-  spawn,'gunzip -c '+filee+' > homogfile.nc'
-  inn=NCDF_OPEN('homogfile.nc')
-  timid=NCDF_VARID(inn,'time')
-  tmpid=NCDF_VARID(inn,'temperatures')
-  dpid=NCDF_VARID(inn,'dewpoints')
-  slpid=NCDF_VARID(inn,'slp')
-  wsid=NCDF_VARID(inn,'windspeeds')
-  inputid=NCDF_VARID(inn,'input_station_id')
-  # USING CONSTANT PRESSURE CALCULATED FROM ELEVATION BECAUSE SLP MAY NOT BE GOOD QUALITY 
-  # ANY CHANGES IN HUMIDITY ARE NOT DUE TO CHANGES IN PRESSURE THEN.
-  NCDF_VARGET,inn,timid,tims # NOW HOURS SINCE 1931-01-01 00:00
-  NCDF_VARGET,inn,tmpid,temps
-  NCDF_VARGET,inn,dpid,dewps
-  NCDF_VARGET,inn,slpid,slps
-  NCDF_VARGET,inn,wsid,ws
-  NCDF_VARGET,inn,inputid,inputs
-  NCDF_CLOSE,inn
-  spawn,'rm homogfile.nc'
-
-# make all mdis the same
-  bads=WHERE(temps LE mdi,count)
-  IF (count GT 0) THEN temps(bads)=mdi
-  bads=WHERE(dewps LE mdi,count)
-  IF (count GT 0) THEN dewps(bads)=mdi
-  bads=WHERE(slps LE mdi,count)
-  IF (count GT 0) THEN slps(bads)=mdi
-  bads=WHERE(ws LE mdi,count)
-  IF (count GT 0) THEN ws(bads)=mdi
-  
-# ensure tims are integers like isd_full_times
-  tims = int(tims)  
-
-##  MATCH,tims,full_times,suba,subb
-#  MATCH,tims,int_times,suba,subb    
-# HadISDv2 now has times as hours since Jan 1st 1931 00:00 so we need to extract the data we want
-  MATCH,tims,isd_full_times,suba,subb    
-
-  print,'Points in suba and subb: ',n_elements(suba),n_elements(subb)
-#stop
-  
-  fulltemp_arr=make_array(ntims,/float,value=mdi)
-  fulldewp_arr=make_array(ntims,/float,value=mdi)
-  fullddep_arr=make_array(ntims,/float,value=mdi)
-  fulltwet_arr=make_array(ntims,/float,value=mdi)
-  fullevap_arr=make_array(ntims,/float,value=mdi)
-  fullqhum_arr=make_array(ntims,/float,value=mdi)
-  fullqsat_arr=make_array(ntims,/float,value=mdi)
-  fullesat_arr=make_array(ntims,/float,value=mdi)
-  fullrhum_arr=make_array(ntims,/float,value=mdi)
-  fullws_arr=make_array(ntims,/float,value=mdi)
-  fullslp_arr=make_array(ntims,/float,value=mdi)
-  statP_arr=make_array(ntims,/float,value=mdi)	# ***FEB2013
-  obsfreq_tmp=make_array(ntims,/int,value=0)	# to look at reporting frequency
-  obsfreq_hum=make_array(ntims,/int,value=0)
-  obsres_tmp=make_array(ntims,/float,value=mdi)	# to look at recording resolution
-  obsres_hum=make_array(ntims,/float,value=mdi)
-  obssource=make_array(ntims,/string,value='999999')
-  
-  
-  fulltemp_arr(subb)=temps(suba)
-  fulldewp_arr(subb)=dewps(suba)
-  fullws_arr(subb)=ws(suba)
-  fullslp_arr(subb)=slps(suba)
-  obsfreq_tmp(subb(WHERE(temps(suba) NE mdi)))=1	# only where actualy temperatures exist
-  obsfreq_hum(subb(WHERE(dewps(suba) NE mdi)))=1	# only where actualy dewpoint temperatures exist
-  boo=where(obsfreq_tmp EQ 1,countt)
-  boo=where(obsfreq_hum EQ 1,counth)
-  print,'TOTAL TEMPS and DEWPS: ',countt,' ',counth
-#stop  
-  gotTs=WHERE(temps NE mdi)
-  gotHs=WHERE(dewps NE mdi)
-  restemps=temps
-  restemps(gotTs)=ABS(temps(gotTs))-(FLOOR(ABS(temps(gotTs))))
-  resdewps=dewps
-  resdewps(gotHs)=ABS(dewps(gotHs))-(FLOOR(ABS(dewps(gotHs))))
-  obsres_tmp(subb)=restemps(suba)		# only where actualy temperatures exist
-  obsres_hum(subb)=resdewps(suba)		# only where actualy dewpoint temperatures exist
-
-  obssource(subb)=FIX(inputs(*,suba),TYPE=7)
-  
-#  stop,'CHECK THESE FREQ, RES and INPUT are working'
-
-# convert to other variables---------------------------------------------
-# Just quickly double check there are vaguely enough data in the climatology period
-  CLIMgots=WHERE(fulltemp_arr(clpointies) NE mdi AND fulldewp_arr(clpointies) NE mdi,count) # subset to only data over the clim period
-  IF (count GT 24000) THEN BEGIN	# 300 days for 20 years with 4 obs per day.
-
-#  FEB2013 IF iii) then use CR20 MSLP
-    tempyearsarr=make_array(8784,climsum,/float,value=mdi)     # 30 year by all hours (including leaps) array - containing the years within the climatology period
-    tempclimsarr=make_array(8784,nyrs,/float,value=mdi)        # all years by all hours (including leaps) array - to fill with climatological daily means 
-    slpclimsarr=make_array(8784,nyrs,/float,value=mdi) # array with all hours including leaps present for each year
-    temppointer=0L
-    FOR yrfill=0,nyrs-1 DO BEGIN
-      IF (leapsids(yrfill) NE 1) THEN BEGIN   # not a leap year so fill to Feb 28th and from Mar 1st
-	IF (yrfill GE stclim) AND (yrfill LE edclim) THEN BEGIN
-	  tempyearsarr(0:1415,yrfill-stclim)=fulltemp_arr(temppointer:temppointer+1415)
-	  tempyearsarr(1440:8783,yrfill-stclim)=fulltemp_arr(temppointer+1416:temppointer+8759)
-	ENDIF
-	temppointer=temppointer+8760	
-      ENDIF ELSE BEGIN
-	IF (yrfill GE stclim) AND (yrfill LE edclim) THEN tempyearsarr(*,yrfill-stclim)=fulltemp_arr(temppointer:temppointer+8783)
-        temppointer=temppointer+8784	    
-      ENDELSE
-#    print,temppointer,actyears(yrfill)
-    ENDFOR
+# Find the CID from the ish-history file
+    GotCID = 0
+    with open (INCIDs, 'rt') as myfile:
+        
+        for line in myfile:
+	
+            if line.find(StationListWMO[st]+' '+StationListWBAN[st]) != -1: # if there is a match with the WMO ID?
     
-  # now subset to get clims for each month, fill tempclimsarr with those clims, slpclimsarr with CR20 MSLP for closestgridbox
-    matchlats=WHERE(CR20lats LT lat)
-    thelat=matchlats(0)-1 
-    matchlons=WHERE(CR20lons GT lon)
-    IF (lon GT -179) THEN thelon=matchlons(0)-1 ELSE thelon=179 # the last of 180 gridboxes covering 179 to -179
-#    stop, 'check CR lats and lons'
-#stop,'check data presence over months'
+                StationListCID[st] = str(line[43:45])
+                GotCID = 1
+                break
+	    
+    if (GotCID == 0):   # There should always be a CID!
+	   
+        StationListCID[st] = '**'
+        print('No CID found!')
+        pdb.set_trace()
+	    
+    #print('Check that the CID search is working')
+    #pdb.set_trace()
 
-# Annoyingly we need a catch in here to check if any of the months do not have data over the climatology period just in case
+# open the file, extract HadISDH time period data for times, t, td, slp and ws and station sources----------------------------------------------------------
 
-    lotsofhours=tempyearsarr(JANpoint,*)   # calculate T clims over clim period 1976-2005
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(JANpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(JANpoint,*)=CR20arr(thelon,thelat,0)
-
-    lotsofhours=tempyearsarr(FEBpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(FEBpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(FEBpoint,*)=CR20arr(thelon,thelat,1)
-
-    lotsofhours=tempyearsarr(MARpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(MARpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(MARpoint,*)=CR20arr(thelon,thelat,2)
-
-    lotsofhours=tempyearsarr(APRpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(APRpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(APRpoint,*)=CR20arr(thelon,thelat,3)
-
-    lotsofhours=tempyearsarr(MAYpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(MAYpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(MAYpoint,*)=CR20arr(thelon,thelat,4)
-
-    lotsofhours=tempyearsarr(JUNpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(JUNpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(JUNpoint,*)=CR20arr(thelon,thelat,5)
-
-    lotsofhours=tempyearsarr(JULpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(JULpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(JULpoint,*)=CR20arr(thelon,thelat,6)
-
-    lotsofhours=tempyearsarr(AUGpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(AUGpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(AUGpoint,*)=CR20arr(thelon,thelat,7)
-
-    lotsofhours=tempyearsarr(SEPpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(SEPpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(SEPpoint,*)=CR20arr(thelon,thelat,8)
-
-    lotsofhours=tempyearsarr(OCTpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(OCTpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(OCTpoint,*)=CR20arr(thelon,thelat,9)
-
-    lotsofhours=tempyearsarr(NOVpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(NOVpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(NOVpoint,*)=CR20arr(thelon,thelat,10)
-
-    lotsofhours=tempyearsarr(DECpoint,*)
-    IF (n_elements(lotsofhours(where(lotsofhours NE mdi))) LT 2) THEN goto, TooFewHours
-    tempclimsarr(DECpoint,*)=MEDIAN(lotsofhours(WHERE(lotsofhours NE mdi)))
-    slpclimsarr(DECpoint,*)=CR20arr(thelon,thelat,11)
-  #now convert back to fulltemp_arr space without fake leap years - converting standard P too
-    temppointer=0L
-    FOR yrfill=0,nyrs-1 DO BEGIN
-      IF (leapsids(yrfill) NE 1) THEN BEGIN   # not a leap year so fill to Feb 28th and from Mar 1st
-#	statP_arr(temppointer:temppointer+1415)=slpclimsarr(0:1415,yrfill)*((((273.15+tempclimsarr(0:1415,yrfill))-(0.0065*stationelv))/(273.15+tempclimsarr(0:1415,yrfill)))^5.256)   
-#	statP_arr(temppointer+1416:temppointer+8759)=slpclimsarr(1440:8783,yrfill)*((((273.15+tempclimsarr(1440:8783,yrfill))-(0.0065*stationelv))/(273.15+tempclimsarr(1440:8783,yrfill)))^5.256)   
-# AS WE'RE USING STATION T NOT SEA LEVEL T, TO GET RATIO OF SEA LEVEL T TO STATION T NEEDS A REARRANGMENT OF THE (slT-HeightConv)/slT to stT/(stT+HeighConv)
-	statP_arr(temppointer:temppointer+1415)=slpclimsarr(0:1415,yrfill)*(((273.15+tempclimsarr(0:1415,yrfill))/((273.15+tempclimsarr(0:1415,yrfill))+(0.0065*stationelv)))^5.256)   
-	statP_arr(temppointer+1416:temppointer+8759)=slpclimsarr(1440:8783,yrfill)*(((273.15+tempclimsarr(1440:8783,yrfill))/((273.15+tempclimsarr(1440:8783,yrfill))+(0.0065*stationelv)))^5.256)   
-	temppointer=temppointer+8760	
-      ENDIF ELSE BEGIN
-#	statP_arr(temppointer:temppointer+8783)=slpclimsarr(*,yrfill)*((((273.15+tempclimsarr(*,yrfill))-(0.0065*stationelv))/(273.15+tempclimsarr(*,yrfill)))^5.256)	
-	statP_arr(temppointer:temppointer+8783)=slpclimsarr(*,yrfill)*(((273.15+tempclimsarr(*,yrfill))/((273.15+tempclimsarr(*,yrfill))+(0.0065*stationelv)))^5.256)	
-	temppointer=temppointer+8784	    
-      ENDELSE
-    ENDFOR
-#  stop,'check out station Ps'
+    filee = INDIR+stationid+'.nc'
+    fulltemp_arr,fulldewp_arr,fullws_arr,fullslp_arr,tims,obssource = GetHadISD(filee,isd_full_times,MDI)
     
-    gots=WHERE(fulltemp_arr NE mdi AND fulldewp_arr NE mdi,count) # subset to only data over the clim period
-    fullddep_arr(gots)=fulltemp_arr(gots)-fulldewp_arr(gots)
-# Check DPD for subzeros - there really shouldn't be any as QC should have picked this up
-    subszeros=WHERE(fullddep_arr(gots) LT 0.,countss)
-    IF (countss GT 0) THEN stop,'SUB ZEROS FOUND'
+    # Catch failure from no data in desired time period
+    if (len(fulltemp_arr[np.where(fulltemp_arr > MDI)[0]]) == 0):
     
-    fullevap_arr(gots)=calc_evap(fulldewp_arr(gots),statP_arr(gots))	    #station_P
-    fullesat_arr(gots)=calc_evap(fulltemp_arr(gots),statP_arr(gots))	    #station_P
-    fullrhum_arr(gots)=(fullevap_arr(gots)/calc_evap(fulltemp_arr(gots),statP_arr(gots)))*100.    #station_P
-    fulltwet_arr(gots)=calc_wetbulb(fullevap_arr(gots),statP_arr(gots),fulldewp_arr(gots),fulltemp_arr(gots)) #station_P
-    ice=WHERE(fulltwet_arr(gots) LE 0,icount)
-    IF (icount GT 0) THEN BEGIN
-      fullevap_arr(gots(ice))=calc_evap_ice(fulldewp_arr(gots(ice)),statP_arr(gots))	#station_P
-      fullesat_arr(gots(ice))=calc_evap_ice(fulltemp_arr(gots(ice)),statP_arr(gots))	#station_P
-      fullrhum_arr(gots(ice))=(fullevap_arr(gots(ice))/calc_evap(fulltemp_arr(gots(ice)),statP_arr(gots)))*100.   #station_P
-    ENDIF  
-# recalc wets with correct (?) evaps - NOT 100% this is correct but errors are smallish
-    fulltwet_arr(gots)=calc_wetbulb(fullevap_arr(gots),statP_arr(gots),fulldewp_arr(gots),fulltemp_arr(gots)) #station_P
-    fullqhum_arr(gots)=calc_qhum(fullevap_arr(gots),statP_arr(gots))	#station_P
-    fullqsat_arr(gots)=calc_qhum(fullesat_arr(gots),statP_arr(gots))	#station_P
-  ENDIF ELSE BEGIN
-    TooFewHours: print,'Too few hours in month climatology'
-    openw,99,ditchfile,/append
-    printf,99,stationid,'HOURS: ',count,format='(a12,x,a7,i6)'
-    close,99
-    print,'Too few hours, moving on...'
-    continue
-  ENDELSE
+        FailureMode('EarlyRecord','No data in period',0,stationid)
+        continue
+
+    #print('TOTAL TEMPS and DEWPS: ',len(np.where(fulltemp_arr > MDI)[0]),' ',len(np.where(fulldewp_arr > MDI)[0]))
+    #pdb.set_trace()
+# Convert to other variables        
+    statP_arr = np.repeat(MDI, ntims)
+    fullddep_arr = np.repeat(MDI, ntims) 
+    fulltwet_arr = np.repeat(MDI, ntims) 
+    fullevap_arr = np.repeat(MDI, ntims) 
+    fullqhum_arr = np.repeat(MDI, ntims) 
+    fullrhum_arr = np.repeat(MDI, ntims) 
+
+# Double check there are vaguely enough data in the climatology period
+    if (len(np.where((fulltemp_arr[clpointies] > MDI) & (fulldewp_arr[clpointies] > MDI))[0]) > 24000):	# 300 days for 20 years with 4 obs per day.
+
+        #There are provisionally enough data - yippee!
+
+# Get the climatological station P    
+        #  FEB2013 use CR20 climatological MSLP and climatological temperature (from HadISD) to get a climatological station P for each time point (duplicated year to year for ease)
+        # so we need all January hours over the climatology period etc.
+        tempyearsarr = np.empty((8784,climsum))
+        tempyearsarr.fill(MDI)                  # 30 year by all hours (including leaps) array - containing the years within the climatology period
+        tempclimsarr = np.empty((8784,nyrs))
+        tempclimsarr.fill(MDI)                  # all years by all hours (including leaps) array - to fill with climatological daily means 
+        slpclimsarr = np.empty((8784,nyrs))
+        slpclimsarr.fill(MDI)                   # array with all hours including leaps present for each year
+        temppointer = 0
+    
+        # Pull out the climatological data
+        for yrfill in range(nyrs):
+        
+            if ((yrfill >= stclim) & (yrfill <= edclim)):
+                if (leapsids[yrfill] != 1):   # not a leap year so fill to Feb 28th and from Mar 1st
+                    tempyearsarr[0:1416,yrfill-stclim] = fulltemp_arr[temppointer:temppointer+1416]
+                    tempyearsarr[1440:8784,yrfill-stclim] = fulltemp_arr[temppointer+1416:temppointer+8760]
+                    temppointer = temppointer+8760	
+
+                else:
+                    tempyearsarr[:,yrfill-stclim] = fulltemp_arr[temppointer:temppointer+8784]
+                    temppointer = temppointer+8784	    
+
+            else:
+                if (leapsids[yrfill] != 1):   # not a leap year so fill to Feb 28th and from Mar 1st
+                    temppointer = temppointer+8760	
+
+                else:
+                    temppointer = temppointer+8784	    
+    
+        # now subset to get clims for each month, fill tempclimsarr with those clims, slpclimsarr with CR20 MSLP for closestgridbox
+
+        matchlats = np.where(CR20lats < StationListLat[st])
+        thelat = matchlats[0][0] - 1 
+ 
+        # Need a catch in case the longitude is < -179 or > 179
+        if ((StationListLon[st] > 179.) | (StationListLon[st] < -179.)):
+            
+            thelon = 179	
+	
+        else:	
+        
+            matchlons = np.where(CR20lons > StationListLon[st])
+            thelon = matchlons[0][0] - 1
+
+        #print('Check the lat and lon matching bit')
+        #pdb.set_trace()
+
+        # Annoyingly we need a catch in here to check if any of the months do not have data over the climatology period just in case
+        # THERE MUST BE AT LEAST 15 years of data over the climatology with 4 hours a day and 80% of days
+        # For February that's ((28*4)*0.8)*15 = 1344 observations THIS IS DIFFERENT TO EARLIER CODE (Feb 2020) SO MAY KICK OUT MORE STATIONS
+        BadMonth = 0 # Counter for months with too few data for climatology to catch failure
+        for mm,Mon in enumerate(MonArr):
+
+            lotsofhours = tempyearsarr[HrDict[Mon+'Hrs'],:]   # calculate T clims over clim period 1981-2010
+            if (len(lotsofhours[np.where(lotsofhours > MDI)]) >= 1344):  
+            
+                tempclimsarr[HrDict[Mon+'Hrs'],:] = np.median(lotsofhours[np.where(lotsofhours > MDI)])
+                slpclimsarr[HrDict[Mon+'Hrs'],:] = CR20arr[mm,thelat,thelon]
+	
+	    # if there isn't enough data then fail
+            else:
+        
+                BadMonth = BadMonth + 1		
+  	    
+        if (BadMonth > 0):
+    
+            FailureMode('TooFewMonths','Months with no climatology',BadMonth,stationid)
+            continue
+
+        #print('Are you happy with how the climatology is being done?')
+        #pdb.set_trace()
+    
+        # now convert back to fulltemp_arr space without fake leap years - converting standard P too
+        temppointer = 0
+        for yrfill in range(nyrs):
+            
+            if (leapsids[yrfill] != 1):    # not a leap year so fill to Feb 28th and from Mar 1st
+                #pdb.set_trace()
+	    # AS WE'RE USING STATION T NOT SEA LEVEL T, TO GET RATIO OF SEA LEVEL T TO STATION T NEEDS A REARRANGMENT OF THE (slT-HeightConv)/slT to stT/(stT+HeighConv)
+                statP_arr[temppointer:temppointer+1416] = slpclimsarr[0:1416,yrfill] * (( (273.15 + tempclimsarr[0:1416,yrfill]) / 
+		                                                                          ((273.15 + tempclimsarr[0:1416,yrfill]) + (0.0065 * StationListElev[st])) ) **5.256)   
+                statP_arr[temppointer+1416:temppointer+8760] = slpclimsarr[1440:8784,yrfill] * (( (273.15 + tempclimsarr[1440:8784,yrfill]) / 
+		                                                                                 ((273.15 + tempclimsarr[1440:8784,yrfill]) + (0.0065*StationListElev[st])) )**5.256)   
+                temppointer = temppointer + 8760	
+            else:
+
+                statP_arr[temppointer:temppointer+8784] = slpclimsarr[:,yrfill] * (( (273.15 + tempclimsarr[:,yrfill]) / 
+		                                                                    ((273.15 + tempclimsarr[:,yrfill]) + (0.0065 * StationListElev[st])) )**5.256)	
+                temppointer = temppointer + 8784	    
+
+        #print('Check the station pressures')
+        #pdb.set_trace()
+
+# Calculate Dew point depression
+        gots = np.where((fulltemp_arr > MDI) & (fulldewp_arr > MDI)) 
+        fullddep_arr[gots[0]] = fulltemp_arr[gots[0]] - fulldewp_arr[gots[0]]
+        
+	# Check DPD for subzeros - there really shouldn't be any as QC should have picked this up
+        if (len(np.where(fullddep_arr[gots[0]] < 0.)[0]) > 0):
+    
+            FailureMode('SubzeroDPD','No. of subzero DPDs',len(np.where(fullddep_arr[gots[0]] < 0.)[0]),stationid)
+            continue
+	
+# Calculate vapour pressure - over ice if twet <= 0.0        
+        fullevap_arr[gots[0]] = CalcHums.vap(fulldewp_arr[gots[0]],fulltemp_arr[gots[0]],statP_arr[gots[0]],roundit=False) #station_P
+
+# Calculate relative humidity - over ice if twet <= 0.0        
+        fullrhum_arr[gots[0]] = CalcHums.rh(fulldewp_arr[gots[0]],fulltemp_arr[gots[0]],statP_arr[gots[0]],roundit=False) #station_P
+
+# Calculate specific humidity - over ice if twet <= 0.0        
+        fullqhum_arr[gots[0]] = CalcHums.sh(fulldewp_arr[gots[0]],fulltemp_arr[gots[0]],statP_arr[gots[0]],roundit=False) #station_P
+
+# Calculate wetbulb temperature - over ice if twet <= 0.0        
+        fulltwet_arr[gots[0]] = CalcHums.wb(fulldewp_arr[gots[0]],fulltemp_arr[gots[0]],statP_arr[gots[0]],roundit=False) #station_P
+
+    else: # too few hours for climatology
+    
+        FailureMode('TooFewHours','Hours of good data',len(np.where((fulltemp_arr[clpointies] > MDI) & (fulldewp_arr[clpointies] > MDI))[0]),stationid)
+        continue
 
 #create monthly means/anoms/clims/sds------------------------------------
 
-  RHabs_mm=make_array(nmons,/float,value=mdi)
-  RHanoms_mm=make_array(nmons,/float,value=mdi)
-  RHsd_mm=make_array(nmons,/float,value=mdi)
-  RHclims_mm=make_array(12,/float,value=mdi)
-  RHanoms_mm=make_months_oddtimesJAN2015(fullrhum_arr,dates,clims,mdi,type=type,stdev_mm=RHsd_mm,abs_mm=RHabs_mm,clims_mm=RHclims_mm)
+    RHanoms_mm, RHabs_mm, RHsd_mm, RHclims_mm,RHclimSD_mm = MakeMonths(fullrhum_arr,dates,MDI) # will return MDI for RHclims_mm if a month fails a climatology count
 
-  # deliberately only after RH which requires T and Td to be present
-  # if insufficient data here then ditch station
-  # do not need to process ALL others
-  IF (type EQ 'BAD') THEN BEGIN
-    openw,99,ditchfile,/append
-    printf,99,stationid,'BAD CLIMS',format='(a12,x,a9)'
-    close,99
-    print,'Cannot calculate climatology, moving on...'
-    continue
-  ENDIF
-
-  Pabs_mm=make_array(nmons,/float,value=mdi)
-  Panoms_mm=make_array(nmons,/float,value=mdi)
-  Psd_mm=make_array(nmons,/float,value=mdi)
-  Pclims_mm=make_array(12,/float,value=mdi)
-  Panoms_mm=make_months_oddtimesJAN2015(statP_arr,dates,clims,mdi,type=type,stdev_mm=Psd_mm,abs_mm=Pabs_mm,clims_mm=Pclims_mm)
-
-  Tabs_mm=make_array(nmons,/float,value=mdi)
-  Tanoms_mm=make_array(nmons,/float,value=mdi)
-  Tsd_mm=make_array(nmons,/float,value=mdi)
-  Tclims_mm=make_array(12,/float,value=mdi)
-  Tanoms_mm=make_months_oddtimesJAN2015(fulltemp_arr,dates,clims,mdi,type=type,stdev_mm=Tsd_mm,abs_mm=Tabs_mm,clims_mm=Tclims_mm)
-
-  Tdabs_mm=make_array(nmons,/float,value=mdi)
-  Tdanoms_mm=make_array(nmons,/float,value=mdi)
-  Tdsd_mm=make_array(nmons,/float,value=mdi)
-  Tdclims_mm=make_array(12,/float,value=mdi)
-  Tdanoms_mm=make_months_oddtimesJAN2015(fulldewp_arr,dates,clims,mdi,type=type,stdev_mm=Tdsd_mm,abs_mm=Tdabs_mm,clims_mm=Tdclims_mm)
-
-  DPDabs_mm=make_array(nmons,/float,value=mdi)
-  DPDanoms_mm=make_array(nmons,/float,value=mdi)
-  DPDsd_mm=make_array(nmons,/float,value=mdi)
-  DPDclims_mm=make_array(12,/float,value=mdi)
-  DPDanoms_mm=make_months_oddtimesJAN2015(fullddep_arr,dates,clims,mdi,type=type,stdev_mm=DPDsd_mm,abs_mm=DPDabs_mm,clims_mm=DPDclims_mm)
-
-# Derive Td and DPD at the monthly resolution for comparison
-  derivedDPDabs_mm=make_array(nmons,/float,value=mdi)
-  derivedTdabs_mm=make_array(nmons,/float,value=mdi)
-  gots=WHERE(DPDabs_mm NE mdi,countgots)
-  IF (countgots GT 0) THEN BEGIN
-    derivedDPDabs_mm(gots)=Tabs_mm(gots)-Tdabs_mm(gots)
-    derivedTdabs_mm(gots)=Tabs_mm(gots)-DPDabs_mm(gots)
-  ENDIF
-#  stop,'Compare Td and DPD derived and calculated directly'
-
-  Twabs_mm=make_array(nmons,/float,value=mdi)
-  Twanoms_mm=make_array(nmons,/float,value=mdi)
-  Twsd_mm=make_array(nmons,/float,value=mdi)
-  Twclims_mm=make_array(12,/float,value=mdi)
-  Twanoms_mm=make_months_oddtimesJAN2015(fulltwet_arr,dates,clims,mdi,type=type,stdev_mm=Twsd_mm,abs_mm=Twabs_mm,clims_mm=Twclims_mm)
-
-  eabs_mm=make_array(nmons,/float,value=mdi)
-  eanoms_mm=make_array(nmons,/float,value=mdi)
-  esd_mm=make_array(nmons,/float,value=mdi)
-  eclims_mm=make_array(12,/float,value=mdi)
-  eanoms_mm=make_months_oddtimesJAN2015(fullevap_arr,dates,clims,mdi,type=type,stdev_mm=esd_mm,abs_mm=eabs_mm,clims_mm=eclims_mm)
-
-  qabs_mm=make_array(nmons,/float,value=mdi)
-  qanoms_mm=make_array(nmons,/float,value=mdi)
-  qsd_mm=make_array(nmons,/float,value=mdi)
-  qclims_mm=make_array(12,/float,value=mdi)
-  qanoms_mm=make_months_oddtimesJAN2015(fullqhum_arr,dates,clims,mdi,type=type,stdev_mm=qsd_mm,abs_mm=qabs_mm,clims_mm=qclims_mm)
-
-  qsatabs_mm=make_array(nmons,/float,value=mdi)
-  qsatanoms_mm=make_array(nmons,/float,value=mdi)
-  qsatsd_mm=make_array(nmons,/float,value=mdi)
-  qsatclims_mm=make_array(12,/float,value=mdi)
-  qsatanoms_mm=make_months_oddtimesJAN2015(fullqsat_arr,dates,clims,mdi,type=type,stdev_mm=qsatsd_mm,abs_mm=qsatabs_mm,clims_mm=qsatclims_mm)
-
-  WSabs_mm=make_array(nmons,/float,value=mdi)
-  WSanoms_mm=make_array(nmons,/float,value=mdi)
-  WSsd_mm=make_array(nmons,/float,value=mdi)
-  WSclims_mm=make_array(12,/float,value=mdi)
-  WSanoms_mm=make_months_oddtimesJAN2015(fullws_arr,dates,clims,mdi,type=type,stdev_mm=WSsd_mm,abs_mm=WSabs_mm,clims_mm=WSclims_mm)
-
-  SLPabs_mm=make_array(nmons,/float,value=mdi)
-  SLPanoms_mm=make_array(nmons,/float,value=mdi)
-  SLPsd_mm=make_array(nmons,/float,value=mdi)
-  SLPclims_mm=make_array(12,/float,value=mdi)
-  SLPanoms_mm=make_months_oddtimesJAN2015(fullslp_arr,dates,clims,mdi,type=type,stdev_mm=SLPsd_mm,abs_mm=SLPabs_mm,clims_mm=SLPclims_mm)
-   
-# go through hours and look for changes in input stations, reporting frequency and recording resolution
-# time consuming - could use some UNIQUE command?
-
-  changehis=stjul
-  changetyp=0	       #0=none,1=input,2=freq,3=res
-  changeinput=strmid(obssource(0),0,6) #starting source station
-  obsfreqT='00'
-  obsfreqH='00'
-  obsresT='BLANK'
-  obsresH='BLANK '
-  countch=0
-  lasttime=0.  #1973,Jan 1st zerod
-  histarr={histee,source:tmp,$         # 0 to 3
-		wmoid:tmp,$	       # 999999
-	       perst:tmp,$	       # yyyymmdd
-	       pered:tmp,$	       # yyyymmdd
-	       ltdeg:tmpi,$	       # -999
-	       ltmin:tmpi,$	       # 99
-	       ltsec:tmpi,$	       # 99
-	       lndeg:tmpi,$	       # -999
-	       lnmin:tmpi,$	       # 99
-	       lnsec:tmpi,$	       # 99
-		chdist:tmp,$	       # 999
-	       chdisttp:tmp,$	       # MI ,YD , 
-	       chdir:tmp,$	       #   N,
-	       stelevft:tmp,$	       # 99999
-	       itelevft:tmp,$	       # 9999 HM, TP
-	       obtimsHUM:tmp,$         # 06
-	       obtimsTMP:tmp,$         # HR this means all obs taken every 6 hours
-	       itlist:tmp}	       # 99999 99999 99999
-
-# find changes in source data by year
-# bundle up into seasons (well 182 day periods) - may still be too sensitive
-  uniqinputs=UNIQ(obssource(WHERE(obssource NE '999999')))     # finds ENDS of sustained periods
-  IF (n_elements(uniqinputs) GT 1) THEN BEGIN
-    PRINT,'A COMPOSITE!'
-    obssource=REFORM(obssource,24,ndays)  
-    full_times=REFORM(full_times,24,ndays)
-    totsource='999999'
-    yrcount=0
-    oldsource='999999'
-    oldpct=0.
-    beginit=0
-    datestamp=stjul
-    counthfyrs=0    #counter to loop through halfyrtots
-    FOR dd=0,ndays-1 DO BEGIN
-      gots=WHERE(obssource(*,dd) NE '999999',count)
-      IF (count GT 0) THEN totsource=[totsource,strmid(obssource(gots,dd),0,6)]
-      yrcount=yrcount+1
-      IF (yrcount EQ halfyrtots(counthfyrs)) THEN BEGIN
-	IF (n_elements(totsource) GT 400) THEN BEGIN   # most days present (4 hours times 180 days = 720 obs)
-	  totsource=totsource(1:n_elements(totsource)-1)
-	  monhist=HISTOGRAM(FIX(totsource,type=3),binsize=1,min=MIN(FIX(totsource,type=3)))
-	  binsies=lindgen(n_elements(monhist))+MIN(FIX(totsource,type=3))
-	  mainsource=binsies(WHERE(monhist EQ MAX(monhist)))
-	  sourcepct=MAX(monhist)/TOTAL(monhist)
-	  IF (beginit EQ 0) THEN BEGIN
-	    beginit=1  # 0 implies not enough data.
-	   oldsource=mainsource
-	   oldpct=sourcepct
-	   yrcount=0
-	   counthfyrs=counthfyrs+1
-	    totsource='999999'
-	    datestamp=full_times(0,dd+1)+stjul #date from beginning of year
-	    continue
-	  ENDIF ELSE IF (mainsource NE oldsource) OR ((sourcepct NE oldpct) AND ((sourcepct EQ 1.0) OR (oldpct EQ 1.0))) THEN BEGIN
-	   print,'FOUND SOURCE CHANGE'
-	    changehis=[changehis,datestamp]
-	    changetyp=[changetyp,1]
-	    changeinput=[changeinput,string(mainsource,format='(i06)')]        # the new ID after change
-	    obsfreqT=[obsfreqT,'00']	       # new frequency after change
-	    obsfreqH=[obsfreqH,'00']
-	    obsresT=[obsresT,'BLANK']
-	    obsresH=[obsresH,'BLANK ']
-	    countch=countch+1
-	    oldsource=mainsource
-	   oldpct=sourcepct
-	  ENDIF 
-	ENDIF 
-	IF (dd LT ndays-1) THEN datestamp=full_times(0,dd+1)+stjul     #date from beginning of year
-	yrcount=0
-       counthfyrs=counthfyrs+1
-	totsource='999999'	
-      ENDIF
-    ENDFOR
-ENDIF  
-  
-# find changes in reporting frequencies 
-# bundle up into months (well 182 day periods) - may still be too sensitive
-# IF LESS THAN 4 obs per day (4 hourly) then this month wouldn't make it so ignore.  
-  obsfreq_tmp=REFORM(obsfreq_tmp,24,ndays)  
-  obsfreq_hum=REFORM(obsfreq_hum,24,ndays)  
-  full_times=REFORM(full_times,24,ndays)
-  totfreqT=intarr(halfyrtots(0))
-  totfreqH=intarr(halfyrtots(0))
-  binsies=indgen(25)
-  yrcount=0
-  oldfreqT='00'
-  oldfreqH='00'
-  beginit=0
-  datestamp=stjul
-  counthfyrs=0    #counter to loop through halfyrtots
-  FOR dd=0,ndays-1 DO BEGIN
-    totfreqT(yrcount)=TOTAL(obsfreq_tmp(*,dd))
-    totfreqH(yrcount)=TOTAL(obsfreq_hum(*,dd))
-    yrcount=yrcount+1
-#    print,yrcount,halfyrtots(counthfyrs),counthfyrs
-    IF (yrcount EQ halfyrtots(counthfyrs)) THEN BEGIN
-      IF (TOTAL(totfreqT) GT 0) AND (TOTAL(totfreqH) GT 0) THEN BEGIN
-	monhist=HISTOGRAM(totfreqT(WHERE(totfreqT NE 0)),binsize=1,nbins=25,min=0)
-	freqT=binsies(WHERE(monhist EQ MAX(monhist)))
-	monhist=HISTOGRAM(totfreqH(WHERE(totfreqH NE 0)),binsize=1,nbins=25,min=0)
-	freqH=binsies(WHERE(monhist EQ MAX(monhist)))
-#	 print,freqH,freqT
-	CASE 1 OF
-	 freqT(0) GT 8: freqT='24'
-	 freqT(0) GT 4 AND freqT(0) LT 9: freqT='08'
-	 freqT(0) EQ 4: freqT='04'
-	 freqT(0) LT 4: freqT=oldfreqT
-	ENDCASE
-	CASE 1 OF
-	 freqH(0) GT 8: freqH='24'
-	 freqH(0) GT 4 AND freqH(0) LT 9: freqH='08'
-	 freqH(0) EQ 4: freqH='04'     
-	 freqH(0) LT 4: freqH=oldfreqH
-	ENDCASE
-#	 print,counthfyrs,' ',freqH,oldfreqH, freqT,oldfreqT
-	IF (beginit EQ 0) THEN BEGIN
-	  beginit=1    # 0 implies not enough data.
-	 oldfreqT=freqT
-	 oldfreqH=freqH
-	 yrcount=0
-	 counthfyrs=counthfyrs+1
-	  totfreqT=intarr(halfyrtots(counthfyrs))
-	  totfreqH=intarr(halfyrtots(counthfyrs))
-	  datestamp=full_times(0,dd+1)+stjul   #date from beginning of year
-	 continue
-	ENDIF ELSE IF (TOTAL(totfreqH) GT 400) AND ((freqT NE oldfreqT) OR (freqH NE oldfreqH)) THEN BEGIN # enough data
-	 print,'FOUND FREQ CHANGE'
-#	 stop
-	  changehis=[changehis,datestamp]
-	  changetyp=[changetyp,2]
-	  changeinput=[changeinput,'999999']   # the new ID after change
-	  obsfreqT=[obsfreqT,freqT]	       # new frequency after change
-	  obsfreqH=[obsfreqH,freqH]
-	  obsresT=[obsresT,'BLANK']
-	  obsresH=[obsresH,'BLANK ']
-	  countch=countch+1
-	  oldfreqT=freqT
-	 oldfreqH=freqH
-	ENDIF 
-      ENDIF
-      IF (dd LT ndays-1) THEN BEGIN
-	datestamp=full_times(0,dd+1)+stjul     #date from beginning of year
-	yrcount=0
-	counthfyrs=counthfyrs+1
-	totfreqT=intarr(halfyrtots(counthfyrs))
-	totfreqH=intarr(halfyrtots(counthfyrs))
-      ENDIF
-    ENDIF
-  ENDFOR
-
-# find changes in reporting resolutions WHOLE, WH&DM, HALF, DECIM
-# bundle up into months (well 182 day periods) - may still be too sensitive
-# IF LESS THAN 4 obs per day (4 hourly) then this month wouldn't make it so ignore.  
-  obsres_tmp=REFORM(obsres_tmp,24,ndays)  
-  obsres_hum=REFORM(obsres_hum,24,ndays)  
-  totresT=0.
-  totresH=0.
-  binsies=findgen(10)*0.1
-  yrcount=0
-  oldresT=0
-  oldresH=0
-  beginit=0
-  datestamp=stjul
-  counthfyrs=0    #counter to loop through halfyrtots
-  FOR dd=0,ndays-1 DO BEGIN
-    gots=WHERE(obsres_tmp(*,dd) NE mdi,count)
-    IF (count GT 0) THEN totresT=[totresT,obsres_tmp(gots,dd)]
-    gots=WHERE(obsres_hum(*,dd) NE mdi,count)
-    IF (count GT 0) THEN totresH=[totresH,obsres_hum(gots,dd)]
-    yrcount=yrcount+1
-    IF (yrcount EQ halfyrtots(counthfyrs)) THEN BEGIN
-      IF (n_elements(totresH) GT 400) AND (n_elements(totresT) GT 400) THEN BEGIN      # check there are some data
-       monhistT=HISTOGRAM(totresT,binsize=0.1,nbins=10,min=0.)
-	findresT=binsies(REVERSE(SORT(monhistT)))
-       monhistT=monhistT(REVERSE(SORT(monhistT)))
-	monhistH=HISTOGRAM(totresH,binsize=0.1,nbins=10,min=0.)
-	findresH=binsies(REVERSE(SORT(monhistH)))
-       monhistH=monhistH(REVERSE(SORT(monhistH)))
-	resT='BLANK'
-       resH='BLANK '
-       CASE 1 OF
-	 findresT(0) EQ 0.0 AND (monhistT(0)/TOTAL(monhistT) GE 0.99): resT='WHOLE'    # 90% of obs
-	 findresT(0) EQ 0.0 AND (monhistT(0)/TOTAL(monhistT) GE 0.6): resT='WH&DM'     # 60% of obs
-	 TOTAL(findresT(0:1)) EQ 0.5 AND (TOTAL(monhistT(0:1)) GT TOTAL(monhistT(2:9))): resT=' HALF'
-	 ELSE: resT='DECIM'
-       ENDCASE
-       CASE 1 OF
-	 findresH(0) EQ 0.0 AND (monhistH(0)/TOTAL(monhistH) GE 0.99): resH='WHOLE '
-	 findresH(0) EQ 0.0 AND (monhistH(0)/TOTAL(monhistH) GE 0.6): resH='WH&DM '    # 60% of obs
-	 TOTAL(findresH(0:1)) EQ 0.5 AND (TOTAL(monhistH(0:1)) GT TOTAL(monhistH(2:9))): resH=' HALF '         
-	 ELSE: resH='DECIM '
-       ENDCASE
-#      print,resT,findresT(0),findresT(1),monhistT(0),monhistT(1),TOTAL(monhistT)
-#      print,resH,findresH(0),findresH(1),monhistT(0),monhistH(1),TOTAL(monhistH)
-	IF (beginit EQ 0) THEN BEGIN
-	  beginit=1    # 0 implies not enough data.
-	 oldresT=resT  # should be WHOLE, DECIM or HALF
-	 oldresH=resH
-	 yrcount=0
-	 counthfyrs=counthfyrs+1
-	  totresT=0.
-	  totresH=0.
-	  datestamp=full_times(0,dd+1)+stjul   #date from beginning of year
-	  continue
-	ENDIF ELSE IF (resT NE oldresT) OR (resH NE oldresH) THEN BEGIN
-	 print,'FOUND RES CHANGE'
-	  changehis=[changehis,datestamp]
-	  changetyp=[changetyp,3]
-	  changeinput=[changeinput,'999999']   # the new ID after change
-	  obsfreqT=[obsfreqT,'00']
-	  obsfreqH=[obsfreqH,'00']
-	  obsresT=[obsresT,resT]	       # new resolution after change
-	  obsresH=[obsresH,resH]
-	  countch=countch+1
-	  oldresT=resT
-	 oldresH=resH
-	ENDIF 
-      ENDIF
-      IF (dd LT ndays-1) THEN datestamp=full_times(0,dd+1)+stjul
-      yrcount=0
-      counthfyrs=counthfyrs+1
-      totresT=0.
-      totresH=0.
-    ENDIF
-  ENDFOR
-
-# compile and sort changes feeding though all info   
-# WILL ONLY PRINT FROM histarr(1) onwards
-  histarr.source=make_array(1000,/string,value='3')
-
-  hissort=SORT(changehis)
-  changehis=changehis(hissort) #need to be converted to year, month, day
-  CALDAT,changehis(0),mm,dd,yy
-  histarr.perst(0)=string(yy,format='(i4)')+string(mm,format='(i02)')+string(dd,format='(i02)')  
-  histarr.pered(0)=histarr.perst(0)
-  IF (lat GE 0.0) THEN BEGIN
-    histarr.ltdeg(*)=FLOOR(lat) 
-    histarr.ltmin(*)=FLOOR((lat-(FLOOR(lat)))*60.) 
-    histarr.ltsec(*)=ROUND((((lat-(FLOOR(lat)))*60.)-FLOOR((lat-(FLOOR(lat)))*60.))*60.)     
-  ENDIF ELSE BEGIN
-    histarr.ltdeg(*)=CEIL(lat)
-    histarr.ltmin(*)=ABS(CEIL((lat-(CEIL(lat)))*60.)) 
-    histarr.ltsec(*)=ABS(ROUND((((lat-(CEIL(lat)))*60.)-CEIL((lat-(CEIL(lat)))*60.))*60.))	 
-  ENDELSE
-  IF (lon GE 0.0) THEN BEGIN
-    histarr.lndeg(*)=FLOOR(lon)
-    histarr.lnmin(*)=FLOOR((lon-(FLOOR(lon)))*60.) 
-    histarr.lnsec(*)=ROUND((((lon-(FLOOR(lon)))*60.)-FLOOR((lon-(FLOOR(lon)))*60.))*60.)     
-  ENDIF ELSE BEGIN
-    histarr.lndeg(*)=CEIL(lon)
-    histarr.lnmin(*)=ABS(CEIL((lon-(CEIL(lon)))*60.)) 
-    histarr.lnsec(*)=ABS(ROUND((((lon-(CEIL(lon)))*60.)-CEIL((lon-(CEIL(lon)))*60.))*60.))	   
-  ENDELSE
-  
-#  changetyp=changetyp(hissort) # info not yet incorporated
-  histarr.wmoid(0:countch)=changeinput(hissort)        
-  histarr.obtimsTMP(0:countch)=obsfreqT(hissort)
-  histarr.obtimsHUM(0:countch)=obsfreqH(hissort)
-  histarr.itlist(0:countch)=obsresH(hissort)+obsresT(hissort)  # put in itlist for now
-
-  IF (countch GT 0) THEN BEGIN
-    FOR cc=1,countch DO BEGIN
-      IF (histarr.wmoid(cc) EQ '999999') THEN histarr.wmoid(cc)=histarr.wmoid(cc-1)
-      IF (histarr.obtimsTMP(cc) EQ '00') THEN histarr.obtimsTMP(cc)=histarr.obtimsTMP(cc-1)
-      IF (histarr.obtimsHUM(cc) EQ '00') THEN histarr.obtimsHUM(cc)=histarr.obtimsHUM(cc-1)
-      IF (histarr.itlist(cc) EQ 'BLANK BLANK') THEN histarr.itlist(cc)=histarr.itlist(cc-1)
-      CALDAT,changehis(cc),mm,dd,yy
-      histarr.pered(cc)=string(yy,format='(i4)')+string(mm,format='(i02)')+string(dd,format='(i02)')  
-      histarr.perst(cc)=histarr.pered(cc-1)
-      IF (histarr.pered(cc) EQ histarr.pered(cc-1)) THEN BEGIN
-	print,'DOUBLE!!!',histarr.pered(cc)
-	# this is the same time as the one before, and could be the same as the one before that actually
-	IF (histarr.wmoid(cc-1) NE histarr.wmoid(cc)) THEN histarr.wmoid(cc-1)=histarr.wmoid(cc)
-	IF (histarr.obtimsTMP(cc-1) NE histarr.obtimsTMP(cc)) THEN histarr.obtimsTMP(cc-1)=histarr.obtimsTMP(cc)
-	IF (histarr.obtimsHUM(cc-1) NE histarr.obtimsHUM(cc)) THEN histarr.obtimsHUM(cc-1)=histarr.obtimsHUM(cc)
-	IF (histarr.itlist(cc-1) NE histarr.itlist(cc) ) THEN histarr.itlist(cc-1)=histarr.itlist(cc)
-	histarr.perst(cc)=histarr.perst(cc-1)
-       
-       histarr.source(cc)='X'  #stops line being printed
-	IF (cc GE 2) THEN BEGIN
-	 IF (histarr.pered(cc) EQ histarr.pered(cc-2)) THEN BEGIN
-	    print,'TRIPLE!!!',histarr.pered(cc)
-	# this is the same time as the one before, and the same as the one before that actually
-	    IF (histarr.wmoid(cc-2) NE histarr.wmoid(cc)) THEN histarr.wmoid(cc-2)=histarr.wmoid(cc)
-	    IF (histarr.obtimsTMP(cc-2) NE histarr.obtimsTMP(cc)) THEN histarr.obtimsTMP(cc-2)=histarr.obtimsTMP(cc)
-	    IF (histarr.obtimsHUM(cc-2) NE histarr.obtimsHUM(cc)) THEN histarr.obtimsHUM(cc-2)=histarr.obtimsHUM(cc)
-	    IF (histarr.itlist(cc-2) NE histarr.itlist(cc)) THEN histarr.itlist(cc-2)=histarr.itlist(cc)
-	    histarr.perst(cc)=histarr.perst(cc-2)
-       
-	   histarr.source(cc)='X'      #stops line being printed
-	  ENDIF
-       ENDIF
-      ENDIF
-    ENDFOR
-  ENDIF
-   
-#save to files----------------------------------------------------------- 
-  openw,99,outdirHIST+stationid+'.his'
-  IF (countch GT 0) THEN BEGIN
-    FOR cc=1,countch DO BEGIN
-      IF (histarr.source(cc) NE 'X') THEN $ 
-      printf,99,histarr.source(cc),histarr.wmoid(cc),histarr.perst(cc),histarr.pered(cc),$
-	      histarr.ltdeg(cc),histarr.ltmin(cc),histarr.ltsec(cc),$
-	      histarr.lndeg(cc),histarr.lnmin(cc),histarr.lnsec(cc),$
-	     histarr.chdist(cc),histarr.chdisttp(cc),histarr.chdir(cc),$
-	     histarr.stelevft(cc),histarr.itelevft(cc),$
-	     histarr.obtimsHUM(cc),histarr.obtimsTMP(cc),histarr.itlist(cc),$
-	     format='(a0,x,a6,x,2(a8,x),2(i4,x,i2,x,i2,x),a3,x,a3,x,a3,x,a5,x,a4,x,a2,a2,x,a11)'
-    ENDFOR
-  ENDIF
-  close,99
-
-  full_times=REFORM(full_times,ntims)
-
-  netcdf_outfile=outdirNCF+stationid+'_hummonthQC.nc'
-  
-  wilma=NCDF_CREATE(netcdf_outfile,/clobber)
-  
-  tid=NCDF_DIMDEF(wilma,'time',nmons)
-  clmid=NCDF_DIMDEF(wilma,'month',12)
-  charid=NCDF_DIMDEF(wilma, 'Character', 3)
-  
-  timesvar=NCDF_VARDEF(wilma,'times',[tid],/SHORT)
-  tempanomvar=NCDF_VARDEF(wilma,'temp_anoms',[tid],/FLOAT)
-  tempabsvar=NCDF_VARDEF(wilma,'temp_abs',[tid],/FLOAT)
-  tempsdvar=NCDF_VARDEF(wilma,'temp_std',[tid],/FLOAT)
-  dewpanomvar=NCDF_VARDEF(wilma,'dewp_anoms',[tid],/FLOAT)
-  dewpabsvar=NCDF_VARDEF(wilma,'dewp_abs',[tid],/FLOAT)
-  dewpsdvar=NCDF_VARDEF(wilma,'dewp_std',[tid],/FLOAT)
-  ddepanomvar=NCDF_VARDEF(wilma,'ddep_anoms',[tid],/FLOAT)
-  ddepabsvar=NCDF_VARDEF(wilma,'ddep_abs',[tid],/FLOAT)
-  ddepsdvar=NCDF_VARDEF(wilma,'ddep_std',[tid],/FLOAT)
-  twetanomvar=NCDF_VARDEF(wilma,'twet_anoms',[tid],/FLOAT)
-  twetabsvar=NCDF_VARDEF(wilma,'twet_abs',[tid],/FLOAT)
-  twetsdvar=NCDF_VARDEF(wilma,'twet_std',[tid],/FLOAT)
-  evapanomvar=NCDF_VARDEF(wilma,'evap_anoms',[tid],/FLOAT)
-  evapabsvar=NCDF_VARDEF(wilma,'evap_abs',[tid],/FLOAT)
-  evapsdvar=NCDF_VARDEF(wilma,'evap_std',[tid],/FLOAT)
-  qhumanomvar=NCDF_VARDEF(wilma,'qhum_anoms',[tid],/FLOAT)
-  qhumabsvar=NCDF_VARDEF(wilma,'qhum_abs',[tid],/FLOAT)
-  qhumsdvar=NCDF_VARDEF(wilma,'qhum_std',[tid],/FLOAT)
-  rhumanomvar=NCDF_VARDEF(wilma,'rhum_anoms',[tid],/FLOAT)
-  rhumabsvar=NCDF_VARDEF(wilma,'rhum_abs',[tid],/FLOAT)
-  rhumsdvar=NCDF_VARDEF(wilma,'rhum_std',[tid],/FLOAT)
-  wsanomvar=NCDF_VARDEF(wilma,'ws_anoms',[tid],/FLOAT)
-  wsabsvar=NCDF_VARDEF(wilma,'ws_abs',[tid],/FLOAT)
-  wssdvar=NCDF_VARDEF(wilma,'ws_std',[tid],/FLOAT)
-  slpanomvar=NCDF_VARDEF(wilma,'slp_anoms',[tid],/FLOAT)
-  slpabsvar=NCDF_VARDEF(wilma,'slp_abs',[tid],/FLOAT)
-  slpsdvar=NCDF_VARDEF(wilma,'slp_std',[tid],/FLOAT)
-
-  dedewpabsvar=NCDF_VARDEF(wilma,'de_dewp_abs',[tid],/FLOAT)
-  deddepabsvar=NCDF_VARDEF(wilma,'de_ddep_abs',[tid],/FLOAT)
-  
-  statPabsvar=NCDF_VARDEF(wilma,'20CRstation_Pclim',[tid],/FLOAT)
-
-  climsvar=NCDF_VARDEF(wilma,'months',[charid,clmid],/CHAR)
-  tempclimvar=NCDF_VARDEF(wilma,'temp_clims',[clmid],/FLOAT)
-  dewpclimvar=NCDF_VARDEF(wilma,'dewp_clims',[clmid],/FLOAT)
-  ddepclimvar=NCDF_VARDEF(wilma,'ddep_clims',[clmid],/FLOAT)
-  twetclimvar=NCDF_VARDEF(wilma,'twet_clims',[clmid],/FLOAT)
-  evapclimvar=NCDF_VARDEF(wilma,'evap_clims',[clmid],/FLOAT)
-  qhumclimvar=NCDF_VARDEF(wilma,'qhum_clims',[clmid],/FLOAT)
-  rhumclimvar=NCDF_VARDEF(wilma,'rhum_clims',[clmid],/FLOAT)
-  wsclimvar=NCDF_VARDEF(wilma,'ws_clims',[clmid],/FLOAT)
-  slpclimvar=NCDF_VARDEF(wilma,'slp_clims',[clmid],/FLOAT)
-
-  NCDF_ATTPUT,wilma,'times','long_name','time'
-  NCDF_ATTPUT,wilma,'times','units','months beginning Jan 1973'
-  NCDF_ATTPUT,wilma,'times','axis','T'
-  NCDF_ATTPUT,wilma,'times','calendar','gregorian'
-  NCDF_ATTPUT,wilma,'times','valid_min',0.
-  NCDF_ATTPUT,wilma,'months','long_name','month'
-  NCDF_ATTPUT,wilma,'months','units','months of the year'
-
-  NCDF_ATTPUT,wilma,'temp_anoms','long_name','Dry bulb temperature monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'temp_anoms','units','Degrees C'
-  NCDF_ATTPUT,wilma,'temp_anoms','axis','T'
-  valid=WHERE(Tanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tanoms_mm(valid))
-    max_t=MAX(Tanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'temp_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'temp_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'temp_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'temp_abs','long_name','Dry bulb temperature monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'temp_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'temp_abs','axis','T'
-  valid=WHERE(Tabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tabs_mm(valid))
-    max_t=MAX(Tabs_mm(valid))
-    NCDF_ATTPUT,wilma,'temp_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'temp_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'temp_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'temp_std','long_name','Dry bulb temperature monthly mean st dev'
-  NCDF_ATTPUT,wilma,'temp_std','units','Degrees C'
-  NCDF_ATTPUT,wilma,'temp_std','axis','T'
-  valid=WHERE(Tsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tsd_mm(valid))
-    max_t=MAX(Tsd_mm(valid))
-    NCDF_ATTPUT,wilma,'temp_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'temp_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'temp_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'temp_clims','long_name','Dry bulb temperature monthly climatology'
-  NCDF_ATTPUT,wilma,'temp_clims','units','Degrees C'
-  valid=WHERE(Tclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tclims_mm(valid))
-    max_t=MAX(Tclims_mm(valid))
-    NCDF_ATTPUT,wilma,'temp_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'temp_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'temp_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'dewp_anoms','long_name','Dewpoint Temperature monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'dewp_anoms','units','Degrees C'
-  NCDF_ATTPUT,wilma,'dewp_anoms','axis','T'
-  valid=WHERE(Tdanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tdanoms_mm(valid))
-    max_t=MAX(Tdanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'dewp_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'dewp_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'dewp_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'dewp_abs','long_name','Dewpoint Temperature monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'dewp_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'dewp_abs','axis','T'
-  valid=WHERE(Tdabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tdabs_mm(valid))
-    max_t=MAX(Tdabs_mm(valid))
-    NCDF_ATTPUT,wilma,'dewp_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'dewp_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'dewp_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'dewp_std','long_name','Dewpoint Temperature monthly mean st dev'
-  NCDF_ATTPUT,wilma,'dewp_std','units','Degrees C'
-  NCDF_ATTPUT,wilma,'dewp_std','axis','T'
-  valid=WHERE(Tdsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tdsd_mm(valid))
-    max_t=MAX(Tdsd_mm(valid))
-    NCDF_ATTPUT,wilma,'dewp_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'dewp_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'dewp_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'dewp_clims','long_name','Dewpoint Temperature monthly climatology'
-  NCDF_ATTPUT,wilma,'dewp_clims','units','Degrees C'
-  valid=WHERE(Tdclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Tdclims_mm(valid))
-    max_t=MAX(Tdclims_mm(valid))
-    NCDF_ATTPUT,wilma,'dewp_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'dewp_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'dewp_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'ddep_anoms','long_name','Dewpoint Depression monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'ddep_anoms','units','Degrees C'
-  NCDF_ATTPUT,wilma,'ddep_anoms','axis','T'
-  valid=WHERE(DPDanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(DPDanoms_mm(valid))
-    max_t=MAX(DPDanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'ddep_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ddep_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ddep_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ddep_abs','long_name','Dewpoint Depression monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'ddep_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'ddep_abs','axis','T'
-  valid=WHERE(DPDabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(DPDabs_mm(valid))
-    max_t=MAX(DPDabs_mm(valid))
-    NCDF_ATTPUT,wilma,'ddep_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ddep_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ddep_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ddep_std','long_name','Dewpoint Depression monthly mean st dev'
-  NCDF_ATTPUT,wilma,'ddep_std','units','Degrees C'
-  NCDF_ATTPUT,wilma,'ddep_std','axis','T'
-  valid=WHERE(DPDsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(DPDsd_mm(valid))
-    max_t=MAX(DPDsd_mm(valid))
-    NCDF_ATTPUT,wilma,'ddep_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ddep_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ddep_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ddep_clims','long_name','Dewpoint Depression monthly climatology'
-  NCDF_ATTPUT,wilma,'ddep_clims','units','Degrees C'
-  valid=WHERE(DPDclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(DPDclims_mm(valid))
-    max_t=MAX(DPDclims_mm(valid))
-    NCDF_ATTPUT,wilma,'ddep_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ddep_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ddep_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'twet_anoms','long_name','Wet-bulb Temperature monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'twet_anoms','units','Degrees C'
-  NCDF_ATTPUT,wilma,'twet_anoms','axis','T'
-  valid=WHERE(Twanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Twanoms_mm(valid))
-    max_t=MAX(Twanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'twet_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'twet_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'twet_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'twet_abs','long_name','Wet-bulb Temperature monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'twet_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'twet_abs','axis','T'
-  valid=WHERE(Twabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Twabs_mm(valid))
-    max_t=MAX(Twabs_mm(valid))
-    NCDF_ATTPUT,wilma,'twet_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'twet_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'twet_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'twet_std','long_name','Wet-bulb Temperature monthly mean st dev'
-  NCDF_ATTPUT,wilma,'twet_std','units','Degrees C'
-  NCDF_ATTPUT,wilma,'twet_std','axis','T'
-  valid=WHERE(Twsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Twsd_mm(valid))
-    max_t=MAX(Twsd_mm(valid))
-    NCDF_ATTPUT,wilma,'twet_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'twet_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'twet_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'twet_clims','long_name','Wet-bulb Temperature monthly climatology'
-  NCDF_ATTPUT,wilma,'twet_clims','units','Degrees C'
-  valid=WHERE(Twclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Twclims_mm(valid))
-    max_t=MAX(Twclims_mm(valid))
-    NCDF_ATTPUT,wilma,'twet_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'twet_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'twet_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'evap_anoms','long_name','Vapour Pressure monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'evap_anoms','units','hPa'
-  NCDF_ATTPUT,wilma,'evap_anoms','axis','T'
-  valid=WHERE(eanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(eanoms_mm(valid))
-    max_t=MAX(eanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'evap_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'evap_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'evap_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'evap_abs','long_name','Vapour Pressure monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'evap_abs','units','hPa'
-  NCDF_ATTPUT,wilma,'evap_abs','axis','T'
-  valid=WHERE(eabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(eabs_mm(valid))
-    max_t=MAX(eabs_mm(valid))
-    NCDF_ATTPUT,wilma,'evap_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'evap_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'evap_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'evap_std','long_name','Vapour Pressure monthly mean st dev'
-  NCDF_ATTPUT,wilma,'evap_std','units','hPa'
-  NCDF_ATTPUT,wilma,'evap_std','axis','T'
-  valid=WHERE(esd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(esd_mm(valid))
-    max_t=MAX(esd_mm(valid))
-    NCDF_ATTPUT,wilma,'evap_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'evap_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'evap_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'evap_clims','long_name','Vapour Pressure monthly climatology'
-  NCDF_ATTPUT,wilma,'evap_clims','units','hPa'
-  valid=WHERE(eclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(eclims_mm(valid))
-    max_t=MAX(eclims_mm(valid))
-    NCDF_ATTPUT,wilma,'evap_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'evap_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'evap_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'qhum_anoms','long_name','Specific Humidity monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'qhum_anoms','units','g/kg'
-  NCDF_ATTPUT,wilma,'qhum_anoms','axis','T'
-  valid=WHERE(qanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(qanoms_mm(valid))
-    max_t=MAX(qanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'qhum_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'qhum_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'qhum_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'qhum_abs','long_name','Specific Humidity monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'qhum_abs','units','g/kg'
-  NCDF_ATTPUT,wilma,'qhum_abs','axis','T'
-  valid=WHERE(qabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(qabs_mm(valid))
-    max_t=MAX(qabs_mm(valid))
-    NCDF_ATTPUT,wilma,'qhum_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'qhum_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'qhum_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'qhum_std','long_name','Specific Humidity monthly mean st dev'
-  NCDF_ATTPUT,wilma,'qhum_std','units','g/kg'
-  NCDF_ATTPUT,wilma,'qhum_std','axis','T'
-  valid=WHERE(qsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(qsd_mm(valid))
-    max_t=MAX(qsd_mm(valid))
-    NCDF_ATTPUT,wilma,'qhum_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'qhum_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'qhum_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'qhum_clims','long_name','Specific Humidity monthly climatology'
-  NCDF_ATTPUT,wilma,'qhum_clims','units','g/kg'
-  valid=WHERE(qclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(qclims_mm(valid))
-    max_t=MAX(qclims_mm(valid))
-    NCDF_ATTPUT,wilma,'qhum_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'qhum_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'qhum_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'rhum_anoms','long_name','Relative Humidity monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'rhum_anoms','units','%'
-  NCDF_ATTPUT,wilma,'rhum_anoms','axis','T'
-  valid=WHERE(RHanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(RHanoms_mm(valid))
-    max_t=MAX(RHanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'rhum_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'rhum_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'rhum_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'rhum_abs','long_name','Relative Humidity monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'rhum_abs','units','%'
-  NCDF_ATTPUT,wilma,'rhum_abs','axis','T'
-  valid=WHERE(RHabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(RHabs_mm(valid))
-    max_t=MAX(RHabs_mm(valid))
-    NCDF_ATTPUT,wilma,'rhum_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'rhum_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'rhum_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'rhum_std','long_name','Relative Humidity monthly mean st dev'
-  NCDF_ATTPUT,wilma,'rhum_std','units','%'
-  NCDF_ATTPUT,wilma,'rhum_std','axis','T'
-  valid=WHERE(RHsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(RHsd_mm(valid))
-    max_t=MAX(RHsd_mm(valid))
-    NCDF_ATTPUT,wilma,'rhum_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'rhum_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'rhum_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'rhum_clims','long_name','Relative Humidity monthly climatology'
-  NCDF_ATTPUT,wilma,'rhum_clims','units','%'
-  valid=WHERE(RHclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(RHclims_mm(valid))
-    max_t=MAX(RHclims_mm(valid))
-    NCDF_ATTPUT,wilma,'rhum_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'rhum_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'rhum_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'ws_anoms','long_name','Wind speed monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'ws_anoms','units','m s-1'
-  NCDF_ATTPUT,wilma,'ws_anoms','axis','T'
-  valid=WHERE(WSanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(WSanoms_mm(valid))
-    max_t=MAX(WSanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'ws_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ws_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ws_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ws_abs','long_name','Wind speed monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'ws_abs','units','m s-1'
-  NCDF_ATTPUT,wilma,'ws_abs','axis','T'
-  valid=WHERE(WSabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(WSabs_mm(valid))
-    max_t=MAX(WSabs_mm(valid))
-    NCDF_ATTPUT,wilma,'ws_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ws_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ws_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ws_std','long_name','Wind speed monthly mean st dev'
-  NCDF_ATTPUT,wilma,'ws_std','units','m s-1'
-  NCDF_ATTPUT,wilma,'ws_std','axis','T'
-  valid=WHERE(WSsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(WSsd_mm(valid))
-    max_t=MAX(WSsd_mm(valid))
-    NCDF_ATTPUT,wilma,'ws_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ws_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ws_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'ws_clims','long_name','Wind speed monthly climatology'
-  NCDF_ATTPUT,wilma,'ws_clims','units','m s-1'
-  valid=WHERE(WSclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(WSclims_mm(valid))
-    max_t=MAX(WSclims_mm(valid))
-    NCDF_ATTPUT,wilma,'ws_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'ws_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ws_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'slp_anoms','long_name','Station level pressure monthly mean anomaly'
-  NCDF_ATTPUT,wilma,'slp_anoms','units','hPa'
-  NCDF_ATTPUT,wilma,'slp_anoms','axis','T'
-  valid=WHERE(SLPanoms_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(SLPanoms_mm(valid))
-    max_t=MAX(SLPanoms_mm(valid))
-    NCDF_ATTPUT,wilma,'slp_anoms','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'slp_anoms','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'slp_anoms','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'slp_abs','long_name','Station level pressure monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'slp_abs','units','hPa'
-  NCDF_ATTPUT,wilma,'slp_abs','axis','T'
-  valid=WHERE(SLPabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(SLPabs_mm(valid))
-    max_t=MAX(SLPabs_mm(valid))
-    NCDF_ATTPUT,wilma,'slp_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'slp_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'slp_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'slp_std','long_name','Station level pressure monthly mean st dev'
-  NCDF_ATTPUT,wilma,'slp_std','units','hPa'
-  NCDF_ATTPUT,wilma,'slp_std','axis','T'
-  valid=WHERE(SLPsd_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(SLPsd_mm(valid))
-    max_t=MAX(SLPsd_mm(valid))
-    NCDF_ATTPUT,wilma,'slp_std','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'slp_std','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'slp_std','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'slp_clims','long_name','Station level pressure monthly climatology'
-  NCDF_ATTPUT,wilma,'slp_clims','units','hPa'
-  valid=WHERE(SLPclims_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(SLPclims_mm(valid))
-    max_t=MAX(SLPclims_mm(valid))
-    NCDF_ATTPUT,wilma,'slp_clims','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'slp_clims','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'slp_clims','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'20CRstation_Pclim','long_name','Monthly Climatological (76-05) station pressure'
-  NCDF_ATTPUT,wilma,'20CRstation_Pclim','units','hPa'
-  NCDF_ATTPUT,wilma,'20CRstation_Pclim','axis','T'
-  valid=WHERE(Pabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(Pabs_mm(valid))
-    max_t=MAX(Pabs_mm(valid))
-    NCDF_ATTPUT,wilma,'20CRstation_Pclim','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'20CRstation_Pclim','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'20CRstation_Pclim','missing_value',-1.e+30
-
-  NCDF_ATTPUT,wilma,'de_dewp_abs','long_name','Derived Dewpoint Temperature monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'de_dewp_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'de_dewp_abs','axis','T'
-  valid=WHERE(derivedTdabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(derivedTdabs_mm(valid))
-    max_t=MAX(derivedTdabs_mm(valid))
-    NCDF_ATTPUT,wilma,'de_dewp_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'de_dewp_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'de_dewp_abs','missing_value',-1.e+30
-  NCDF_ATTPUT,wilma,'de_ddep_abs','long_name','Derived Dewpoint Depression monthly mean absolutes'
-  NCDF_ATTPUT,wilma,'de_ddep_abs','units','Degrees C'
-  NCDF_ATTPUT,wilma,'de_ddep_abs','axis','T'
-  valid=WHERE(derivedDPDabs_mm NE -1.E+30, tc)
-  IF tc GE 1 THEN BEGIN
-    min_t=MIN(derivedDPDabs_mm(valid))
-    max_t=MAX(derivedDPDabs_mm(valid))
-    NCDF_ATTPUT,wilma,'de_ddep_abs','valid_min',min_t(0)
-    NCDF_ATTPUT,wilma,'de_ddep_abs','valid_max',max_t(0)
-  ENDIF
-  NCDF_ATTPUT,wilma,'ddep_abs','missing_value',-1.e+30
-
- NCDF_ATTPUT,wilma,/GLOBAL,'station_information','Where station is a composite the station id refers to the primary source used in the timestep and may not apply to all elements'
-  current_time=SYSTIME()
-  #PRINT,current_time
-  NCDF_ATTPUT,wilma,/GLOBAL,'file_created',STRING(current_time)
-  NCDF_CONTROL,wilma,/ENDEF
-  
-  NCDF_VARPUT, wilma,timesvar, int_mons
-  NCDF_VARPUT, wilma,tempanomvar,Tanoms_mm
-  NCDF_VARPUT, wilma,tempabsvar,Tabs_mm
-  NCDF_VARPUT, wilma,tempsdvar,Tsd_mm
-  NCDF_VARPUT, wilma,dewpanomvar,Tdanoms_mm
-  NCDF_VARPUT, wilma,dewpabsvar,Tdabs_mm
-  NCDF_VARPUT, wilma,dewpsdvar,Tdsd_mm
-  NCDF_VARPUT, wilma,ddepanomvar,DPDanoms_mm
-  NCDF_VARPUT, wilma,ddepabsvar,DPDabs_mm
-  NCDF_VARPUT, wilma,ddepsdvar,DPDsd_mm
-  NCDF_VARPUT, wilma,twetanomvar,Twanoms_mm
-  NCDF_VARPUT, wilma,twetabsvar,Twabs_mm
-  NCDF_VARPUT, wilma,twetsdvar,Twsd_mm
-  NCDF_VARPUT, wilma,evapanomvar,eanoms_mm
-  NCDF_VARPUT, wilma,evapabsvar,eabs_mm
-  NCDF_VARPUT, wilma,evapsdvar,esd_mm
-  NCDF_VARPUT, wilma,qhumanomvar,qanoms_mm
-  NCDF_VARPUT, wilma,qhumabsvar,qabs_mm
-  NCDF_VARPUT, wilma,qhumsdvar,qsd_mm
-  NCDF_VARPUT, wilma,rhumanomvar,RHanoms_mm
-  NCDF_VARPUT, wilma,rhumabsvar,RHabs_mm
-  NCDF_VARPUT, wilma,rhumsdvar,RHsd_mm
-  NCDF_VARPUT, wilma,wsanomvar,WSanoms_mm
-  NCDF_VARPUT, wilma,wsabsvar,WSabs_mm
-  NCDF_VARPUT, wilma,wssdvar,WSsd_mm
-  NCDF_VARPUT, wilma,slpanomvar,SLPanoms_mm
-  NCDF_VARPUT, wilma,slpabsvar,SLPabs_mm
-  NCDF_VARPUT, wilma,slpsdvar,SLPsd_mm
-  NCDF_VARPUT, wilma,statPabsvar,Pabs_mm
-
-  NCDF_VARPUT, wilma,climsvar,monarr
-  NCDF_VARPUT, wilma,tempclimvar,Tclims_mm
-  NCDF_VARPUT, wilma,dewpclimvar,Tdclims_mm
-  NCDF_VARPUT, wilma,ddepclimvar,DPDclims_mm
-  NCDF_VARPUT, wilma,twetclimvar,Twclims_mm
-  NCDF_VARPUT, wilma,evapclimvar,eclims_mm
-  NCDF_VARPUT, wilma,qhumclimvar,qclims_mm
-  NCDF_VARPUT, wilma,rhumclimvar,RHclims_mm
-  NCDF_VARPUT, wilma,wsclimvar,WSclims_mm
-  NCDF_VARPUT, wilma,slpclimvar,SLPclims_mm
-
-  NCDF_VARPUT, wilma,dedewpabsvar,derivedTdabs_mm
-  NCDF_VARPUT, wilma,deddepabsvar,derivedDPDabs_mm
-  
-  NCDF_CLOSE,wilma
-
-  asciiRAW_outfileq=outdirRAWq+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfilee=outdirRAWe+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileRH=outdirRAWRH+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileT=outdirRAWT+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileTw=outdirRAWTw+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileDPD=outdirRAWDPD+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileTd=outdirRAWTd+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileSLP=outdirRAWslp+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-  asciiRAW_outfileWS=outdirRAWws+strmid(stationid,0,6)+strmid(stationid,7,5)+'.raw.tavg'
-
-  asciiANOM_outfileT=outdirASC+'TANOMS/'+stationid+'_TmonthQCanoms.raw'
-  asciiANOM_outfileTd=outdirASC+'TDANOMS/'+stationid+'_TdmonthQCanoms.raw'
-  asciiANOM_outfileDPD=outdirASC+'DPDANOMS/'+stationid+'_DPDmonthQCanoms.raw'
-  asciiANOM_outfileTw=outdirASC+'TWANOMS/'+stationid+'_TwmonthQCanoms.raw'
-  asciiANOM_outfilee=outdirASC+'EANOMS/'+stationid+'_emonthQCanoms.raw'
-  asciiANOM_outfileq=outdirASC+'QANOMS/'+stationid+'_qmonthQCanoms.raw'
-  asciiANOM_outfileRH=outdirASC+'RHANOMS/'+stationid+'_RHmonthQCanoms.raw'
-  asciiANOM_outfileWS=outdirASC+'WSANOMS/'+stationid+'_WSmonthQCanoms.raw'
-  asciiANOM_outfileSLP=outdirASC+'SLPANOMS/'+stationid+'_SLPmonthQCanoms.raw'
-
-  asciiABS_outfileT=outdirASC+'TABS/'+stationid+'_TmonthQCabs.raw'
-  asciiABS_outfileTd=outdirASC+'TDABS/'+stationid+'_TdmonthQCabs.raw'
-  asciiABS_outfileDPD=outdirASC+'DPDABS/'+stationid+'_DPDmonthQCabs.raw'
-  asciiABS_outfiledeTd=outdirASC+'derivedTDABS/'+stationid+'_deTdmonthQCabs.raw'
-  asciiABS_outfiledeDPD=outdirASC+'derivedDPDABS/'+stationid+'_deDPDmonthQCabs.raw'
-  asciiABS_outfileTw=outdirASC+'TWABS/'+stationid+'_TwmonthQCabs.raw'
-  asciiABS_outfilee=outdirASC+'EABS/'+stationid+'_emonthQCabs.raw'
-  asciiABS_outfileq=outdirASC+'QABS/'+stationid+'_qmonthQCabs.raw'
-  asciiABS_outfileRH=outdirASC+'RHABS/'+stationid+'_RHmonthQCabs.raw'
-  asciiABS_outfileWS=outdirASC+'WSABS/'+stationid+'_WSmonthQCabs.raw'
-  asciiABS_outfileSLP=outdirASC+'SLPABS/'+stationid+'_SLPmonthQCabs.raw'
-  
-  Tanoms_mm=REFORM(Tanoms_mm,12,nyrs)
-  Tdanoms_mm=REFORM(Tdanoms_mm,12,nyrs)
-  DPDanoms_mm=REFORM(DPDanoms_mm,12,nyrs)
-  Twanoms_mm=REFORM(Twanoms_mm,12,nyrs)
-  eanoms_mm=REFORM(eanoms_mm,12,nyrs)
-  qanoms_mm=REFORM(qanoms_mm,12,nyrs)
-  RHanoms_mm=REFORM(RHanoms_mm,12,nyrs)
-  WSanoms_mm=REFORM(WSanoms_mm,12,nyrs)
-  SLPanoms_mm=REFORM(SLPanoms_mm,12,nyrs)
-  
-  Tabs_mm=REFORM(Tabs_mm,12,nyrs)
-  Tdabs_mm=REFORM(Tdabs_mm,12,nyrs)
-  DPDabs_mm=REFORM(DPDabs_mm,12,nyrs)
-  derivedTdabs_mm=REFORM(derivedTdabs_mm,12,nyrs)
-  derivedDPDabs_mm=REFORM(derivedDPDabs_mm,12,nyrs)
-  Twabs_mm=REFORM(Twabs_mm,12,nyrs)
-  eabs_mm=REFORM(eabs_mm,12,nyrs)
-  qabs_mm=REFORM(qabs_mm,12,nyrs)
-  qsatabs_mm=REFORM(qsatabs_mm,12,nyrs)
-  RHabs_mm=REFORM(RHabs_mm,12,nyrs)
-  WSabs_mm=REFORM(WSabs_mm,12,nyrs)
-  SLPabs_mm=REFORM(SLPabs_mm,12,nyrs)
-  
-  #change mdi to -9999 and multiply values by 10 - round whole number
-  gots=WHERE(qanoms_mm NE mdi,cgots)
-  miss=WHERE(qanoms_mm EQ mdi,cmiss)	# these should map to all other variables
-  # *** POSSIBLE THE qanom mapping is different from qabs and RHabs etc - so <15 months may have been passed by abs but failed by anoms
-  # good to mask out where bad for anoms but then this will fail later
-  IF (cmiss GT 0) THEN BEGIN
-    Tanoms_mm(miss)=-9999
-    Tdanoms_mm(miss)=-9999
-    DPDanoms_mm(miss)=-9999
-    Twanoms_mm(miss)=-9999
-    eanoms_mm(miss)=-9999
-    qanoms_mm(miss)=-9999
-    RHanoms_mm(miss)=-9999
-    WSanoms_mm(miss)=-9999
-    SLPanoms_mm(miss)=-9999
-    Tabs_mm(miss)=-9999
-    Tdabs_mm(miss)=-9999
-    DPDabs_mm(miss)=-9999
-    derivedTdabs_mm(miss)=-9999
-    derivedDPDabs_mm(miss)=-9999
-    Twabs_mm(miss)=-9999
-    eabs_mm(miss)=-9999
-    qabs_mm(miss)=-9999
-    qsatabs_mm(miss)=-9999
-    RHabs_mm(miss)=-9999
-    WSabs_mm(miss)=-9999
-    SLPabs_mm(miss)=-9999
-  ENDIF
-  IF (cgots GT 200) THEN BEGIN	# if there aren't at least 200 months then ditch the station - save to ditchfile
-    Tanoms_mm(gots)=ROUND(Tanoms_mm(gots)*100.)
-    Tdanoms_mm(gots)=ROUND(Tdanoms_mm(gots)*100.)
-    DPDanoms_mm(gots)=ROUND(DPDanoms_mm(gots)*100.)
-    Twanoms_mm(gots)=ROUND(Twanoms_mm(gots)*100.)
-    eanoms_mm(gots)=ROUND(eanoms_mm(gots)*100.)
-    qanoms_mm(gots)=ROUND(qanoms_mm(gots)*100.)
-    RHanoms_mm(gots)=ROUND(RHanoms_mm(gots)*100.)
-    WSanoms_mm(gots)=ROUND(WSanoms_mm(gots)*100.)
-    SLPanoms_mm(gots)=ROUND(SLPanoms_mm(gots)*100.)
-
-    Tabs_mm(gots)=ROUND(Tabs_mm(gots)*100.)
-    Tdabs_mm(gots)=ROUND(Tdabs_mm(gots)*100.)
-    DPDabs_mm(gots)=ROUND(DPDabs_mm(gots)*100.)
-    derivedTdabs_mm(gots)=ROUND(derivedTdabs_mm(gots)*100.)
-    derivedDPDabs_mm(gots)=ROUND(derivedDPDabs_mm(gots)*100.)
-    Twabs_mm(gots)=ROUND(Twabs_mm(gots)*100.)
-    eabs_mm(gots)=ROUND(eabs_mm(gots)*100.)
-    qabs_mm(gots)=ROUND(qabs_mm(gots)*100.)
-    qsatabs_mm(gots)=ROUND(qsatabs_mm(gots)*100.)
-    RHabs_mm(gots)=ROUND(RHabs_mm(gots)*100.)
-    WSabs_mm(gots)=ROUND(WSabs_mm(gots)*100.)
-    SLPabs_mm(gots)=ROUND(SLPabs_mm(gots)*100.)
-  ENDIF ELSE BEGIN
-    openw,99,ditchfile,/append
-    printf,99,stationid,'MONTHS: ',cgots,format='(a12,x,a8,i4)'
-    close,99
-    print,'Too small, moving on...'
-    continue
-  ENDELSE
-
-  openw,6,asciiANOM_outfileT
-  openw,7,asciiANOM_outfileTd
-  openw,8,asciiANOM_outfileTw
-  openw,9,asciiANOM_outfilee
-  openw,10,asciiANOM_outfileq
-  openw,11,asciiANOM_outfileRH
-  openw,12,asciiANOM_outfileDPD
-  openw,13,asciiANOM_outfileWS
-  openw,14,asciiANOM_outfileSLP
-
-  openw,26,asciiABS_outfileT
-  openw,27,asciiABS_outfileTd
-  openw,28,asciiABS_outfileTw
-  openw,29,asciiABS_outfilee
-  openw,30,asciiABS_outfileq
-  openw,31,asciiABS_outfileRH
-  openw,32,asciiABS_outfileDPD
-  openw,33,asciiABS_outfiledeTd
-  openw,34,asciiABS_outfiledeDPD
-  openw,35,asciiABS_outfileWS
-  openw,36,asciiABS_outfileSLP
-
-  openw,76,asciiRAW_outfileT
-  openw,77,asciiRAW_outfileDPD
-  openw,78,asciiRAW_outfileTw
-  openw,79,asciiRAW_outfilee
-  openw,80,asciiRAW_outfileq
-  openw,81,asciiRAW_outfileRH
-  openw,82,asciiRAW_outfileTd
-  openw,83,asciiRAW_outfileWS
-  openw,84,asciiRAW_outfileSLP
-  
-  FOR yy=styear,edyear DO BEGIN
-    printf,76,wmoid,wbanid,strcompress(yy,/remove_all),Tabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,77,wmoid,wbanid,strcompress(yy,/remove_all),derivedDPDabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,78,wmoid,wbanid,strcompress(yy,/remove_all),Twabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,79,wmoid,wbanid,strcompress(yy,/remove_all),eabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,80,wmoid,wbanid,strcompress(yy,/remove_all),qabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,81,wmoid,wbanid,strcompress(yy,/remove_all),RHabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,82,wmoid,wbanid,strcompress(yy,/remove_all),Tdabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,83,wmoid,wbanid,strcompress(yy,/remove_all),WSabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,84,wmoid,wbanid,strcompress(yy,/remove_all),SLPabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
+    #print('Check the monthly means - are the anoms and abs present identically?')
+    #pdb.set_trace()
     
-    printf,6,wmoid,wbanid,strcompress(yy,/remove_all),Tanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,7,wmoid,wbanid,strcompress(yy,/remove_all),Tdanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,8,wmoid,wbanid,strcompress(yy,/remove_all),Twanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,9,wmoid,wbanid,strcompress(yy,/remove_all),eanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,10,wmoid,wbanid,strcompress(yy,/remove_all),qanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,11,wmoid,wbanid,strcompress(yy,/remove_all),RHanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,12,wmoid,wbanid,strcompress(yy,/remove_all),DPDanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,13,wmoid,wbanid,strcompress(yy,/remove_all),WSanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,14,wmoid,wbanid,strcompress(yy,/remove_all),SLPanoms_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
+    # Test RH clims to see if they have been calculated because RH requires both T and Td to be present
+    if (len(np.where(RHclims_mm > MDI)[0]) < 12):
+    
+        FailureMode('TooFewClims','No of Months Clim',len(np.where(RHclims_mm > MDI)[0]),stationid)
+        continue
 
-    printf,26,wmoid,wbanid,strcompress(yy,/remove_all),Tabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,27,wmoid,wbanid,strcompress(yy,/remove_all),Tdabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,28,wmoid,wbanid,strcompress(yy,/remove_all),Twabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,29,wmoid,wbanid,strcompress(yy,/remove_all),eabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,30,wmoid,wbanid,strcompress(yy,/remove_all),qabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,31,wmoid,wbanid,strcompress(yy,/remove_all),RHabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,32,wmoid,wbanid,strcompress(yy,/remove_all),DPDabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,33,wmoid,wbanid,strcompress(yy,/remove_all),derivedTdabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,34,wmoid,wbanid,strcompress(yy,/remove_all),derivedDPDabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,35,wmoid,wbanid,strcompress(yy,/remove_all),WSabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-    printf,36,wmoid,wbanid,strcompress(yy,/remove_all),SLPabs_mm(*,yy-styear),format='(a6,a5,x,a4,12(i6,3x))'
-  ENDFOR
+    # Check number of months in station and if < 200 then ditch
+    if (len(np.where(RHanoms_mm > MDI)[0]) < 200):
+    
+        FailureMode('ShortStation','Months present',len(np.where(RHanoms_mm > MDI)[0]),stationid)
+        continue   
+
+    Panoms_mm, Pabs_mm, Psd_mm, Pclims_mm, PclimSD_mm = MakeMonths(statP_arr,dates,MDI)
+    Tanoms_mm, Tabs_mm, Tsd_mm, Tclims_mm, TclimSD_mm = MakeMonths(fulltemp_arr,dates,MDI)
+    Tdanoms_mm, Tdabs_mm, Tdsd_mm, Tdclims_mm, TdclimSD_mm = MakeMonths(fulldewp_arr,dates,MDI)
+    DPDanoms_mm, DPDabs_mm, DPDsd_mm, DPDclims_mm, DPDclimSD_mm = MakeMonths(fullddep_arr,dates,MDI)
+
+    # Derive Td and DPD at the monthly resolution for comparison
+    derivedDPDabs_mm = np.repeat(MDI,nmons)
+    derivedTdabs_mm = np.repeat(MDI,nmons)
+    gots = np.where(DPDabs_mm > MDI)
+    if (len(gots[0]) > 0):
+        derivedDPDabs_mm[gots[0]] = Tabs_mm[gots[0]] - Tdabs_mm[gots[0]]
+        derivedTdabs_mm[gots[0]] = Tabs_mm[gots[0]] - DPDabs_mm[gots[0]]
+
+    Twanoms_mm, Twabs_mm, Twsd_mm, Twclims_mm, TwclimSD_mm = MakeMonths(fulltwet_arr,dates,MDI)
+    eanoms_mm, eabs_mm, esd_mm, eclims_mm, eclimSD_mm = MakeMonths(fullevap_arr,dates,MDI)
+    qanoms_mm, qabs_mm, qsd_mm, qclims_mm, qclimSD_mm = MakeMonths(fullqhum_arr,dates,MDI)
+    WSanoms_mm, WSabs_mm, WSsd_mm, WSclims_mm, WSclimSD_mm = MakeMonths(fullws_arr,dates,MDI)
+    SLPanoms_mm, SLPabs_mm, SLPsd_mm, SLPclims_mm, SLPclimSD_mm = MakeMonths(fullslp_arr,dates,MDI)
+
+    #print('Check the monthly means')
+    #pdb.set_trace()
+ 
+    # List data together to pass to NetCDF writer
+    DataList = [RHanoms_mm, RHabs_mm, RHsd_mm, RHclims_mm, RHclimSD_mm, Tanoms_mm, Tabs_mm, Tsd_mm, Tclims_mm, TclimSD_mm,
+                Tdanoms_mm, Tdabs_mm, Tdsd_mm, Tdclims_mm, TdclimSD_mm, DPDanoms_mm, DPDabs_mm, DPDsd_mm, DPDclims_mm, DPDclimSD_mm,
+                Twanoms_mm, Twabs_mm, Twsd_mm, Twclims_mm, TwclimSD_mm, eanoms_mm, eabs_mm, esd_mm, eclims_mm, eclimSD_mm,
+                qanoms_mm, qabs_mm, qsd_mm, qclims_mm, qclimSD_mm, WSanoms_mm, WSabs_mm, WSsd_mm, WSclims_mm, WSclimSD_mm,
+                SLPanoms_mm, SLPabs_mm, SLPsd_mm, SLPclims_mm, SLPclimSD_mm, Pabs_mm,derivedDPDabs_mm,derivedTdabs_mm]
+
+    DimList=[['time','month','characters','bound_pairs'],
+	       [nmons,12,10,2],
+    	       dict([('var_type','f4'),
+    		     ('var_name','time'),
+    		     ('var_dims',('time',)),
+    		     ('standard_name','time'),
+    		     ('long_name','time'),
+    		     ('units','days since 1973-1-1 00:00:00'),
+    		     ('axis','T'),
+    		     ('calendar','gregorian'),
+    		     ('start_year',styear),
+    		     ('end_year',edyear),
+    		     ('start_month',1),
+    		     ('end_month',12),
+    		     ('bounds','bounds_time')]),
+    	       dict([('var_type','i4'),
+    		     ('var_name','bounds_time'),
+    		     ('var_dims',('time','bound_pairs',)), 
+    		     ('standard_name','time'),
+    		     ('long_name','time period boundaries')]),
+    	       dict([('var_type','S1'),
+    		     ('var_name','month'),
+    		     ('var_dims',('month','characters',)), 
+    		     ('long_name','month of year')])]
+
+    # Attribute list for variables
+    AttrList=[dict([('var_type','i4'),
+	            ('var_name','rhum_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) relative humidity monthly mean anomaly'),
+	            ('units','%rh')]),
+              dict([('var_type','i4'),
+	            ('var_name','rhum_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) relative humidity monthly mean'),
+	            ('units','%rh')]),
+              dict([('var_type','i4'),
+	            ('var_name','rhum_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) relative humidity monthly standard deviations'),
+	            ('units','%rh')]),
+              dict([('var_type','i4'),
+	            ('var_name','rhum_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) relative humidity monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','%rh')]),
+              dict([('var_type','i4'),
+	            ('var_name','rhum_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) relative humidity monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','%rh')]),
+              dict([('var_type','i4'),
+	            ('var_name','temp_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) air temperature monthly mean anomaly'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','temp_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) air temperature monthly mean'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','temp_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) air temperature monthly standard deviations'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','temp_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) air temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','temp_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) air temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','dewp_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint temperature monthly mean anomaly'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','dewp_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint temperature monthly mean'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','dewp_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint temperature monthly standard deviations'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','dewp_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) dewpoint temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','dewp_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) dewpoint temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','ddep_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint depression monthly mean anomaly'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','ddep_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint depression monthly mean'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','ddep_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) dewpoint depression monthly standard deviations'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','ddep_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) dewpoint depression monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','ddep_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) dewpoint depression monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','twet_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) wetbulb temperature monthly mean anomaly'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','twet_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) wetbulb temperature monthly mean'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','twet_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) wetbulb temperature monthly standard deviations'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','twet_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) wetbulb temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','twet_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) wetbulb temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','evap_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) vapour pressure monthly mean anomaly'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','evap_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) vapour pressure monthly mean'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','evap_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) vapour pressure monthly standard deviations'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','evap_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) vapour pressure monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','evap_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) vapour pressure monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','qhum_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) specific humidity monthly mean anomaly'),
+	            ('units','g/kg')]),
+              dict([('var_type','i4'),
+	            ('var_name','qhum_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) specific humidity monthly mean'),
+	            ('units','g/kg')]),
+              dict([('var_type','i4'),
+	            ('var_name','qhum_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) specific humidity monthly standard deviations'),
+	            ('units','g/kg')]),
+              dict([('var_type','i4'),
+	            ('var_name','qhum_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) specific humidity monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','g/kg')]),
+              dict([('var_type','i4'),
+	            ('var_name','qhum_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) specific humidity monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','g/kg')]),
+              dict([('var_type','i4'),
+	            ('var_name','ws_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~10m) wind speed monthly mean anomaly'),
+	            ('units','m/s')]),
+              dict([('var_type','i4'),
+	            ('var_name','ws_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~10m) wind speed monthly mean'),
+	            ('units','m/s')]),
+              dict([('var_type','i4'),
+	            ('var_name','ws_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~10m) wind speed monthly standard deviations'),
+	            ('units','m/s')]),
+              dict([('var_type','i4'),
+	            ('var_name','ws_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~10m) wind speed monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','m/s')]),
+              dict([('var_type','i4'),
+	            ('var_name','ws_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~10m) wind speed monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','m/s')]),
+              dict([('var_type','i4'),
+	            ('var_name','slp_anoms'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) station level pressure monthly mean anomaly'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','slp_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) station level pressure monthly mean'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','slp_std'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) station level pressure monthly standard deviations'),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','slp_clims'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) station level pressure monthly climatology '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','slp_climSDs'),
+		    ('var_dims',('month',)), 
+	            ('long_name','near surface (~2m) station level pressure monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','hPa')]), 
+              dict([('var_type','i4'),
+	            ('var_name','20CRstation_Pclim'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) 20CRv2c station level pressure monthly climatological mean '+str(clims[0])+'-'+str(clims[1])),
+	            ('units','hPa')]),
+              dict([('var_type','i4'),
+	            ('var_name','de_ddep_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) derived (T-Td) dewpoint depression monthly mean'),
+	            ('units','deg C')]),
+              dict([('var_type','i4'),
+	            ('var_name','de_dewp_abs'),
+		    ('var_dims',('time',)), 
+	            ('long_name','near surface (~2m) derived dewpoint temperature (T-DPD) monthly mean'),
+	            ('units','deg C')])]  
+
+    Institution = 'Met Office Hadley Centre (UK), \
+               National Centres for Environmental Information (USA)'
+    History = 'See Willett et al., (2014) REFERENCE for more information. \
+           See www.metoffice.gov.uk/hadobs/hadisdh/ for more information and related data and figures. \
+           Follow @metofficeHadOBS to keep up to date with Met Office Hadley Centre HadOBS dataset developements. \
+           See hadisdh.blogspot.co.uk for HadISDH updates, bug fixes and explorations.'
+# Non-commercial license
+    Licence = 'HadISDH is distributed under the Non-Commercial Government Licence: \
+           http://www.nationalarchives.gov.uk/doc/non-commercial-government-licence/non-commercial-government-licence.htm. \
+           The data are freely available for any non-comercial use with attribution to the data providers. Please cite \
+           Willett et al.,(2014) and Smith et al., (2011) with a link to the REFERENCES provided in the REFERENCE attribute.'
+# Open Government License
+#Licence = 'HadISDH is distributed under the Open Government Licence: \
+#           http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/. \
+#           The data are freely available for use with attribution to the data providers. Please cite \
+#           Willett et al.,(2014) with a link to the REFERENCE provided in the REFERENCE attribute.'
+    Project = 'HadOBS: Met Office Hadley Centre Climate Monitoring Data-product www.metoffice.gov.uk/hadobs'
+    Processing_level = 'Hourly station data selected for length and continuity, quality controlled, averaged to monthly means.'
+    Acknowledgement = 'Kate Willett and Robert Dunn were supported by the Joint UK BEIS/Defra \
+                  NOAA ESRL 20CRv2c are used in the processing of HadISDH.'
+# THIS BIT NEEDS EDITING EVERY YEAR **************************
+    Source = 'HadISD.3.1.0.2019f (Dunn et al. 2016) from the National Centres for Environmental Information \
+          International Surface Database (ISD): www.ncdc.noaa.gov/isd'
+    Comment = 'Where station is a composite the station id refers to the primary source used in the timestep and may not apply to all elements'
+    References = 'Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., \
+              Jones, P. D. and Williams, Jr., C. N.: HadISDH land surface multi-variable humidity and temperature record for climate monitoring, \
+              Clim. Past, 10, 1983-2006, doi:10.5194/cp-10-1983-2014, 2014, \
+	      Smith, A., N. Lott, and R. Vose, 2011: The Integrated Surface Database: Recent \
+	      Developments and Partnerships. Bulletin of the American Meteorological Society, \
+	      92, 704-708, doi:10.1175/2011BAMS3015.1'
+    Creator_name = 'Kate Willett'
+    Creator_email = 'kate.willett@metoffice.gov.uk'
+    Conventions = 'CF-1.6'
+    netCDF_type = 'NETCDF4_CLASSIC'
+
+    GlobAttrObjectList=dict([['File_created',dt.datetime.strftime(dt.datetime.now(), '%Y-%m-%d %H:%M:%S')], # Is there a call for time stamping?
+			     ['Description','HadISDH monthly mean land surface raw data'],
+			     ['Title','HadISDH monthly mean land surface raw climate monitoring product'], 
+			     ['Institution',Institution],
+			     ['History','See http://catalogue.ceda.ac.uk/uuid/251474c7b09449d8b9e7aeaf1461858f for more information and related data.'], 
+			     ['Licence',Licence],
+			     ['Project', Project],
+			     ['Processing_level',Processing_level],
+			     ['Acknowledgement',Acknowledgement],
+			     ['Source',Source],
+			     ['Comment',''],
+			     ['References',References],
+			     ['Creator_name',Creator_name],
+			     ['Creator_email',Creator_email],
+			     ['Version',version],
+			     ['doi',''], # This needs to be filled in
+			     ['Conventions',Conventions],
+			     ['netCDF_type',netCDF_type]]) 
+
+# Write out monthly data to netCDH
+    WriteNetCDF(OUTNCF+stationid+NCSUFFIX,styear,edyear,clims,DataList,DimList,AttrList,GlobAttrObjectList,MDI)
+
+# Write out anoms and abs for PHA and just for ascii versions
+    # First reform the data arrays
+
+    # Now convert missing to -9999 and cross-check abs and anoms (should match but maybe they don't)
+    # Do this within list which should also change the master
+
+    # ReList data together to pass to ASCII writer
+    DataList = [RHanoms_mm, RHabs_mm, 
+                Tanoms_mm, Tabs_mm, 
+                Tdanoms_mm, Tdabs_mm, 
+                DPDanoms_mm, DPDabs_mm,
+                Twanoms_mm, Twabs_mm, 
+                eanoms_mm, eabs_mm, 
+                qanoms_mm, qabs_mm, 
+                WSanoms_mm, WSabs_mm, 
+                SLPanoms_mm, SLPabs_mm, 
+		derivedDPDabs_mm,derivedTdabs_mm]
+
+    OutListRAW = dict([('1', OUTRAWrh+outstationid+RAWSUFFIX),
+                  ('3',OUTRAWt+outstationid+RAWSUFFIX),
+                  ('5',OUTRAWtd+outstationid+RAWSUFFIX),
+		  ('9',OUTRAWtw+outstationid+RAWSUFFIX),
+		  ('11',OUTRAWe+outstationid+RAWSUFFIX),
+		  ('13',OUTRAWq+outstationid+RAWSUFFIX),
+		  ('15',OUTRAWws+outstationid+RAWSUFFIX),
+		  ('17',OUTRAWslp+outstationid+RAWSUFFIX),
+		  ('18',OUTRAWdpd+outstationid+RAWSUFFIX)])
+
+    OutListAll = dict([('0',OUTASC+'RHANOMS/'+stationid+'_RH'+ANOMSUFFIX),
+                       ('1',OUTASC+'RHABS/'+stationid+'_RH'+ABSSUFFIX),
+		       ('2',OUTASC+'TANOMS/'+stationid+'_T'+ANOMSUFFIX),
+		       ('3',OUTASC+'TABS/'+stationid+'_T'+ABSSUFFIX),
+		       ('4',OUTASC+'TDANOMS/'+stationid+'_Td'+ANOMSUFFIX),
+		       ('5',OUTASC+'TDABS/'+stationid+'_Td'+ABSSUFFIX),
+		       ('6',OUTASC+'DPDANOMS/'+stationid+'_DPD'+ANOMSUFFIX),
+		       ('7',OUTASC+'DPDABS/'+stationid+'_DPD'+ABSSUFFIX),
+		       ('8',OUTASC+'TWANOMS/'+stationid+'_Tw'+ANOMSUFFIX),
+		       ('9',OUTASC+'TWABS/'+stationid+'_Tw'+ABSSUFFIX),
+		       ('10',OUTASC+'EANOMS/'+stationid+'_e'+ANOMSUFFIX),
+		       ('11',OUTASC+'EABS/'+stationid+'_e'+ABSSUFFIX),
+		       ('12',OUTASC+'QANOMS/'+stationid+'_q'+ANOMSUFFIX),
+		       ('13',OUTASC+'QABS/'+stationid+'_q'+ABSSUFFIX),
+		       ('14',OUTASC+'WSANOMS/'+stationid+'_WS'+ANOMSUFFIX),
+		       ('15',OUTASC+'WSABS/'+stationid+'_WS'+ABSSUFFIX),
+		       ('16',OUTASC+'SLPANOMS/'+stationid+'_SLP'+ANOMSUFFIX),
+		       ('17',OUTASC+'SLPABS/'+stationid+'_SLP'+ABSSUFFIX),
+		       ('18',OUTASC+'derivedDPDABS/'+stationid+'_deDPD'+ABSSUFFIX),
+		       ('19',OUTASC+'derivedTDABS/'+stationid+'_deTd'+ABSSUFFIX)])
+
+        # get mask of qanoms_mm to mask out other variables NOT 100% SURE WE NEED/WANT TO DO THIS
+    qmask = np.where(qanoms_mm == MDI)[0]
+    for v,vv in enumerate(DataList):
   
-  close,6
-  close,7
-  close,8
-  close,9
-  close,10
-  close,11
-  close,12
-  close,13
-  close,14
-
-  close,26
-  close,27
-  close,28
-  close,29
-  close,30
-  close,31
-  close,32
-  close,33
-  close,34
-  close,35
-  close,36
+        # reshape to print out a row of 12 months for each year
+        vv = np.reshape(vv,(nyrs,12))
   
-  close,76
-  close,77
-  close,78
-  close,79
-  close,80
-  close,81
-  close,82
-  close,83
-  close,84
-  
-  openw,99,keepfile,/append
-    printf,99,wmoid,wbanid,lat,lon,stationelv,cid,namoo,'MONTHS: ',cgots,format='(a6,a5,f8.4,x,f9.4,x,f6.1,x,a2,x,a29,x,a8,i4)'
-  close,99
+        # change MDI to -9999 and multiply values by 10 - round whole number
+        vv[np.where(vv == MDI)] = -9999
+	# mask to qanoma
+        vv[qmask] = -9999
+	
+        vv[np.where(vv > -9999)] = np.round(vv[np.where(vv > -9999)] * 100).astype(int)
 
-#  stop
+    # Write to ascii
 
-ENDWHILE
-close,5
-END
+        WriteAscii(OutListAll[str(v)],vv,outstationid,styear,edyear)
+           
+        if (str(v) in OutListRAW):
+	    
+            WriteAscii(OutListRAW[str(v)],vv,outstationid,styear,edyear)	      	    
+        
+    #print('Check writing to file has worked')
+    #pdb.set_trace()
+
+# Print out station listing in keep file    
+    filee = open(OUTKEEP,'a+')
+    filee.write('%11s%8.4f %9.4f %6.1f %2s %29s%8s%4i\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],'MONTHS: ',len(np.where(qanoms_mm > -9999)[0])))
+    filee.close()
+
+print('And we are done!')
