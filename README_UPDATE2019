@@ -3,18 +3,24 @@ T, Td, Tw, q, e, RH, DPD, WS and SLP
 
 VERSION 4.2.0.2019f based on HadISD.3.1.0.2019f
 
-Note: This is an annual update with a lightly different (and more) station make up to the previous
+Note: This is an annual update with a slightly different (and more) station make up to the previous
 version (4.1.0.2018f) and may be deep past changes. There are now 8139 stations as opposed to 8103 stations (4.1.0.2018f) to begin selection from.
-There are no significant code changes but some code has been converted to python 3 (from IDL) hence the increment to the Y.
+There are no significant code changes but some code has been converted to python 3 (from IDL) and some bugs have been found and corrected hence the increment to the Y.
 The extra year may still change some internal statistics (neighbour correlations etc). The Z increment has been reset to 0 with 
 the increment of Y.
+
+# BUgs:
+Incorrect reshaping of 20CR climatological array so climatological pressures used to obtain climatological station pressure was wrong. This had a very small affect on values.
+RH when Tw <= 0 was being calculated relative to a wet bulb rather than an ice bulb
+The monthly averaging was kicking out data with 15 years of observations within the climatology whereas we keep this data (>= 15 rather than >15)
+The decade check for climatology was incorrect in IDL such that stations were passing through when they had no data in the 1981-1990 period.
 
 We are now only running with the 1981-2010 climatology.
 
 Other changes:
 Having rewritten the sampling error code in python 3 last year I still can't use it until I have also rewritten the 
 grid_HadISDHFLAT_JAN2015.pro code that calls it.
-I am half way through rewriting crate_monthseriesJAN2015.pro to CreateMonthSeriesfromHadISD.py 
+I have converted create_monthseriesJAN2015.pro to CreateMonthSeriesfromHadISD.py 
 
 GLOSSARY:
 PHA = Pairwise Homogenisation Algorithm v52j Menne and Williams, 2009
@@ -127,7 +133,7 @@ ORDER
 	- set up PHA directories:
 	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/PHA2015/pha52jgo/data/
 	-> makePHAdirectories.sh 
-	- change all cases of 16 to 17 and then run ./makePHAdirectories.sh
+	- change all cases of 18 to 19 and then run ./makePHAdirectories.sh
 	/data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PHA2015/pha52jgo/data/hadisdh/
 							-> 73<yy><var>
 								-> meta
@@ -142,6 +148,7 @@ ORDER
 		- change endyr=2016 to endyr=2017
 		- hopefully maxyrs=300000 is ok but may need to be expanded now we're working with 8000+ stations
 
+GOT TO HERE - UPDATE WITH PYTHON CODE!!!
 2) CREATE MONTHLY DATA FROM HOURLY HADISD
 /data/local/hadkw/HADCRUH2/UPDATE<yyyy>/PROGS/HADISDH_BUILD/create_monthseriesJAN2015.pro	(all variables inclusive)
 	- change thisyear, nowmon, nowyear and version to appropriate values
