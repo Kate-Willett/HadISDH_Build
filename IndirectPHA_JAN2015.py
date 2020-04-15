@@ -1,5 +1,5 @@
 #!/usr/local/sci/bin/python
-# PYTHON2.7
+# PYTHON3
 # 
 # Author: Kate Willett
 # Created: 11 October 2013
@@ -75,6 +75,10 @@
 # Go through everything in the 'Start' section to make sure dates, versions and filepaths are up to date
 # Choose param settings for the desired variable (also in 'Start' section)
 # This can take an hour or so to run through ~3800 stations so consider using screen, screen -d, screen -r
+# 
+# module load scitools/default-current
+# python IndirectPHA_JAN2015.py
+#
 # python2.7 IndirectPHA_JAN2015.py
 # 
 # -----------------------
@@ -96,6 +100,17 @@
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
+#
+#
+# Version 4 (20 February 2020)
+# ---------
+#  
+# Enhancements
+#  
+# Changes
+# This is no Python 3 from python 2.7
+#  
+# Bug fix
 #
 # Version 3 (25 January 2017)
 # ---------
@@ -165,22 +180,22 @@ from subprocess import check_output
 from LinearTrends import MedianPairwise
 
 # RESTART VALUE
-Restarter = '702610'				#'------'		#'681040'
+Restarter = '------'				#'------'		#'681040'
 
 # Set up initial run choices
 # Start and end years
 styr       = 1973
-edyr       = 2018
+edyr       = 2019
 
 # Variable
 param      = 'tw'	# tw, q, e, rh, t
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2019'
+nowyear    = '2020'
 
 # Dataset version
-version    = '4.1.0.2018f'
+version    = '4.2.0.2019f'
 
 # Climatology start and end years
 clmst = 1981   #1976
@@ -188,7 +203,7 @@ clmed = 2010   #2005
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+updateyear
 STATLIST    = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_'+nowmon+nowyear+'.txt'	# removed all 'bad' DPD and T stations ()
 
 # Break locations are taken from pha output
@@ -316,7 +331,7 @@ def ReadData(FileName,typee,delimee):
     ''' Need to specify format as it is complex '''
     ''' outputs an array of tuples that in turn need to be subscripted by their names defaults f0...f8 '''
 
-    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee) # ReadData
+    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee,encoding = 'latin-1') # ReadData
 
 #************************************************************************
 # PHAREAD
@@ -337,10 +352,10 @@ def PHARead(FileName,StationID, all_adjust, all_starts, all_uncs, breakcount,The
     for line in open(FileName):
 
         if "Adj write:"+StationID in line:
-	    print(line)
+            print(line)
             moo = str.split(line)
             
-	    if breakcount == 0:
+            if breakcount == 0:
 		# This is the first line read in so should be the last data present point but data may have been removed
 		# - force end point to be nmonths IF it is not == nmonths and within 24 months of nmonths - just the end of data present as 
 		# no changepoints can occurr within 2 years of end of record
@@ -354,49 +369,49 @@ def PHARead(FileName,StationID, all_adjust, all_starts, all_uncs, breakcount,The
 		### can use np.delete(array,row/column/pointers,axis)###
 		
                 if TheMCount-int(moo[7]) > 24:
-		    all_firsts[0] = int(moo[7])+1
-		    all_firsts    = np.append(all_firsts,int(moo[4]))
-		    all_starts[0] = TheMCount
-		    all_starts    = np.append(all_starts,int(moo[7]))
-		    all_adjust[0] = 0.0
-		    all_adjust    = np.append(all_adjust,moo[11])
-		    all_uncs[0]   = 0.0
-		    all_uncs      = np.append(all_uncs,moo[12])
-		    breakcount    = breakcount+2
-		    infunccount   = infunccount+2
-		elif TheMCount-int(moo[7]) <= 24:		    
-		    all_firsts[0] = int(moo[4])
-		    all_starts[0] = TheMCount
-		    all_adjust[0] = moo[11]
+                    all_firsts[0] = int(moo[7])+1
+                    all_firsts    = np.append(all_firsts,int(moo[4]))
+                    all_starts[0] = TheMCount
+                    all_starts    = np.append(all_starts,int(moo[7]))
+                    all_adjust[0] = 0.0
+                    all_adjust    = np.append(all_adjust,moo[11])
+                    all_uncs[0]   = 0.0
+                    all_uncs      = np.append(all_uncs,moo[12])
+                    breakcount    = breakcount+2
+                    infunccount   = infunccount+2
+                elif TheMCount-int(moo[7]) <= 24:		    
+                    all_firsts[0] = int(moo[4])
+                    all_starts[0] = TheMCount
+                    all_adjust[0] = moo[11]
                     all_uncs[0]   = moo[12]
-		    breakcount    = breakcount+1
-		    infunccount   = infunccount+1
+                    breakcount    = breakcount+1
+                    infunccount   = infunccount+1
  
-	    elif breakcount != 0 and infunccount == 0:
+            elif breakcount != 0 and infunccount == 0:
                 
-		if TheMCount-int(moo[7]) > 24:
-		    all_firsts    = np.append(all_firsts,(int(moo[7])+1,int(moo[4])))
-		    all_starts    = np.append(all_starts,(TheMCount,int(moo[7])))
-		    all_adjust    = np.append(all_adjust,(0.0,moo[11]))
-		    all_uncs      = np.append(all_uncs,(0.0,moo[12]))
-		    breakcount    = breakcount+2
-		    infunccount   = infunccount+2
-		elif TheMCount-int(moo[7]) <= 24:		    
-		    all_firsts    = np.append(all_firsts,int(moo[4]))
+                if TheMCount-int(moo[7]) > 24:
+                    all_firsts    = np.append(all_firsts,(int(moo[7])+1,int(moo[4])))
+                    all_starts    = np.append(all_starts,(TheMCount,int(moo[7])))
+                    all_adjust    = np.append(all_adjust,(0.0,moo[11]))
+                    all_uncs      = np.append(all_uncs,(0.0,moo[12]))
+                    breakcount    = breakcount+2
+                    infunccount   = infunccount+2
+                elif TheMCount-int(moo[7]) <= 24:		    
+                    all_firsts    = np.append(all_firsts,int(moo[4]))
                     all_starts    = np.append(all_starts,TheMCount)		
                     all_adjust    = np.append(all_adjust,moo[11])
                     all_uncs      = np.append(all_uncs,moo[12])
                     breakcount    = breakcount+1
-		    infunccount   = infunccount+1
+                    infunccount   = infunccount+1
 		# This is the first line of a new variable (i.e., T after doing Td)	    	
 
             else:
-		all_firsts  = np.append(all_firsts,int(moo[4]))
+                all_firsts  = np.append(all_firsts,int(moo[4]))
                 all_starts  = np.append(all_starts,int(moo[7]))		#int(moo[4]))
                 all_adjust  = np.append(all_adjust,moo[11])
                 all_uncs    = np.append(all_uncs,moo[12])
                 breakcount  = breakcount+1
-		infunccount = infunccount+1
+                infunccount = infunccount+1
 
     # Test the start point of the last element added - if it is not 1 then add 1 in case some data has been removed.
     if all_firsts[infunccount-1] > 24:
@@ -444,12 +459,13 @@ def ReadInNetworks(TheCount,TheList,TheCStation,TheFilebitA,TheFilebitB,TheYears
 
     for n,TheNStation in enumerate(TheList[1:]):	# 1: starts at second element
 
-	if TheNStation == TheCStation:
-	    continue
+        if TheNStation == TheCStation:
+            continue
 	    
         TheFile       = TheFilebitA+TheNStation[0:6]+'-'+TheNStation[6:11]+TheFilebitB
-	TempStation   = []
-        TheTypes      = np.append("|S12",["int"]*13)
+        TempStation   = []
+#        TheTypes      = np.append("|S12",["int"]*13)
+        TheTypes      = np.append("|U12",["int"]*13)
         TheDelimiters = np.append([12,4,6],[9]*11)
         RawData       = ReadData(TheFile,TheTypes,TheDelimiters)
 
@@ -462,14 +478,14 @@ def ReadInNetworks(TheCount,TheList,TheCStation,TheFilebitA,TheFilebitB,TheYears
                 TempStation = np.append(TempStation,moo[2:14])	# for some silly reason you subscript starting from 0th element to the nth rather than n-1th element
   
         if TheData.size:		# if empty array then use first element, otherwise append
-	    TheData = np.append(TheData,np.reshape(TempStation/100.,(1,len(TempStation))),axis=0)	# now in proper units, fill the Neighbour array
-	else:
-	    TheData = np.reshape(TempStation/100.,(1,len(TempStation)))
+            TheData = np.append(TheData,np.reshape(TempStation/100.,(1,len(TempStation))),axis=0)	# now in proper units, fill the Neighbour array
+        else:
+            TheData = np.reshape(TempStation/100.,(1,len(TempStation)))
 
         if any(TheNewList):		# if empty array then use first element, otherwise append
-	    TheNewList = np.append(TheNewList,TheNStation)
-	else:
-	    TheNewList = [TheNStation]
+            TheNewList = np.append(TheNewList,TheNStation)
+        else:
+            TheNewList = [TheNStation]
     
     TheNewCount = len(TheNewList)		# Now this only includes the neighbours and not the candidate, as in FingNeighbours
 
@@ -490,23 +506,23 @@ def MakeAnomalies(TheData,TheAnomalies,TheClims,TheYCount,TheStClim,TheEdClim,Th
     for t,TempStation in enumerate(TheData):	# row by row so ok as long as each station is a row
 
         #print(t,len(TempStation))
-	Mooch  = np.reshape(TempStation,(TheYCount,12))	# years(rows) by months(columns)
-	Mooch2 = np.empty_like(Mooch)		# To make sure I don't overwrite the absolute data
-	Mooch2.fill(TheMDI)
+        Mooch  = np.reshape(TempStation,(TheYCount,12))	# years(rows) by months(columns)
+        Mooch2 = np.empty_like(Mooch)		# To make sure I don't overwrite the absolute data
+        Mooch2.fill(TheMDI)
 
-	for mm in range(12):
+        for mm in range(12):
 
-	    subarr = Mooch[TheStClim:TheEdClim+1,mm]
-	    #print(mm,subarr)
-	    gots   = (subarr > TheMDI)
+            subarr = Mooch[TheStClim:TheEdClim+1,mm]
+            #print(mm,subarr)
+            gots   = (subarr > TheMDI)
 
-	    if len(subarr[gots]) >= 15:		# more sophisticated checking has been done previously 
-	        TheClims[t,mm]   = np.mean(subarr[gots])
-		gots2            = (Mooch[:,mm] > TheMDI)
-	        Mooch2[gots2,mm] = Mooch[gots2,mm]-TheClims[t,mm]
-		#print " %6.2f"*40 % tuple(Mooch[:,mm])
+            if len(subarr[gots]) >= 15:		# more sophisticated checking has been done previously 
+                TheClims[t,mm]   = np.mean(subarr[gots])
+                gots2            = (Mooch[:,mm] > TheMDI)
+                Mooch2[gots2,mm] = Mooch[gots2,mm]-TheClims[t,mm]
+        	#print " %6.2f"*40 % tuple(Mooch[:,mm])
 
-	TheAnomalies[t,] = np.reshape(Mooch2,(1,12*TheYCount))    
+        TheAnomalies[t,] = np.reshape(Mooch2,(1,12*TheYCount))    
 
     return TheAnomalies,TheClims #MakeAnomalies
 
@@ -525,8 +541,8 @@ def MakeDiffSeries(TheCandidate,TheNeighbours,TheDiffSeries,TheMDI,TheMCount):
 
         for mm in range(0,TheMCount):
 
-	    if TheCandidate[mm] > TheMDI and TempStation[mm] > TheMDI:
-	        TheDiffSeries[t,mm] = TheCandidate[mm]-TempStation[mm]
+            if TheCandidate[mm] > TheMDI and TempStation[mm] > TheMDI:
+                TheDiffSeries[t,mm] = TheCandidate[mm]-TempStation[mm]
 	
 #	gotsN=TempStation > TheMDI
 #        subsample=np.where(gotsC == gotsN)
@@ -559,9 +575,9 @@ def SortBreaks(TheBreakLocs,TheActualBreakLocs,TheBCount,TheMCount):
 
     for bb in range(1,TheBCount):
 
-   	if TheBreakLocs[bb]-LastBreakLoc > 11:	    # keep it if its at least a year apart from any other break
-    	    TheActualBreakLocs = np.append(TheActualBreakLocs,TheBreakLocs[bb])
-    	    LastBreakLoc       = TheBreakLocs[bb]
+       if TheBreakLocs[bb]-LastBreakLoc > 11:	    # keep it if its at least a year apart from any other break
+            TheActualBreakLocs = np.append(TheActualBreakLocs,TheBreakLocs[bb])
+            LastBreakLoc       = TheBreakLocs[bb]
 
 # I've added an artificial break location at 1 so that is an extra break
 # therefore TheBCount should be len(TheActualBreakLocs)-1 and as the last
@@ -595,29 +611,29 @@ def AssignJumpSizeUnc(TheBreakList,TheBCount,TheActualBreakLocs,TheBreakDist,The
     for bb in range(1,TheBCount):	# range(1,2) = [1] - therefore last element always stays as zero
 
 	# set up the HSP pointers for each pair of HSPs
-	HSP_1 = range((TheActualBreakLocs[bb-1]-1),TheActualBreakLocs[bb])   # no minus 1 as indexing starts from a and moves to b-1              
-	#HSP_2=range((TheActualBreakLocs[bb]-1),(TheActualBreakLocs[bb+1]-1)) 
-	# HSP_2 should not include endpoint from HSP_1 - correction below
-	# HSP_2 should not include start point from next HSP and no extra Nmonths+1 is then needed to make this work - Bcount already one fewer
-	HSP_2 = range(TheActualBreakLocs[bb],TheActualBreakLocs[bb+1]) # -1 as indexing starts from 0
+        HSP_1 = range((TheActualBreakLocs[bb-1]-1),TheActualBreakLocs[bb])   # no minus 1 as indexing starts from a and moves to b-1              
+        #HSP_2=range((TheActualBreakLocs[bb]-1),(TheActualBreakLocs[bb+1]-1)) 
+        # HSP_2 should not include endpoint from HSP_1 - correction below
+        # HSP_2 should not include start point from next HSP and no extra Nmonths+1 is then needed to make this work - Bcount already one fewer
+        HSP_2 = range(TheActualBreakLocs[bb],TheActualBreakLocs[bb+1]) # -1 as indexing starts from 0
 	
 #	print("HSP POINTS: ",TheActualBreakLocs[bb-1]-1,TheActualBreakLocs[bb],TheActualBreakLocs[bb],TheActualBreakLocs[bb+1])
  	    
         TheBreakDist = []
-	TheBreakDist = DetectJumpSizes(HSP_1,HSP_2,TheNeighbourDiffs,TheBreakDist,TheMDI)
+        TheBreakDist = DetectJumpSizes(HSP_1,HSP_2,TheNeighbourDiffs,TheBreakDist,TheMDI)
 	#print " %5.2f"*len(NewBreakDist) % tuple(NewBreakDist)
 
-	if len(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) > 0:	# THERE MUST BE AT LEAST 1 DIFF SERIES WITH DATA OR NO GO
-	    print " %5.2f"*len(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) % tuple(TheBreakDist[np.where(abs(TheBreakDist) > 0.)])
-	    print "PERCENTILES %5.2f %5.2f %5.2f %5.2f %5.2f " % tuple(np.percentile(TheBreakDist[np.where(abs(TheBreakDist) > 0.)],(5,25,50,75,95)))
+        if len(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) > 0:	# THERE MUST BE AT LEAST 1 DIFF SERIES WITH DATA OR NO GO
+            print(" %5.2f"*len(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) % tuple(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]))
+            print("PERCENTILES %5.2f %5.2f %5.2f %5.2f %5.2f " % tuple(np.percentile(TheBreakDist[np.where(abs(TheBreakDist) > 0.)],(5,25,50,75,95))))
 
-	    TheBreakList = np.append(TheBreakList,np.zeros((1,4)),0)	# always add another row on the fly - first row remains zeros
-	    TheBreakList[breakpointer-1,0] = (np.median(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]))	# actual adj to next HSP 
-	    TheBreakList[breakpointer-1,1] = np.mean(((np.median(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) - np.percentile(TheBreakDist[np.where(abs(TheBreakDist) > 0.)],5)),
+            TheBreakList = np.append(TheBreakList,np.zeros((1,4)),0)	# always add another row on the fly - first row remains zeros
+            TheBreakList[breakpointer-1,0] = (np.median(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]))	# actual adj to next HSP 
+            TheBreakList[breakpointer-1,1] = np.mean(((np.median(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]) - np.percentile(TheBreakDist[np.where(abs(TheBreakDist) > 0.)],5)),
 		                              (np.percentile(TheBreakDist[np.where(abs(TheBreakDist) > 0.)],95) - np.median(TheBreakDist[np.where(abs(TheBreakDist) > 0.)]))))	#
-	    print "MEDIAN AND 1.65SIGMA ",TheBreakList[breakpointer-1,0:2]
-	    TheModifiedBreakLocs = np.append(TheModifiedBreakLocs,TheActualBreakLocs[bb])
-	    breakpointer = breakpointer+1
+            print("MEDIAN AND 1.65SIGMA ",TheBreakList[breakpointer-1,0:2])
+            TheModifiedBreakLocs = np.append(TheModifiedBreakLocs,TheActualBreakLocs[bb])
+            breakpointer = breakpointer+1
         
 	# IF there are no difference series then the candidate does not have data present for at least one of the HSPs
 	# IF this is the first or last changepoint then it is most likely that we have added this to account for PHA_direct removed data
@@ -635,8 +651,8 @@ def AssignJumpSizeUnc(TheBreakList,TheBCount,TheActualBreakLocs,TheBreakDist,The
 # after all breaks assessed relatively calculated total adjustment and uncertainty
     for bb in range(0,TheBCount-1):
 
-	 TheBreakList[bb,2] = sum(TheBreakList[bb:TheBCount-1,0])
-	 TheBreakList[bb,3] = np.sqrt(sum(TheBreakList[bb:TheBCount-1,1]**2))
+        TheBreakList[bb,2] = sum(TheBreakList[bb:TheBCount-1,0])
+        TheBreakList[bb,3] = np.sqrt(sum(TheBreakList[bb:TheBCount-1,1]**2))
 
 # plot histogram with median and 5th/95th percentiles to see if its sensible
 
@@ -654,14 +670,14 @@ def DetectJumpSizes(TheHSP_1,TheHSP_2,TheNeighbourDiffs,TheBreakDist,TheMDI):
     for d,Diff in enumerate(TheNeighbourDiffs):
 
         period1 = Diff[TheHSP_1]
-	period2 = Diff[TheHSP_2]
-	gots1   = period1 > TheMDI
-	gots2   = period2 > TheMDI
+        period2 = Diff[TheHSP_2]
+        gots1   = period1 > TheMDI
+        gots2   = period2 > TheMDI
 #	print gots1
 #	print gots2
 
         if sum(gots1) > 11 and sum(gots2) > 11:	# there are data present in both samples
-	    TheBreakDist[d] = np.median(period2[gots2])-np.median(period1[gots1])
+            TheBreakDist[d] = np.median(period2[gots2])-np.median(period1[gots1])
 
 #	print TheBreakDist[d]    
 
@@ -681,7 +697,7 @@ def ApplyJumpsReZero(TheAnomalies,TheHomogAnoms,TheBreakList,TheBCount,TheActual
     
     for bb in range(1,TheBCount):
 
-	HSP                     = range((TheActualBreakLocs[bb-1]-1),TheActualBreakLocs[bb])   # does not need minus 1 as range starts from a and moves to b-1              
+        HSP                     = range((TheActualBreakLocs[bb-1]-1),TheActualBreakLocs[bb])   # does not need minus 1 as range starts from a and moves to b-1              
         AdjustmentFactor[0,HSP] = np.repeat(TheBreakList[bb-1,2],len(HSP))	# the total adjustment for that HSP   
 
     TheHomogAnoms[np.where(TheAnomalies > TheMDI)] = TheAnomalies[np.where(TheAnomalies > TheMDI)]+AdjustmentFactor[np.where(TheAnomalies > TheMDI)] 
@@ -708,7 +724,7 @@ def MakeAbs(TheHomogAnoms,TheHomogAbs,TheClims,TheMDI,TheYCount,TheMean):
     for mm in range(12):
 
         if TheClims[0,mm] > TheMDI:
-	    TheHomogAbs[np.where(TheHomogAnoms[:,mm] > TheMDI),mm] = TheHomogAnoms[np.where(TheHomogAnoms[:,mm] > TheMDI),mm]+TheClims[0,mm]+TheMean
+            TheHomogAbs[np.where(TheHomogAnoms[:,mm] > TheMDI),mm] = TheHomogAnoms[np.where(TheHomogAnoms[:,mm] > TheMDI),mm]+TheClims[0,mm]+TheMean
     
     TheHomogAbs   = np.reshape(TheHomogAbs,(1,TheYCount*12))
     TheHomogAnoms = np.reshape(TheHomogAnoms,(1,TheYCount*12))
@@ -727,15 +743,15 @@ def WriteOut(TheData,TheFile,TheYears,TheStYr,TheStationID):
 
         for mm in range(12):
 
-	    if mm == 0:  
-	        moo = [np.char.mod("%6i",int(TheData[outt,mm]*100.))," "]
-	    else:
-	        moo = moo+[np.char.mod("%6i",int(TheData[outt,mm]*100.))," "]  # list of silly months with spaces between
+            if mm == 0:  
+                moo = [np.char.mod("%6i",int(TheData[outt,mm]*100.))," "]
+            else:
+                moo = moo+[np.char.mod("%6i",int(TheData[outt,mm]*100.))," "]  # list of silly months with spaces between
 	
-	if outt == 0:
-	    goo = [TheStationID," ",TheYears[outt]+TheStYr]+moo
-	else:
-	    goo = np.vstack((goo,[TheStationID," ",TheYears[outt]+TheStYr]+moo))
+        if outt == 0:
+            goo = [TheStationID," ",TheYears[outt]+TheStYr]+moo
+        else:
+            goo = np.vstack((goo,[TheStationID," ",TheYears[outt]+TheStYr]+moo))
 
 # NEED TO MAKE A 2D STRING ARRAY - seems very long winded to me!
     
@@ -755,17 +771,17 @@ def LogBreakInfo(TheFile,TheStationID,TheBCount,TheMonthCount,TheBreakLocs,TheBr
 
     if TheBCount == 1:
         filee.write('%11s %2s %3i %3i %6.2f %6.2f %6.2f %6.2f \n' % (TheStationID,1,1,
-	           TheMonthCount,-(TheBreakList[0,0]),TheBreakList[0,1],-(TheBreakList[0,2]),TheBreakList[0,3]))
+                   TheMonthCount,-(TheBreakList[0,0]),TheBreakList[0,1],-(TheBreakList[0,2]),TheBreakList[0,3]))
     else:
         LocEnd = TheMonthCount
 	# Force first location of TheBreakLocs to be 0 instead of 1 so that a single line of code works
-	TheBreakLocs[0] = 0
+        TheBreakLocs[0] = 0
 
-	for b,brev in enumerate(range(TheBCount,0,-1)):
+        for b,brev in enumerate(range(TheBCount,0,-1)):
 
-	    print(TheBCount,b,brev)
+            print(TheBCount,b,brev)
             filee.write('%11s %2s %3i %3i %6.2f %6.2f %6.2f %6.2f \n' % (TheStationID,brev,TheBreakLocs[brev-1]+1,
-	            LocEnd,-(TheBreakList[brev-1,0]),TheBreakList[brev-1,1],-(TheBreakList[brev-1,2]),TheBreakList[brev-1,3]))
+                    LocEnd,-(TheBreakList[brev-1,0]),TheBreakList[brev-1,1],-(TheBreakList[brev-1,2]),TheBreakList[brev-1,3]))
             LocEnd = (TheBreakLocs[brev-1])
 
     filee.close()
@@ -792,22 +808,22 @@ def PlotHomogTS(TheFile,TheStation,TheNeighbours,TheHStation,TheMDI,TheStYr,TheY
     
     for yy in range(TheYCount):
         
-	if np.sum(TheStation[yy,] != TheMDI) >= 9:
-	    TheStationAnn[yy] = np.mean(TheStation[yy,np.where(TheStation[yy,] != TheMDI)])
+        if np.sum(TheStation[yy,] != TheMDI) >= 9:
+            TheStationAnn[yy] = np.mean(TheStation[yy,np.where(TheStation[yy,] != TheMDI)])
         if np.sum(TheHStation[yy,] != TheMDI) >= 9:
-	    TheHStationAnn[yy] = np.mean(TheHStation[yy,np.where(TheHStation[yy,] != TheMDI)])
+            TheHStationAnn[yy] = np.mean(TheHStation[yy,np.where(TheHStation[yy,] != TheMDI)])
  
     TheStation  = np.reshape(TheStation,(TheYCount*12))
     TheHStation = np.reshape(TheHStation,(TheYCount*12))    
    
     for n,Neighbour in enumerate(TheNeighbours):
         
-	Neighbour = np.reshape(Neighbour,(TheYCount,12))
+        Neighbour = np.reshape(Neighbour,(TheYCount,12))
         
-	for yy in range(TheYCount):
+        for yy in range(TheYCount):
         
-	    if np.sum(Neighbour[yy,] != TheMDI) >= 9:
-	        TheNeighboursAnn[n,yy] = np.mean(Neighbour[yy,np.where(Neighbour[yy,] != TheMDI)])
+            if np.sum(Neighbour[yy,] != TheMDI) >= 9:
+                TheNeighboursAnn[n,yy] = np.mean(Neighbour[yy,np.where(Neighbour[yy,] != TheMDI)])
         
     
     TheYears = np.reshape(range(TheStYr,TheStYr+TheYCount),TheYCount)
@@ -833,7 +849,7 @@ def PlotHomogTS(TheFile,TheStation,TheNeighbours,TheHStation,TheMDI,TheStYr,TheY
    
     for n,Neighbour in enumerate(TheNeighboursAnn):
         
-	line, = plt.plot(TheYears[np.where(Neighbour > TheMDI)],Neighbour[np.where(Neighbour > TheMDI)],color='black',linewidth=0.25)
+        line, = plt.plot(TheYears[np.where(Neighbour > TheMDI)],Neighbour[np.where(Neighbour > TheMDI)],color='black',linewidth=0.25)
  	
     line, = plt.plot(TheYears[np.where(TheStationAnn > TheMDI)],TheStationAnn[np.where(TheStationAnn > TheMDI)],'r',linewidth=2)	
     line, = plt.plot(TheYears[np.where(TheHStationAnn > TheMDI)],TheHStationAnn[np.where(TheHStationAnn > TheMDI)],'b',linewidth=2)
@@ -930,36 +946,36 @@ def PHAReadSimple(FileName,StationID, all_adjust, all_starts, all_ends, all_sour
     for line in open(FileName):
 
         if "Adj write:"+StationID in line:
-	    print(line)
+            print(line)
             moo        = str.split(line)
-	    tempstring = moo[12]
-	    tempunc    = tempstring[0:4]
+            tempstring = moo[12]
+            tempunc    = tempstring[0:4]
             
-	    if breakcount == 0:
+            if breakcount == 0:
 		### can use np.delete(array,row/column/pointers,axis)###
 		
-		all_starts[0]  = int(moo[4]) 
-		all_ends[0]    = TheMCount
-		all_adjust[0]  = float(moo[11])
+                all_starts[0]  = int(moo[4]) 
+                all_ends[0]    = TheMCount
+                all_adjust[0]  = float(moo[11])
             
-	        if float(tempunc) > 0. :
-		    all_uncs[0] = float(tempunc)	# convert 1.65 sigma to 1 sigma
-		else:
-		    all_uncs[0] = 0.
+                if float(tempunc) > 0. :
+                    all_uncs[0] = float(tempunc)	# convert 1.65 sigma to 1 sigma
+                else:
+                    all_uncs[0] = 0.
 		
-		all_sources[0] = 'p'
-		breakcount     = breakcount+1 
+                all_sources[0] = 'p'
+                breakcount     = breakcount+1 
             else:
-		all_starts   = np.append(all_starts,int(moo[4]))
+                all_starts   = np.append(all_starts,int(moo[4]))
                 all_ends     = np.append(all_ends,int(moo[7]))		#int(moo[4]))
                 all_adjust   = np.append(all_adjust,float(moo[11]))		
             
-	        if float(tempunc) > 0.:
-		    all_uncs = np.append(all_uncs,float(tempunc))
-		else:
-		    all_uncs = np.append(all_uncs,0.)
+                if float(tempunc) > 0.:
+                    all_uncs = np.append(all_uncs,float(tempunc))
+                else:
+                    all_uncs = np.append(all_uncs,0.)
 		     
-		all_sources  = np.append(all_sources,'p')
+                all_sources  = np.append(all_sources,'p')
                 breakcount   = breakcount+1        
 
     all_starts[len(all_starts)-1] = 1	#start at 1 because ID will (no intro extra CP)
@@ -983,34 +999,35 @@ def IDPHAReadSimple(FileName,StationID, all_adjust, all_starts, all_ends, all_so
     for line in open(FileName):
 
         if StationID in line:
-	    print(line)
+            print(line)
+            #pdb.set_trace()
             moo = str.split(line)
 
             if breakcount == 0:
 		### can use np.delete(array,row/column/pointers,axis)###
 		
-		all_starts[0]  = int(moo[2])
-		all_ends[0]    = TheMCount
-		all_adjust[0]  = float(moo[6])		
+                all_starts[0]  = int(moo[2])
+                all_ends[0]    = TheMCount
+                all_adjust[0]  = float(moo[6])		
 
-                if moo[7] > 0. :
-		    all_uncs[0] = float(moo[7])	# convert 1.65 sigma to 1 sigma
-		else:
-		    all_uncs[0] = 0.
+                if float(moo[7]) > 0. :
+                    all_uncs[0] = float(moo[7])	# convert 1.65 sigma to 1 sigma
+                else:
+                    all_uncs[0] = 0.
 
-		all_sources[0] = 'i'
-		breakcount     = breakcount+1 
+                all_sources[0] = 'i'
+                breakcount     = breakcount+1 
             else:
-		all_starts  = np.append(all_starts,int(moo[2]))
+                all_starts  = np.append(all_starts,int(moo[2]))
                 all_ends    = np.append(all_ends,int(moo[3]))		#int(moo[4]))
                 all_adjust  = np.append(all_adjust,float(moo[6]))		
 
-                if moo[7] > 0.:
-		    all_uncs = np.append(all_uncs,float(moo[7]))
-		else:
-		    all_uncs = np.append(all_uncs,0.)
+                if float(moo[7]) > 0.:
+                    all_uncs = np.append(all_uncs,float(moo[7]))
+                else:
+                    all_uncs = np.append(all_uncs,0.)
 		     
-		all_sources = np.append(all_sources,'i')
+                all_sources = np.append(all_sources,'i')
                 breakcount  = breakcount+1        
 
     return all_adjust, all_starts, all_ends, all_sources, all_uncs, breakcount # IDPHAReadSimple
@@ -1049,36 +1066,36 @@ def SortBreaksMerge(TheStarts,TheAdjs,TheUncs,TheBreakList,TheSources,TheBCount,
     
     if TheSources[0] =='p' : 
         perr = TheUncs[0]
-	padj = TheAdjs[0]
+        padj = TheAdjs[0]
     else:
         ierr = TheUncs[0]
-	iadj = TheAdjs[0]
+        iadj = TheAdjs[0]
         
     realcounter=1
     for bb in range(1,TheBCount):
         
-	print(bb,TheSources[bb],realcounter,TheStarts[bb],LastBreakLocSt)
+        print(bb,TheSources[bb],realcounter,TheStarts[bb],LastBreakLocSt)
         
-	if TheSources[bb] =='p' : 
+        if TheSources[bb] =='p' : 
             perr = TheUncs[bb]
-	    padj = TheAdjs[bb]
+            padj = TheAdjs[bb]
         else:
             ierr = TheUncs[bb]
-	    iadj = TheAdjs[bb]
+            iadj = TheAdjs[bb]
    	
-	if TheStarts[bb]-LastBreakLocSt> 11:	    # LastBreakLocSt-TheStarts[bb]  keep it if its at least a year apart from any other break
-    	    print("NEW")
-	    NewStarts      = np.append(NewStarts,TheStarts[bb])
-    	    NewAdjs        = np.append(NewAdjs,padj+iadj)	#TheAdjs[bb])
-    	    NewUncs        = np.append(NewUncs,np.sqrt((perr**2) + (ierr**2)))	#TheUncs[bb])
-    	    NewSources     = np.append(NewSources,TheSources[bb])
-    	    LastBreakLocSt = TheStarts[bb]
-	    realcounter    = realcounter+1
-	else:
-	    print("BOTH")
-    	    NewAdjs[realcounter-1]    = padj+iadj
-    	    NewUncs[realcounter-1]    = np.sqrt((perr**2) + (ierr**2))
-    	    NewSources[realcounter-1] = 'b'
+        if TheStarts[bb]-LastBreakLocSt> 11:	    # LastBreakLocSt-TheStarts[bb]  keep it if its at least a year apart from any other break
+            print("NEW")
+            NewStarts      = np.append(NewStarts,TheStarts[bb])
+            NewAdjs        = np.append(NewAdjs,padj+iadj)	#TheAdjs[bb])
+            NewUncs        = np.append(NewUncs,np.sqrt((perr**2) + (ierr**2)))	#TheUncs[bb])
+            NewSources     = np.append(NewSources,TheSources[bb])
+            LastBreakLocSt = TheStarts[bb]
+            realcounter    = realcounter+1
+        else:
+            print("BOTH")
+            NewAdjs[realcounter-1]    = padj+iadj
+            NewUncs[realcounter-1]    = np.sqrt((perr**2) + (ierr**2))
+            NewSources[realcounter-1] = 'b'
 
     TheBCount = len(NewStarts)
 
@@ -1092,7 +1109,7 @@ def SortBreaksMerge(TheStarts,TheAdjs,TheUncs,TheBreakList,TheSources,TheBCount,
     TheBreakList = np.zeros((TheBCount,4))	# Build this on the fly to equal nBreaks(rows) by rel(adj,unc),act(adj,unc) including last HSP which will be zero	
 
     for bb in range(1,TheBCount):
-	NewEnds[bb]        = (NewStarts[bb-1])-1
+        NewEnds[bb]        = (NewStarts[bb-1])-1
         TheBreakList[bb,0] = NewAdjs[bb]-NewAdjs[bb-1]		# this is this funny range thing again needs +1
         TheBreakList[bb,1] = np.sqrt((NewUncs[bb]**2)-(NewUncs[bb-1]**2))
         TheBreakList[bb,2] = NewAdjs[bb]		# minus or not minus?
@@ -1117,17 +1134,17 @@ def LogBreakInfoMerge(TheFile,TheStationID,TheBCount,TheMonthCount,TheBreakLocsS
 
     if TheBCount == 1:
         filee.write('%11s %2s %3i %3i %6.2f %6.2f %6.2f %6.2f \n' % (TheStationID,1,1,
-	           TheMonthCount,TheBreakList[0,0],TheBreakList[0,1],TheBreakList[0,2],TheBreakList[0,3]))
+                   TheMonthCount,TheBreakList[0,0],TheBreakList[0,1],TheBreakList[0,2],TheBreakList[0,3]))
     else:
         LocEnd = TheMonthCount
 	# Force first location of TheBreakLocs to be 0 instead of 1 so that a single line of code works
 
-	for b in range(0,TheBCount):
+        for b in range(0,TheBCount):
 
-	    print(TheBCount,b)
+            print(TheBCount,b)
 	    # no sign swapping of adjustments as this is a direct read in from the logs
             filee.write('%11s %2s %3i %3i %6.2f %6.2f %6.2f %6.2f %2s\n' % (TheStationID,TheBCount-b,TheBreakLocsSt[b],
-	            LocEnd,TheBreakList[b,0],TheBreakList[b,1],TheBreakList[b,2],TheBreakList[b,3],TheSources[b]))
+                    LocEnd,TheBreakList[b,0],TheBreakList[b,1],TheBreakList[b,2],TheBreakList[b,3],TheSources[b]))
             LocEnd = (TheBreakLocsSt[b]-1)
 
     filee.close()
@@ -1138,7 +1155,8 @@ def LogBreakInfoMerge(TheFile,TheStationID,TheBCount,TheMonthCount,TheBreakLocsS
 # MAIN PROGRAM
 #***********************************************************************
 # read in station list
-MyTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S7","int")
+MyTypes         = ("|U6","|U5","float","float","float","|U4","|U30","|U7","int")
+#MyTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S7","int")
 MyDelimiters    = [6,5,8,10,7,4,30,7,5]
 RawData         = ReadData(STATLIST,MyTypes,MyDelimiters)
 StationListWMO  = np.array(RawData['f0'])
@@ -1187,30 +1205,32 @@ for st in range(nstations):
     if param == 't':
         MyFile       = INPHA+StationListWMO[st]+StationListWBAN[st]+'_PHAadj.txt'
         print(st,MyFile)  
-        MyTypes      = np.append("|S16",["int"]*12)
+        MyTypes      = np.append("|U16",["int"]*12)
+#        MyTypes      = np.append("|S16",["int"]*12)
         MyDelimiters = np.append([16,6],[7]*11)
         RawData      = ReadData(MyFile,MyTypes,MyDelimiters)
         
-	for yy in yrarr:
+        for yy in yrarr:
             
-	    moo = list(RawData[yy])
+            moo = list(RawData[yy])
             
-	    if yy == 0: 
+            if yy == 0: 
                 MyStation = moo[1:13] 
             else:
                 MyStation = np.append(MyStation,moo[1:13])	# for some silly reason you subscript starting from 0th element to the nth rather than n-1th element
     else:
         MyFile       = INRAW+StationListWMO[st]+"-"+StationListWBAN[st]+STATSUFFIXIN  
         print(st,MyFile)  
-        MyTypes      = np.append("|S12",["int"]*13)
+        MyTypes      = np.append("|U12",["int"]*13)
+#        MyTypes      = np.append("|S12",["int"]*13)
         MyDelimiters = np.append([12,4,6],[9]*11)
         RawData      = ReadData(MyFile,MyTypes,MyDelimiters)
         
-	for yy in yrarr:
+        for yy in yrarr:
         
-	    moo = list(RawData[yy])
+            moo = list(RawData[yy])
         
-	    if yy == 0: 
+            if yy == 0: 
                 MyStation = moo[2:14] 
             else:
                 MyStation = np.append(MyStation,moo[2:14])	# for some silly reason you subscript starting from 0th element to the nth rather than n-1th element
@@ -1232,23 +1252,23 @@ for st in range(nstations):
         print("No. of Neighbours: ",nNstations-1)	# not including candidate but may have duplicate
         #print(NeighbourList)
         
-	if (nNstations-1) < 7:	# TOO FEW NEIGHBOURS
-	    if (nNstations > 0): nNstations=nNstations-1
-	    ListStation(NONEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
-	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
-	    continue
+        if (nNstations-1) < 7:	# TOO FEW NEIGHBOURS
+            if (nNstations > 0): nNstations=nNstations-1
+            ListStation(NONEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
+                        StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+            continue
 
 # read in the neighbour files - if insufficient then list in bad stations list
         NeighbourStations,NeighbourList,nNstations = ReadInNetworks(nNstations,NeighbourList,
-	                                           StationListWMO[st]+StationListWBAN[st],INRAW,
+                                                   StationListWMO[st]+StationListWBAN[st],INRAW,
 						   STATSUFFIXIN,yrarr,NeighbourStations)
         print("Actual No. of Neighbours: ",nNstations)	# not including candidate but may have duplicate
         #print(NeighbourList)
 	
         if nNstations < 7:
-	    ListStation(NONEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
-	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
-	    continue
+            ListStation(NONEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
+                        StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+            continue
 
 # convert all to anomalies (storing station climatology)
         MyAnomalies,MyClims = MakeAnomalies(MyStation,MyAnomalies,MyClims,nyrs,clmsty,clmedy,mdi)
@@ -1260,50 +1280,51 @@ for st in range(nstations):
         NeighbourDiffStations = MakeDiffSeries(MyAnomalies,NeighbourAnomsStations,NeighbourDiffStations,mdi,nmons)
 
 # sort all breaks from last to most recent, remove duplicates (+- 6months), loop through HSPs (Homogeneous subperiods)
-	BreakLocs,MyBreakLocs,nBreaks = SortBreaks(BreakLocs,MyBreakLocs,nBreaks,nmons)
+        BreakLocs,MyBreakLocs,nBreaks = SortBreaks(BreakLocs,MyBreakLocs,nBreaks,nmons)
 
 # Loop through all break periods, get distribution of shifts from difference series, assign relative and total adjustment and uncertainty
         NewBreakList,nBreaks,MyBreakLocs = AssignJumpSizeUnc(NewBreakList,nBreaks,MyBreakLocs,NewBreakDist,NeighbourDiffStations,mdi)
-	print NewBreakList    
+        print(NewBreakList)    
 	
 # apply adjustments to station anomaly series and rezero homogenised 
 # move raw to mean of homogenised so that when they are plotted they lie together for the most recent HSP (not saved so ok to do this to aid visual inspection)
-	MyAnomalies,MyHomogAnoms,MyClimMeanShift = ApplyJumpsReZero(MyAnomalies,MyHomogAnoms,NewBreakList,nBreaks,MyBreakLocs,clmstm,clmedm,mdi,MyClimMeanShift)
-        print "MEAN SHIFT ",MyClimMeanShift
+        MyAnomalies,MyHomogAnoms,MyClimMeanShift = ApplyJumpsReZero(MyAnomalies,MyHomogAnoms,NewBreakList,nBreaks,MyBreakLocs,clmstm,clmedm,mdi,MyClimMeanShift)
+        print("MEAN SHIFT ",MyClimMeanShift)
 	
 # add back climatology to homogeneous station anomalies
         MyHomogAbs = MakeAbs(MyHomogAnoms,MyHomogAbs,MyClims,mdi,nyrs,MyClimMeanShift)
 
 # PLOT CANDIDATE AND NEIGHBOURS UNHOMOG WITH HOMOG ON TOP - ABS, ANOMS with MedianPairwiseTrends
 # REZEROD HOMOG MAY MEAN ITS NOW OFFSET COMPARED TO ORIGINAL
-	if param != 't':
-	    MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
+        if param != 't':
+            MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
             PlotHomogTS(MyPlotFile,MyStation,NeighbourStations,MyHomogAbs,mdi,styr,nyrs,unit,'absolutes')
             MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'anoms'
             PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,mdi,styr,nyrs,unit,'anomalies')
         else:
-	    MyStation    = []	# filled after reading in candidate station
-	    MyFile       = INRAW+StationListWMO[st]+'-'+StationListWBAN[st]+STATSUFFIXIN
+            MyStation    = []	# filled after reading in candidate station
+            MyFile       = INRAW+StationListWMO[st]+'-'+StationListWBAN[st]+STATSUFFIXIN
             print(st,MyFile)  
-            MyTypes      = np.append("|S12",["int"]*13)
+#            MyTypes      = np.append("|S12",["int"]*13)
+            MyTypes      = np.append("|U12",["int"]*13)
             MyDelimiters = np.append([12,4,6],[9]*11)
             RawData      = ReadData(MyFile,MyTypes,MyDelimiters)
             
-	    for yy in yrarr:
+            for yy in yrarr:
             
-	        moo = list(RawData[yy])
+                moo = list(RawData[yy])
             
-	        if yy == 0: 
+                if yy == 0: 
                     MyStation = moo[2:14] 
                 else:
                     MyStation = np.append(MyStation,moo[2:14])	# for some silly reason you subscript starting from 0th element to the nth rather than n-1th element
             
-	    MyStation = np.reshape(MyStation/100.,(1,len(MyStation)))	# now in proper units and an array not list
+            MyStation = np.reshape(MyStation/100.,(1,len(MyStation)))	# now in proper units and an array not list
 
             # convert all to anomalies (storing station climatology)
             MyAnomalies,MyClims = MakeAnomalies(MyStation,MyAnomalies,MyClims,nyrs,clmsty,clmedy,mdi)
 	    
-	    MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
+            MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'abs'
             PlotHomogTS(MyPlotFile,MyStation,NeighbourStations,MyHomogAbs,mdi,styr,nyrs,unit,'absolutes')
             MyPlotFile = OUTPLOT+StationListWMO[st]+StationListWBAN[st]+'_trendcomp_'+param+'_'+nowmon+nowyear+'anoms'
             PlotHomogTS(MyPlotFile,MyAnomalies,NeighbourAnomsStations,MyHomogAnoms,mdi,styr,nyrs,unit,'anomalies')
@@ -1316,8 +1337,8 @@ for st in range(nstations):
         LogBreakInfo(BREAKSINFO,StationListWMO[st]+StationListWBAN[st],nBreaks,nmons,MyBreakLocs[:-1],NewBreakList)
         
 	# for 't' merge old PHA and new IDPHA breaks and log
-	if param == 't':
-	    MergeAdjustments(TBREAKFIL,BREAKSINFO,BREAKSINFOMERGE,StationListWMO[st]+StationListWBAN[st],nmons)
+        if param == 't':
+            MergeAdjustments(TBREAKFIL,BREAKSINFO,BREAKSINFOMERGE,StationListWMO[st]+StationListWBAN[st],nmons)
 	    
 
 # If no breaks - go to printing out the homogeneous station and zero breaks stats
@@ -1325,16 +1346,16 @@ for st in range(nstations):
         nBreaks      = 1	# so that LogBreakInfo works for all with the for loop
         MyFileOut    = OUTHOM+StationListWMO[st]+StationListWBAN[st]+STATSUFFIXOUT  
         WriteOut(MyStation,MyFileOut,yrarr,styr,StationListWMO[st]+StationListWBAN[st])
-	NewBreakList = np.reshape([0.,0.,0.,0.],(1,4))	# set up a row
+        NewBreakList = np.reshape([0.,0.,0.,0.],(1,4))	# set up a row
         LogBreakInfo(BREAKSINFO,StationListWMO[st]+StationListWBAN[st],nBreaks,nmons,BreakLocs,NewBreakList)
 	
 	# catch the no breaks cases for T
-	if param == 't':
+        if param == 't':
             LogBreakInfo(BREAKSINFOMERGE,StationListWMO[st]+StationListWBAN[st],nBreaks,nmons,BreakLocs,NewBreakList)
 
 # list in good station list
     ListStation(GOTNEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
-	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+                        StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
 
 
 # if param = t then also list station in goodforHadISDH*PHADPDtd list of IDPHAt 
@@ -1342,15 +1363,16 @@ for st in range(nstations):
     if param == 't':
         
 	# Grep the WMO to see if it is in the PHAtd bad stations
-	moo = open('moo.dat','w')
+        moo = open('moo.dat','w')
         call(['grep','-a',StationListWMO[st],TDBADSFILE],stdout=moo)
         foo = check_output(['wc','-l','moo.dat'])
-	moo.close()
-        if int(foo[0]) == 0:
+        moo.close()
+        # PYTHON 3 requires this decode because otherwise it comes out as b'string'
+	if int(foo.decode('utf-8')[0]) == 0:
 
 	    # If it isn't then Output to file
             ListStation(TDGOTNEIGHBOURSLIST,StationListWMO[st]+StationListWBAN[st],StationListLat[st],
-	                StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
+                        StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],nNstations)
 
 
 # end loop of stations

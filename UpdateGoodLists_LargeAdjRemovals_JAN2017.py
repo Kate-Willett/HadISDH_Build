@@ -1,9 +1,9 @@
 #!/usr/local/sci/bin/python
-# PYTHON2.7
+# PYTHON3
 # 
 # Author: Kate Willett
 # Created: 31 January 2017
-# Last update: 7 February 2018
+# Last update: 23 February 2020
 # Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
@@ -63,6 +63,17 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 # 
+#
+# Version 3 (23 February 2020)
+# ---------
+#  
+# Enhancements
+#  
+# Changes
+# This code is now python 3 from pyrhon 2.7
+#  
+# Bug fixes
+#
 # Version 2 (7 February 2018)
 # ---------
 #  
@@ -92,6 +103,9 @@
 #************************************************************************
 #                                 START
 #************************************************************************
+# module load scitools/default-current
+# python UpdateGoodLists_LargeAdjRemovals_JAN2017.py
+
 # USE python2.7
 # python2.7 UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 #
@@ -105,18 +119,18 @@ from subprocess import call
 
 # Set up initial run choices
 # End year
-edyr       = 2018
+edyr       = 2019
 
 # Working file month and year
 nowmon     = 'JAN'
-nowyear    = '2019'
+nowyear    = '2020'
 
 # Dataset version
-version    = '4.1.0.2018f'
+version    = '4.2.0.2019f'
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+updateyear
 
 # List of stations to remove
 LARGETLIST  = workingdir+'/LISTS_DOCS/Largest_Adjs_landT.'+version+'_IDPHAMG_'+nowmon+nowyear+'.txt'
@@ -154,7 +168,7 @@ def ReadData(FileName,typee,delimee):
     ''' Need to specify format as it is complex '''
     ''' outputs an array of tuples that in turn need to be subscripted by their names defaults f0...f8 '''
 
-    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee) # ReadData
+    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee,encoding='latin-1') # ReadData
 
 #***********************************************************************
 # SIFTLIST
@@ -163,7 +177,8 @@ def SiftList(FileName,BadWMOWBANs):
     ''' If good station doesn't match up with anything '''
     ''' in the bad station list then write out to new file '''
 
-    MyTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S14")
+    MyTypes         = ("|U6","|U5","float","float","float","|U4","|U30","|U14")
+#    MyTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S14")
     MyDelimiters    = [6,5,8,10,7,4,30,14]
     RawData         = ReadData(FileName+'_KeptLarge.txt',MyTypes,MyDelimiters)
     StationListWMO  = np.array(RawData['f0'])
@@ -228,7 +243,8 @@ def WriteText(TheFile,TheStationWMO,TheStationWBAN,TheBlurb):
 # MAIN PROGRAM
 #***********************************************************************
 # Read in the largest adj lists, merge, save only unique stations, output to file
-MyTypes            = ("|S6","|S5","float","|S60")
+MyTypes            = ("|U6","|U5","float","|U60")
+#MyTypes            = ("|S6","|S5","float","|S60")
 MyDelimiters       = [6,5,7,60]
 # read in bad station list for T
 RawData            = ReadData(LARGETLIST,MyTypes,MyDelimiters)

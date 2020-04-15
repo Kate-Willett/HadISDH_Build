@@ -85,7 +85,7 @@ pro plot_HadISDH_trendsscat_JAN2015,param,homogtype
 
 ; Which start/end year?
 styr = 1973
-edyr = 2018
+edyr = 2019
 yearchoice = strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
 OLDyearchoice = strcompress(styr,/remove_all)+strcompress(edyr-1,/remove_all)
 
@@ -98,13 +98,13 @@ climchoiceOLD = 'anoms8110' ; Oh Dear - should compare with old anoms8110 but I 
 
 ; Which output date?
 nowmon     = 'JAN'
-nowyear    = '2019'
+nowyear    = '2020'
 
 ; Which input date?
 thenmon     = 'JAN'
-thenyear    = '2019'
-OLDthenmon     = 'MAR'
-OLDthenyear    = '2018'
+thenyear    = '2020'
+OLDthenmon     = 'JAN'
+OLDthenyear    = '2019'
 
 ; Which variable?
 ;param      = 't'	;'dpd','td','t','tw','e','q','rh';
@@ -113,14 +113,14 @@ OLDthenyear    = '2018'
 ;homogtype  = 'ID'	;'PHA','ID','DPD', 'RAW'
 
 ; Which versions?
-version    = '4.1.0.2018f'
-OLDversion = '4.0.0.2017f'
+version    = '4.2.0.2019f'
+OLDversion = '4.1.0.2018f'
 
 ; Which plot - compare old/new or raw/homog?
 typee      = 'OLD' ;'RAW' for PHA vs RAW or 'OLD' for 2015 vs 2014
 
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
-oldindir   = '/data/local/hadkw/HADCRUH2/UPDATE20'+strmid(strcompress(edyr-1,/remove_all),2,2)+'/STATISTICS/'
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
+oldindir   = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+strmid(strcompress(edyr-1,/remove_all),2,2)+'/STATISTICS/'
 indir      = workingdir+'/STATISTICS/'
 odir       = workingdir+'/IMAGES/BUILD/'
 
@@ -215,11 +215,12 @@ CASE param OF
       inoldts   = oldindir+'TIMESERIES/HadISDH.landq.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
       outfile   = odir+'HadISDH.landq.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp = indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
+      inhomogmp = indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inhomogts = indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inrawts   = indir+'TIMESERIES/HadISDH.landq.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landq.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
+;      inoldmp   = oldindir+'TRENDS/HadISDH.landq.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+'2020_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landq.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
       outfile   = odir+'HadISDH.landq.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF   
@@ -259,10 +260,11 @@ CASE param OF
       inoldts   = oldindir+'TIMESERIES/HadISDH.landRH.'+OLDversion+'_FLATgridPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
       outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
     ENDIF ELSE IF (homogtype EQ 'ID') THEN BEGIN
-      inhomogmp = indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
+      inhomogmp = indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_MPtrends_'+yearchoice+'.nc'
       inrawmp   = indir+'TRENDS/HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_cf_MPtrends_'+yearchoice+'.nc'
       inhomogts = indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
       inrawts   = indir+'TIMESERIES/HadISDH.landRH.'+version+'_FLATgridRAW5by5_'+climchoice+'_'+thenmon+thenyear+'_areaTS_'+yearchoice+'.nc'
+;      inoldmp   = oldindir+'TRENDS/HadISDH.landRH.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+'2020_MPtrends_'+OLDyearchoice+'.nc'
       inoldmp   = oldindir+'TRENDS/HadISDH.landRH.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_cf_MPtrends_'+OLDyearchoice+'.nc'
       inoldts   = oldindir+'TIMESERIES/HadISDH.landRH.'+OLDversion+'_FLATgridIDPHA5by5_'+climchoiceOLD+'_'+OLDthenmon+OLDthenyear+'_areaTS_'+OLDyearchoice+'.nc'
       outfile   = odir+'HadISDH.landRH.'+version+'_FLATgridIDPHA5by5_'+nowmon+nowyear+'_MPtrendsscat'+typee+'_'+yearchoice+'.eps'
@@ -467,8 +469,8 @@ CASE param OF
   'td': qid=NCDF_VARID(filee,'Td_MPtrend') 	; may become uncertainty fields
   't': qid=NCDF_VARID(filee,'T_MPtrend') 	; may become uncertainty fields
   'tw': qid=NCDF_VARID(filee,'Tw_MPtrend') 	; may become uncertainty fields
-  'q': qid=NCDF_VARID(filee,'q_MPtrend') 	; may become uncertainty fields
-  'rh': qid=NCDF_VARID(filee,'RH_MPtrend') 	; may become uncertainty fields
+  'q': qid=NCDF_VARID(filee,'q_trend') 	; may become uncertainty fields
+  'rh': qid=NCDF_VARID(filee,'RH_trend') 	; may become uncertainty fields
   'e': qid=NCDF_VARID(filee,'e_MPtrend') 	; may become uncertainty fields
 ENDCASE
 

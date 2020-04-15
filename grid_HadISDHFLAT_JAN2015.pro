@@ -20,7 +20,10 @@
 
 ; Call calc_samplingerrorJUL2012_nofill to compute gridbox sampling error due to missing data and incomplete spatial sampling.
 
-; Write out to netCDF, ascii (abs, anoms, uncertainty)
+; Write out to netCDF, ascii (abs, anoms, uncertainty) - all errors are 2 sigma errors!!!
+
+; NOTE PREVIOUS RUN WAS READING IN 4 SIGMA STATION_ERRORS !!! I HAVE CORRECTED THAT CODE BUT NOW NEED TO RERUN THIS WITH STATION_ERR/2
+; ALSO FOUDN A BUG IN COMBINED_ERR WHICH IS *2 WHEN IT ALREADY INCLUDES STATION_ERR*2!!!
 
 ; Write out gridding results min/max of each var
 
@@ -68,6 +71,7 @@
 ; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/HadISDH.land<var>.'+version+'_FLATgrid<homogtype>PHA5by5_anoms7605_JAN2017.nc 
 ; The summary min and max values for each variable within the netCDF file:
 ; /data/local/hadkw/HADCRUH2/UPDATE2016/LISTS_DOCS/GriddingResults_3.0.0.2016p_anoms7605_JAN2017.txt	max/mins of all fields in nc file 
+; THESE ARE OUTPUT AS 2 SIGMA ERRORS!!!
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
@@ -219,11 +223,11 @@ pro grid_HadISDHFLAT_JAN2015,param,homogtype
 ; EDITABLES
 
 ;; Which variable?
-;param =      'td'	;'dpd','td','t','tw','e','q','rh'
+;param =      'q'	;'dpd','td','t','tw','e','q','rh'
 ;
 ; Which start year/end year?
 MYstyr =     1973
-MYedyr =     2018
+MYedyr =     2019
 
 ; Which climatologye period?
 MYclst =     1981	; could be 1976 or 1981
@@ -231,15 +235,15 @@ MYcled =     2010	; could be 2005 or 2010
 
 ; Date of working files?
 nowmon =     'JAN'
-nowyear =    '2019'
+nowyear =    '2020'
 thenmon =    'JAN'
-thenyear =   '2019'
+thenyear =   '2020'
 
 ;; Which homog type?
 ;homogtype =  'ID'	;'PHA','ID','DPD', 'RAW'
 
 ; Which version?
-version =    '4.1.0.2018f'
+version =    '4.2.0.2019f'
 
 workingdir = 'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
 
@@ -790,9 +794,17 @@ WHILE NOT EOF(5) DO BEGIN
     NCDF_VARGET,inn,anmid,anoms
     NCDF_VARGET,inn,absid,absols
     NCDF_VARGET,inn,clmid,clims
-    IF (homogtype NE 'RAW') THEN BEGIN
+    IF (homogtype NE 'RAW') THEN BEGIN ; THESE ARE 2 SIGMA ALREADY!!!
       NCDF_VARGET,inn,stdid,stds
-      NCDF_VARGET,inn,uncid,uncs
+      NCDF_VARGET,inn,uncid,uncs ; except this is a balls up and was accidentally 4 sigma!!!
+
+;      ; QUICK FIX FOR UNCS*************************************************
+;      gotuncs = where(uncs GT mdi,countuncs)
+;      IF (countuncs GT 0) THEN BEGIN
+;        uncs(gotuncs) = uncs(gotuncs) / 2. ; NOW FIXED TO 2 sigma uncs
+;      ENDIF
+;      ; WILL NEED TO REMOVE THIS BIT FOR NEXT YEAR*************************      
+
       NCDF_VARGET,inn,obEid,obsE
       NCDF_VARGET,inn,cmEid,clmE
       NCDF_VARGET,inn,ajEid,adjE
@@ -939,6 +951,7 @@ ENDFOR
 
 clpoints =      [clst,cled] ; actual start and end points in years, cled+1 applied within calc_samplingerrorJUL2012_nofill to include final 12 months
 samps_details = make_array(nlons,nlats,2,/float,value=mdi)
+; THIS OUTPUTS 2 SIGMA ERRORS!!!
 q_samperr =     calc_samplingerrorJUL2012_nofill(q_anoms,lats,lons,GB_counts,station_counts,mdi,clpoints,samps_details)
 
 q_rbar(*,*) =   REFORM(samps_details(*,*,0))
@@ -949,10 +962,12 @@ q_sbarSQ(*,*) = REFORM(samps_details(*,*,1))
 ; switch off if raw - here we're combining the sampling and station errors
 FOR tt =              0,nmons-1 DO BEGIN
   combarr =           make_array(nlons,nlats,/float,value=mdi)
-  subarr1 =           q_staterr(*,*,tt)
-  subarr2 =           q_samperr(*,*,tt)
+  subarr1 =           q_staterr(*,*,tt) ; already 2 sigma
+  subarr2 =           q_samperr(*,*,tt) ; already 2 sigma
   gots =              WHERE(subarr1 NE mdi AND subarr2 NE mdi,count)
-  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2)))*2.
+  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2))) ; 2 sigma errors!!!!!
+; ERROR - THESE SHOULD NOT BE *2 AS THEY ARE ALREADY 2 SIGMA ERRORS!!!
+;  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2)))*2. ; 2 sigma errors!!!!!
   q_comberr(*,*,tt) = combarr
 ENDFOR
 ;stop
@@ -1196,7 +1211,7 @@ NCDF_ATTPUT,wilma,rhclimvar,'reference_period','1976 to 2005'
 
 printf,19,'CLIMS: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhsterr,'long_name','Station uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhsterr,'long_name','Station uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhsterr,'units',unitees
 valid=WHERE(q_staterr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1211,7 +1226,7 @@ NCDF_ATTPUT,wilma,rhsterr,'reference_period','1976 to 2005'
 
 printf,19,'STATION UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhajerr,'long_name','Adjustment uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhajerr,'long_name','Adjustment uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhajerr,'units',unitees
 valid=WHERE(q_adjerr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1226,7 +1241,7 @@ NCDF_ATTPUT,wilma,rhajerr,'reference_period','1976 to 2005'
 
 printf,19,'ADJUSTMENT UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhoberr,'long_name','Measurement uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhoberr,'long_name','Measurement uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhoberr,'units',unitees
 valid=WHERE(q_obserr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1241,7 +1256,7 @@ NCDF_ATTPUT,wilma,rhoberr,'reference_period','1976 to 2005'
 
 printf,19,'MEASUREMENT UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhcmerr,'long_name','Climatological uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhcmerr,'long_name','Climatological uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhcmerr,'units',unitees
 valid=WHERE(q_clmerr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1256,7 +1271,7 @@ NCDF_ATTPUT,wilma,rhcmerr,'reference_period','1976 to 2005'
 
 printf,19,'CLIMATOLOGICAL UNCERTAINTY: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhsperr,'long_name','Sampling uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhsperr,'long_name','Sampling uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhsperr,'units',unitees
 valid=WHERE(q_samperr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1301,7 +1316,7 @@ NCDF_ATTPUT,wilma,rhsberr,'reference_period','1976 to 2005'
 
 printf,19,'GRIDBOX VARIANCE: ',min_t,max_t
 
-NCDF_ATTPUT,wilma,rhcberr,'long_name','Combined uncertainty over gridbox'
+NCDF_ATTPUT,wilma,rhcberr,'long_name','Combined uncertainty over gridbox (2 sigma)'
 NCDF_ATTPUT,wilma,rhcberr,'units',unitees
 valid=WHERE(q_comberr NE mdi, tc)
 IF tc GE 1 THEN BEGIN
@@ -1320,7 +1335,7 @@ current_time=SYSTIME()
 
 NCDF_ATTPUT,wilma,/GLOBAL,'file_created',STRING(current_time)
 NCDF_ATTPUT,wilma,/GLOBAL,'description',"HadISDH monthly mean land surface "+param2+" climate monitoring product from 1973 onwards. "+$
-                                         "Quality control, homogenisation, uncertainty estimation, averaging over gridboxes (no smoothing "+$
+                                         "Quality control, homogenisation, uncertainty estimation (2 sigma), averaging over gridboxes (no smoothing "+$
 					 "or interpolation)."
 NCDF_ATTPUT,wilma,/GLOBAL,'title',"HadISDH monthly mean land surface "+param2+" climate monitoring product from 1973 onwards."
 NCDF_ATTPUT,wilma,/GLOBAL,'institution',"Met Office Hadley Centre (UK), National Climatic Data Centre (USA), Climatic Research Unit (UK), "+$

@@ -9,7 +9,9 @@
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
 ; <brief summary of code purpose and main outputs>
-; 
+;
+; OUTPUTS 2 SIGMA ERRORS!!! NOT SURE THAT THE PYTHON ONE DOES! 
+;
 ; <references to related published material, e.g. that describes data set>
 ; 
 ; -----------------------

@@ -1,9 +1,9 @@
 #!/usr/local/sci/bin/python
-# PYTHON2.7
+# PYTHON3
 # 
 # Author: Kate Willett
 # Created: 31 January 2018
-# Last update: 31 January 2018
+# Last update: 17 February 2020
 # Location: /data/local/hadkw/HADCRUH2/UPDATE2015/PROGS/HADISDH_BUILD/	
 # GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 # -----------------------
@@ -69,6 +69,16 @@
 # -----------------------
 #
 # 
+# Version 2 (17 February 2020)
+# ---------
+#  
+# Enhancements
+#  
+# Changes
+# Now in Python 3 rather than Python 2.7
+#  
+# Bug fixes
+#
 # Version 1 (31 January 2018)
 # ---------
 #  
@@ -87,6 +97,9 @@
 #************************************************************************
 #                                 START
 #************************************************************************
+# module load scitools/default-current # for Python 3
+# python RewriteStnListPostPHA.py
+#
 # USE python2.7
 # python2.7 RewriteStnListPostPHA.py
 #
@@ -110,37 +123,39 @@ from subprocess import call
 # Variables
 # Set up initial run choices
 # End year - CHECK
-edyr       = 2018
+edyr       = 2019
 
 # Working file month and year - CHECK
 nowmon     = 'JAN'
-nowyear    = '2019'
+nowyear    = '2020'
 
 # Dataset version - CHECK THE VERSION
-version    = '4.1.0.2018f'
+version    = '4.2.0.2019f'
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+updateyear
 phadir     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear
 
 # PHA Run string - CHECK THE DATETIME STRING DPD, T, Q, E, RH, TW, TD
 # from PHA2015/phav52jgo/data/hadisdh/
 # > ls 731*/output/P*
-PHAID = ['1902111949','1902111949','1902111949','1902111949','1902111949','1902111949','1902111949']
+PHAID = ['2002171753','2002171753','2002171753','2002171753','2002171753','2002171753','2002171753']
 
 # In Filepaths - CHECK THE NUMBER OF input_not_stnlist IS CORRECT
 # from PHA2015/phav52jgo/data/hadisdh/
 # > ls 731*/corr/m*
-BadFiles   = [[phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist'],
-              [phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist'],
+BadFiles   = [[phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist',
+               phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.2.input_not_stnlist'],
+              [phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist',
+	      phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.2.input_not_stnlist'],
               [phadir+'q/corr/meta.73'+updateyear+'q.tavg.r00.'+PHAID[2]+'.1.input_not_stnlist'],
               [phadir+'e/corr/meta.73'+updateyear+'e.tavg.r00.'+PHAID[3]+'.1.input_not_stnlist'],
               [phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.1.input_not_stnlist',
                phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.2.input_not_stnlist'],
 	      [phadir+'tw/corr/meta.73'+updateyear+'tw.tavg.r00.'+PHAID[5]+'.1.input_not_stnlist'],
-              [phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist',
-               phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
+              [phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist']]#,
+              # phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
 
 InAll       = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_JAN'+nowyear+'.txt' 
 
@@ -149,9 +164,11 @@ OutIDPHAall = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_JAN'+n
 OutTdBad    = phadir+'td/corr/badlist.txt'
 
 # Variables
-MyFullTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S7","int")
+MyFullTypes         = ("|U6","|U5","float","float","float","|U4","|U30","|U7","int")
+#MyFullTypes         = ("|S6","|S5","float","float","float","|S4","|S30","|S7","int")
 MyFullDelimiters    = [6,5,8,10,7,4,30,7,5]
-MyBadTypes          = ("|S6","|S5","float","float","int","|S4","|S30")
+MyBadTypes          = ("|U6","|U5","float","float","int","|U4","|U30")
+#MyBadTypes          = ("|S6","|S5","float","float","int","|S4","|S30")
 MyBadDelimiters     = [6,5,7,10,13,4,30]
 nBADstations        = 0	# defined after reading in station list
 BADStationListWMO   = []	# nstations list filled after reading in station list
@@ -187,7 +204,7 @@ def ReadText(FileName,typee,delimee):
     ''' Need to specify format as it is complex '''
     ''' outputs an array of tuples that in turn need to be subscripted by their names defaults f0...f8 '''
 
-    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee) # ReadData
+    return np.genfromtxt(FileName, dtype=typee,delimiter=delimee,encoding='latin-1') # ReadData
     
 #***************************************************************************
 # WRITETEXT
@@ -230,6 +247,9 @@ LittleVarLoop = ['dpd','t','q','e','rh','tw','td']
 for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLoop
     print(vv,var)
 
+    #if (var != 'Td'):
+    #    continue
+    
     # Loop through each of the input_not_station files, read in and concatenate to the BADStationList...
     for ff, filee in enumerate(BadFiles[vv]):
         #print(ff,filee)
@@ -243,8 +263,8 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
     
     # If var is DPD or T then add the BAD lists to ALLBAD - then sort for unique values
     if var == 'DPD' or var == 'T':
-	ALLBADStationListWMO = np.append(ALLBADStationListWMO,BADStationListWMO)
-	ALLBADStationListWBAN = np.append(ALLBADStationListWBAN,BADStationListWBAN)
+        ALLBADStationListWMO = np.append(ALLBADStationListWMO,BADStationListWMO)
+        ALLBADStationListWBAN = np.append(ALLBADStationListWBAN,BADStationListWBAN)
 	#pdb.set_trace()
 	
 	# Cut down to only unique values
@@ -253,12 +273,12 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
             ALLBADStationListWMO  = ALLBADStationListWMO[UniqIndex]    
             ALLBADStationListWBAN = ALLBADStationListWBAN[UniqIndex]   
             nALLBADstations = len(UniqVals) 
-	    print('BAD DPD and T uniq stations: ',nALLBADstations)
+            print('BAD DPD and T uniq stations: ',nALLBADstations)
 	    
 	    # Remove the ALLBAD stations from the list - find bad station locs and delete them
-	    BadLocs               = StationListWMO.searchsorted(ALLBADStationListWMO)
-	    GOODStationListWMO    = np.delete(StationListWMO,BadLocs)
-	    GOODStationListWBAN   = np.delete(StationListWBAN,BadLocs)
+            BadLocs               = StationListWMO.searchsorted(ALLBADStationListWMO)
+            GOODStationListWMO    = np.delete(StationListWMO,BadLocs)
+            GOODStationListWBAN   = np.delete(StationListWBAN,BadLocs)
             GOODStationListLat    = np.delete(StationListLat,BadLocs)
             GOODStationListLon    = np.delete(StationListLon,BadLocs)
             GOODStationListElev   = np.delete(StationListElev,BadLocs)
@@ -266,13 +286,13 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
             GOODStationListName   = np.delete(StationListName,BadLocs)
             GOODStationListMonths = np.delete(StationListMonths,BadLocs)
             nGOODstations         = len(GOODStationListWMO) 
-	    print('GOOD DPD and T uniq stations: ',nGOODstations)
+            print('GOOD DPD and T uniq stations: ',nGOODstations)
 	
 	    # Concatenate WMO and WBAN
-	    GOODStationListID = np.array(["%s%s" % i for i in zip(GOODStationListWMO,GOODStationListWBAN)])
+            GOODStationListID = np.array(["%s%s" % i for i in zip(GOODStationListWMO,GOODStationListWBAN)])
 	
 	    # Write out the new Good list to file (IDPHAall)
-	    WriteText(OutIDPHAall,
+            WriteText(OutIDPHAall,
 	              GOODStationListID,
 		      GOODStationListLat,
 		      GOODStationListLon,
@@ -324,8 +344,8 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
     if var == 'Td':
         f = open(OutTdBad,'w')
         for bb in range(nBADstations):
-	    f.write('%6s\n' % BADStationListWMO[bb])
-	f.close()
+            f.write('%6s\n' % BADStationListWMO[bb])
+        f.close()
     
     nBADstations        = 0	# defined after reading in station list
     BADStationListWMO   = []	# nstations list filled after reading in station list

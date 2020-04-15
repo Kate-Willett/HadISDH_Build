@@ -3,15 +3,15 @@
 ; Author: Kate Willett
 ; Created: 1 February 2013
 ; Last update: 22 January 2018
-; Location: /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/HADISDH_BUILD/	
+; Location: /data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
 ; -----------------------
 ; Reads in hourly HadISD data, converts to humidity variables, caluclates monthly means and monthly mean anomalies, saves to ascii and netCDF.
-; Outputs to PHA folder: /data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/
-; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/NETCDF/
-; Outputs to /data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/ASCII/
+; Outputs to PHA folder: /data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/
+; Outputs to /data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/NETCDF/
+; Outputs to /data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/ASCII/
 ;
 ; this program reads in every QC'd netcdf file and outputs a monthly mean anomaly, abs, clim and sd version
 ; this uses T, Tdew and SLP from the netCDF but also needs to know elevation in order to calculate SLP if necessary.
@@ -20,8 +20,8 @@
 ; May add heat indices in the future
 ;
 ; this also reads in source data and outputs a station history file
-; /data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/HISTORY/ of the format:
-; /data/local/hadkw/HADCRUH2/PROGS/USHCN_v52d/src_codes/documentation/SHF_tob_inst.txt
+; /data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/HISTORY/ of the format:
+; /data/users/hadkw/WORKING_HADISDH/PROGS/USHCN_v52d/src_codes/documentation/SHF_tob_inst.txt
 ; some amendments:
 ; SOURCE CODE 3=history created from raw data using: 
 ;	- change in station source (composited stations) 
@@ -50,10 +50,10 @@
 ; -----------------------
 ; reads in netCDF hourly station data from HadISD /media/Kate1Ext3/HadISD.2.0.2.2017p/
 ; New list of 8103 potential HadISD stations to include
-; inlists='/data/local/hadkw/HADCRUH2/UPDATE2017/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'
-; inCIDs='/data/local/hadkw/HADCRUH2/UPDATE2017/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
+; inlists='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/LISTS_DOCS/HadISD.2.0.2.2017p_candidate_stations_details.txt'
+; inCIDs='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
 ; 20CR SLP data for making climatological SLP for humidity calculation
-; inSLP='/data/local/hadkw/HADCRUH2/UPDATE2017/OTHERDATA/'	;20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
+; inSLP='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/OTHERDATA/'	;20CR*7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
 ;
 ; -----------------------
 ; HOW TO RUN THE CODE
@@ -77,23 +77,23 @@
 ; OUTPUT
 ; -----------------------
 ; ASCII monthly means and anomalies
-; outdirASC='/data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/ASCII/'
+; outdirASC='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/ASCII/'
 ; GHCNM style ASCII monthly means for PHA
-; outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317q/monthly/raw/'
-; outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317e/monthly/raw/'
-; outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317t/monthly/raw/'
-; outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317dpd/monthly/raw/'
-; outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317td/monthly/raw/'
-; outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317tw/monthly/raw/'
-; outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317rh/monthly/raw/'
-; outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317ws/monthly/raw/'
-; outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317slp/monthly/raw/'
-; outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/HISTORY/'
-; outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE2017/MONTHLIES/NETCDF/'
+; outdirRAWq='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317q/monthly/raw/'
+; outdirRAWe='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317e/monthly/raw/'
+; outdirRAWt='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317t/monthly/raw/'
+; outdirRAWdpd='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317dpd/monthly/raw/'
+; outdirRAWtd='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317td/monthly/raw/'
+; outdirRAWtw='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317tw/monthly/raw/'
+; outdirRAWrh='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317rh/monthly/raw/'
+; outdirRAWws='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317ws/monthly/raw/'
+; outdirRAWslp='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/PROGS/PHA2015/pha52jgo/data/hadisdh/7317slp/monthly/raw/'
+; outdirHIST='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/HISTORY/'
+; outdirNCF='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/MONTHLIES/NETCDF/'
 ; A list of stations that are not carried forward because they do not contain enough months of data
-; ditchfile='/data/local/hadkw/HADCRUH2/UPDATE2017/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; ditchfile='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 ; A list of stations that have enough months to be carried forward
-; keepfile='/data/local/hadkw/HADCRUH2/UPDATE2017/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+; keepfile='/data/users/hadkw/WORKING_HADISDH/UPDATE2017/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 ; 
 ; -----------------------
 ; VERSION/RELEASE NOTES
@@ -196,39 +196,39 @@
 ;-----------------------------------
 pro create_monthseriesJAN2015
 
-newstart=long(062900)   	    ;long(0) or long(010010) etc	; use this to restart the program at a specified place 
+newstart=long(013040)   	    ;long(0) or long(010010) etc	; use this to restart the program at a specified place 
 nowmon='JAN'
-nowyear='2019'
-version='4.1.0.2018f'
-thisyear=2018
+nowyear='2020'
+version='4.2.0.2019f'
+thisyear=2019
 strthisyear=strcompress(thisyear,/remove_all)
 strsubyear=strmid(strcompress(thisyear,/remove_all),2,2)
 
 
-indir='/data/users/hadkw/HadISD/HadISD.3.0.0.2018f/hadisd.3.0.0.2018f_19310101-20190101_' ; not sure why this goes to Jan 1st
+indir='/data/users/hadkw/WORKING_HADISDH/HadISD/hadisd.3.1.0.2019f_19310101-20200101_' ; not sure why this goes to Jan 1st
 ;indir='/media/Kate1Ext3/HadISD.2.0.2.2017p/hadisd.2.0.2.2017p_19310101-20171231_'
-inlists='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/HadISD.3.0.0.2018f_candidate_stations_details.txt'
-inCIDs='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
+inlists='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/LISTS_DOCS/HadISD.3.1.0.2019f_candidate_stations_details.txt'
+inCIDs='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
 
 ;------------------------------------------------------------------
 ; END OF EDITABLES
 ;--------------------------------------
 
-inSLP='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/OTHERDATA/'	;20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
-outdirASC='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/ASCII/'
-outdirRAWq='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'q/monthly/raw/'
-outdirRAWe='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'e/monthly/raw/'
-outdirRAWt='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'t/monthly/raw/'
-outdirRAWdpd='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'dpd/monthly/raw/'
-outdirRAWtd='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'td/monthly/raw/'
-outdirRAWtw='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'tw/monthly/raw/'
-outdirRAWrh='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'rh/monthly/raw/'
-outdirRAWws='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'ws/monthly/raw/'
-outdirRAWslp='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'slp/monthly/raw/'
-outdirHIST='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/HISTORY/'
-outdirNCF='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/MONTHLIES/NETCDF/'
-ditchfile='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
-keepfile='/data/local/hadkw/HADCRUH2/UPDATE'+strthisyear+'/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+inSLP='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/OTHERDATA/'	;20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc
+outdirASC='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/MONTHLIES/ASCII/'
+outdirRAWq='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'q/monthly/raw/'
+outdirRAWe='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'e/monthly/raw/'
+outdirRAWt='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'t/monthly/raw/'
+outdirRAWdpd='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'dpd/monthly/raw/'
+outdirRAWtd='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'td/monthly/raw/'
+outdirRAWtw='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'tw/monthly/raw/'
+outdirRAWrh='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'rh/monthly/raw/'
+outdirRAWws='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'ws/monthly/raw/'
+outdirRAWslp='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+strsubyear+'slp/monthly/raw/'
+outdirHIST='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/MONTHLIES/HISTORY/'
+outdirNCF='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/MONTHLIES/NETCDF/'
+ditchfile='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+keepfile='/data/users/hadkw/WORKING_HADISDH/UPDATE'+strthisyear+'/LISTS_DOCS/goodforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
 
 ; variables
 mdi=-1e+30
@@ -359,7 +359,7 @@ NCDF_VARGET,inn,lonid,CR20lons
 NCDF_VARGET,inn,latid,CR20lats
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,0)=CR20vals/100.
 ; NEW 20CR
@@ -372,7 +372,6 @@ CR20lats=CR20lats+1.
 CR20lons=CR20lons-1
 CR20lons(WHERE(CR20lons GE 180))=-(360.-CR20lons(WHERE(CR20lons GE 180)))
 CR20lons=SHIFT(CR20lons,89) ; they now go from -179 to 179
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
 
 inn=NCDF_OPEN(inSLP+'20CRv2cFeb19812010_SLP_Jan2018.nc')
 ;inn=NCDF_OPEN(inSLP+'20CRFeb7605MSLP_yycompos.151.170.240.10.37.8.12.55.nc')
@@ -381,7 +380,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,1)=CR20vals/100.
 ; NEW 20CR
@@ -395,7 +394,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,2)=CR20vals/100.
 ; NEW 20CR
@@ -409,7 +408,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,3)=CR20vals/100.
 ; NEW 20CR
@@ -423,7 +422,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,4)=CR20vals/100.
 ; NEW 20CR
@@ -437,7 +436,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,5)=CR20vals/100.
 ; NEW 20CR
@@ -451,7 +450,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,6)=CR20vals/100.
 ; NEW 20CR
@@ -465,7 +464,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,7)=CR20vals/100.
 ; NEW 20CR
@@ -479,7 +478,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,8)=CR20vals/100.
 ; NEW 20CR
@@ -493,7 +492,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,9)=CR20vals/100.
 ; NEW 20CR
@@ -507,7 +506,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,10)=CR20vals/100.
 ; NEW 20CR
@@ -521,7 +520,7 @@ varid=NCDF_VARID(inn,'VAR')
 ;varid=NCDF_VARID(inn,'prmsl')
 NCDF_VARGET,inn,varid,CR20vals
 NCDF_CLOSE,inn
-CR20vals=SHIFT(CR20vals,89) ; lons now go gtom -179 to 179
+CR20vals=SHIFT(CR20vals,89,0) ; lons now go gtom -179 to 179
 ; OLD 20CR
 ;CR20arr(*,*,11)=CR20vals/100.
 ; NEW 20CR
@@ -773,7 +772,8 @@ WHILE NOT EOF(5) DO BEGIN
     IF (icount GT 0) THEN BEGIN
       fullevap_arr(gots(ice))=calc_evap_ice(fulldewp_arr(gots(ice)),statP_arr(gots))	;station_P
       fullesat_arr(gots(ice))=calc_evap_ice(fulltemp_arr(gots(ice)),statP_arr(gots))	;station_P
-      fullrhum_arr(gots(ice))=(fullevap_arr(gots(ice))/calc_evap(fulltemp_arr(gots(ice)),statP_arr(gots)))*100.   ;station_P
+;      fullrhum_arr(gots(ice))=(fullevap_arr(gots(ice))/calc_evap(fulltemp_arr(gots(ice)),statP_arr(gots)))*100.   ;station_P
+      fullrhum_arr(gots(ice))=(fullevap_arr(gots(ice))/calc_evap_ice(fulltemp_arr(gots(ice)),statP_arr(gots)))*100.   ;station_P
     ENDIF  
 ; recalc wets with correct (?) evaps - NOT 100% this is correct but errors are smallish
     fulltwet_arr(gots)=calc_wetbulb(fullevap_arr(gots),statP_arr(gots),fulldewp_arr(gots),fulltemp_arr(gots)) ;station_P
@@ -876,6 +876,8 @@ WHILE NOT EOF(5) DO BEGIN
   SLPsd_mm=make_array(nmons,/float,value=mdi)
   SLPclims_mm=make_array(12,/float,value=mdi)
   SLPanoms_mm=make_months_oddtimesJAN2015(fullslp_arr,dates,clims,mdi,type=type,stdev_mm=SLPsd_mm,abs_mm=SLPabs_mm,clims_mm=SLPclims_mm)
+
+  stop
    
 ; go through hours and look for changes in input stations, reporting frequency and recording resolution
 ; time consuming - could use some UNIQUE command?
@@ -1184,6 +1186,7 @@ ENDIF
       ENDIF
     ENDFOR
   ENDIF
+
    
 ;save to files----------------------------------------------------------- 
   openw,99,outdirHIST+stationid+'.his'

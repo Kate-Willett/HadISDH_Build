@@ -399,7 +399,7 @@ startee = ' ' 	; fix as a station to restart
 
 ; The start year and end year to run through
 styr = 1973
-edyr = 2018
+edyr = 2019
 
 ; Which type of product - DPD (Td), PHA (DPD or others) or ID (q, RH, T, e, Tw)?
 ;homogtype = 'ID'	;'PHA' or 'ID' or 'DPD'
@@ -409,16 +409,16 @@ edyr = 2018
 
 ; Month and Year label of file 
 nowmon  = 'JAN'
-nowyear = '2019'
+nowyear = '2020'
 
-version = '4.1.0.2018f'
+version = '4.2.0.2019f'
 plotonly = 'FALSE'	; TRUE or FALSE
 KeptLarge = 'FALSE'	; TRUE (run with _KeptLarge station lists or FALSE (normal, first time run)
 
 ; *********************
 ; Set up file locations
 updateyear = strmid(strcompress(edyr,/remove_all),2,2)
-workingdir = '/data/local/hadkw/HADCRUH2/UPDATE20'+updateyear
+workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+updateyear
 
 if (KeptLarge EQ 'TRUE') then KL = '_KeptLarge' else KL = ''
 

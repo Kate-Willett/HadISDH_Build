@@ -148,8 +148,8 @@ nmms=nyyrs*12
 clim_points=[clims(0)-sy,clims(1)-sy]
 climlength=(clims(1)-clims(0))+1
 nddecs=3	; assumes we're always using a 30 year climatology
-dec1=clim_points(0)+9
-dec2=clim_points(0)+19
+dec1=9    ;clim_points(0)+9
+dec2=19     ;clim_points(0)+19
 
 ;print,'CHECK TIME STATS: ',nyyrs,nmms,nddys,nhhrs,sm,sd,sy,sh,em,ed,ey,eh
 
@@ -229,7 +229,7 @@ FOR mm=0,nmms-1 DO BEGIN
 
   ENDIF
 ENDFOR
-
+stop
 ; this bit gets the month hour climatologies across the climatological period given
 ; it also averages these to create month climatologies
 mm_hr_abs=REFORM(mm_hr_abs,24,12,nyyrs)
@@ -257,6 +257,7 @@ FOR mm=0,11 DO BEGIN
   hourgots2=WHERE(gots GE 8 AND gots LE 15,count2)
   hourgots3=WHERE(gots GE 16 AND gots LE 23,count3)
   IF (count GE 4) AND ((count1 GT 0) AND (count2 GT 0) AND(count3 GT 0)) THEN clims_mm(mm)=MEAN(mm_hr_clims(gots,mm)) 	
+  stop
 ENDFOR
 ;stop,'CHECK CLIM HERE!'	
 
@@ -302,7 +303,7 @@ IF (count EQ 12) THEN BEGIN
       IF (count GE 4) AND ((count1 GT 0) AND (count2 GT 0) AND(count3 GT 0)) THEN anoms_mm(mm)=MEAN(mm_hr_anoms(gots,mm)) 
     ENDIF
   ENDFOR
-;  stop,'CHECK MM ANOM COMPLEX HERE!'	;,plot,hour_tmp(*,day_count-5:day_count)	
+  stop,'CHECK MM ANOM COMPLEX HERE!'	;,plot,hour_tmp(*,day_count-5:day_count)	
 
  
 mm_hr_abs=REFORM(mm_hr_abs,24,12*nyyrs)

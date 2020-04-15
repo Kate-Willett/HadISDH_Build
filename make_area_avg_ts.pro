@@ -5,7 +5,7 @@
 ; Author: Kate Willett
 ; Created: 1 February 2013
 ; Last update: 24 January 2019
-; Location: /data/local/hadkw/HADCRUH2/UPDATE2014/PROGS/HADISDH_BUILD/	
+; Location: /data/users/hadkw/WORKING_HADISDH/UPDATE2014/PROGS/HADISDH_BUILD/	
 ; GitHub: https://github.com/Kate-Willett/HadISDH_Build					
 ; -----------------------
 ; CODE PURPOSE AND OUTPUT
@@ -24,14 +24,14 @@
 ; DATA
 ; -----------------------
 ; HadISDH-land:
-; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; /data/users/hadkw/WORKING_HADISDH/UPDATE2016/STATISTICS/GRIDS/
 ; HadISDH.landq.3.0.0.2016p_FLATgridIDPHA5by5_anoms7605_JAN2017_cf.nc
 ; HadISDH-marine
-; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; /data/users/hadkw/WORKING_HADISDH/UPDATE2016/STATISTICS/GRIDS/
 ; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocal_anoms8110_JAN2017_cf.nc
 ; HadISDH.marineq.1.0.0.2016p_OBSclim2BClocalship_anoms8110_JAN2017_cf.nc
 ; HadISDH-blend:
-; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/GRIDS/
+; /data/users/hadkw/WORKING_HADISDH/UPDATE2016/STATISTICS/GRIDS/
 ; HadISDH.blendq.1.0.0.2016p_FULL_anoms8110_JAN2017_cf.nc
 ; HadISDH.blendq.1.0.0.2016p_FULLship_anoms8110_JAN2017_cf.nc
 ; Other:
@@ -51,7 +51,7 @@
 ; -----------------------
 ; OUTPUT
 ; -----------------------
-; /data/local/hadkw/HADCRUH2/UPDATE2016/STATISTICS/TIMESERIES/
+; /data/users/hadkw/WORKING_HADISDH/UPDATE2016/STATISTICS/TIMESERIES/
 ; HadISDH.landq.3.0.0.2016p_FLATgridIDPHA5by5_anoms7605_JAN2017_areaTS_19732016.nc
 ; HadISDH.blendq.1.0.0.2016p_FULL_anoms8110_JAN2017_areaTS_19732016.nc
 ; HadISDH.blendq.1.0.0.2016p_FULLship_anoms8110_JAN2017_areaTS_19732016.nc
@@ -144,18 +144,18 @@ mdi =        -1e+30
 
 ; *** CHOOSE CANDIDATE set up values
 styr =       1973	; 1850, 1973, 1950, 1880, 1979
-edyr =       2018	; 
+edyr =       2019	; 
 datestring = strcompress(styr,/remove_all)+strcompress(edyr,/remove_all)
 climst =     1981	; 1976 or 1981
 climed =     2010	; 2005 or 2010
 
 ; *** CHOOSE READ IN DATE ***
-thenmon =     'FEB'
-thenyear =    '2019'
+thenmon =     'JAN'
+thenyear =    '2020'
 
 ; *** CHOOSE PRINT OUT DATE ***
-nowmon =     'FEB'
-nowyear =    '2019'
+nowmon =     'JAN'
+nowyear =    '2020'
 
 ;; *** CHOOSE PARAMETER ***
 ;param =      'q'	;'dpd','td','t','tw','e','q','rh','w','evap';
@@ -164,7 +164,7 @@ nowyear =    '2019'
 ;homogtype =  'MARINEship'	;'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA'
 
 ; *** CHOOSE VERSION IF HadISDH ***
-version =    '1.0.0.2018f' ; 4.1.0.2018f 1.0.0.2018f
+version =    '4.2.0.2019f' ; 4.1.0.2018f 1.0.0.2018f
 
 ; *** CHOOSE WORKING DIRECTORY ***
 workingdir = 'UPDATE20'+strmid(strcompress(edyr,/remove_all),2,2)
@@ -178,7 +178,7 @@ mclimst =     1981	; could be 1976 or 1981
 mclimed =     2010	; could be 2005 or 2010
 
 ; *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
-domain =     'marine'	; 'land','marine','blend'
+domain =     'land'	; 'land','marine','blend'
 
 ; *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
 isanom =     'true'	; 'false' for actual values, 'true' for anomalies
@@ -209,11 +209,11 @@ latlg = 5.	;5., 4.
 lonlg = 5. 	;5., 4.
   
 IF (homogtype EQ 'OTHER') OR (homogtype EQ 'ERA') THEN $
-  dir =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/' ELSE $
-  dir =   '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/'
+  dir =   '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/OTHERDATA/' ELSE $
+  dir =   '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/STATISTICS/'
     
-maskdir = '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/GRIDS/'
-odir =    '/data/local/hadkw/HADCRUH2/'+workingdir+'/STATISTICS/TIMESERIES/'
+maskdir = '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/STATISTICS/GRIDS/'
+odir =    '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/STATISTICS/TIMESERIES/'
 
 CASE param OF
   'evap': BEGIN
@@ -389,7 +389,7 @@ CASE param OF
   END  
 ENDCASE
 
-inlandcover = '/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'
+inlandcover = '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'
 
 IF (homogtype EQ 'ERA') THEN BEGIN
   IF (mask EQ 'true') THEN BEGIN
@@ -432,7 +432,7 @@ lons = (findgen(nlons)*lonlg)+stln
 ;----------------------------------------------------
 ; read in files
 IF (homogtype EQ 'OTHER') OR (homogtype EQ 'ERA') THEN BEGIN
-  filee = NCDF_OPEN('/data/local/hadkw/HADCRUH2/'+workingdir+'/OTHERDATA/'+infile+'.nc')
+  filee = NCDF_OPEN('/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/OTHERDATA/'+infile+'.nc')
 ENDIF ELSE BEGIN
   filee = NCDF_OPEN(dir+'GRIDS/'+infile+'_cf.nc')
 ENDELSE
@@ -827,7 +827,11 @@ FOR yy=0,nyrs-1 DO BEGIN
   year=year+1
 ENDFOR
 close,2
+
+stop
+
 return
+
 
 end
 

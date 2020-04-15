@@ -14,6 +14,21 @@
 # Produces area average time series of each variable and uncertainty components for monthly and annual means and global, northern
 # hemisphere, tropics and southern hemisphere land and marine time series.
 #
+# THis now also works on marine data. When combining obs uncertainties over the gridbox month we assume 100% correlation for 4 of the current components of station unc (or 5 of 6 when we include solar unc)
+# 100% correlated are instrument adjustment uncertainty (SCN), height adjustment uncertainty (HGT) and climatology uncertainty (C). Uncorrelated are whole number (R) and measurement (M).
+# When combining correlated uncertainties I use SQRT((U1 + U2 + U3 etc)**2) / SQRT(n_obs or n_grids). THis is different to here when combing annual station uncertainty which uses mean(U1, U2, U3 etc).
+# My method results in larger uncertainties!!!
+#
+# When then combining uncertainties regionally over wider areas I currently do not assume any correlation. This is tricky. In truth there will be some degree of correlation but it is far from 100%, 
+# espectially because we're combining the already combined station uncertainties some of which are correlated and some of which are not. Correlation reduces quickly over space for the same month 
+# and over time for the same gridbox. However, there will be some correlation as ships move through gridboxes through time. We are already assuming worst case scenario when treating SCN, HGT and 
+# C as 100% correlation so these are likely over estimates. I do not think it is necessary to then assume 100% correlation over space and time for regional averages. At present I am treating it as 
+# completely uncorrelated which will be an underestimate. Until I can do a better job of working out the actual space time correlation of each ob/grid I cannot do better. So this is a first stab at 
+# uncertainty quantification. It actually results in HUGE station uncertainty which I suspect/hope is an over estimate.
+#
+# All read in uncertainties are 2 sigma!!!
+# The coverage uncertainty is *2 to make it 2 sigma too
+#
 # <references to related published material, e.g. that describes data set>
 # 
 # -----------------------
@@ -64,6 +79,17 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 #
+# Version 3 (8th April 2020)
+# ---------
+#  
+# Enhancements
+# Updated to work with ERA5
+#  
+# Changes
+# Now has a missing data threshold of 11 (so one missing month is ok for annual!!!) - for April 2015!
+#  
+# Bug fixes
+#
 # Version 2 (2nd May 2019)
 # ---------
 #  
@@ -104,7 +130,7 @@ import copy
 import pdb
 
 # RJHD routines
-YEAREND = '2018'
+YEAREND = '2019'
 DATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
 OUTDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
 OTHERDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/OTHERDATA/"
@@ -112,13 +138,16 @@ DOMAIN = 'land'
 
 if (DOMAIN == 'land'):
 
-    HADISDH_VER = "4.1.0.2018f"
-    HADISDH_DATE = "JAN2019"
+    HADISDH_VER = "4.2.0.2019f"
+    HADISDH_DATE = "JAN2020"
+    Ship = False # needs to be set or code will fail
 
 elif (DOMAIN == 'marine'):
 
-    HADISDH_VER = "1.0.0.2018f"
-    HADISDH_DATE = "FEB2019"
+    HADISDH_VER = "1.0.0.2019f"
+    HADISDH_DATE = "JAN2020"
+#    Ship = False # plot ship only data or False plot the ship and buoy
+    Ship = True # plot ship only data or False plot the ship and buoy
 
 
 class Region(object):
@@ -318,12 +347,27 @@ def full_outfile_write(filename, times, ts, sample, coverage, station, combined)
 
 
 #*******************************
-#for variable in ["q","RH","T","Td","Tw","e","DPD"]:
-for variable in ["DPD"]:
+for variable in ["q","RH","T","Td","Tw","e","DPD"]:
+#for variable in ["RH","T","Td","Tw","e","DPD"]:
+#for variable in ["q"]:
 
     print(variable)
 
-    era_file = "{}2m_5by5_monthly_anoms1981-2010_ERA-Interim_data_1979{}.nc".format(variable.lower(), YEAREND)
+    era_file = "{}2m_monthly_5by5_ERA5_1979{}.nc".format(variable.lower(), YEAREND)
+
+    # Dictionary for looking up variable long names for netCDF output of variables
+    LongNameDict = dict([('q','2m specific humidity from 1by1 hrly T, Td and p ERA5'),
+             ('RH','2m relative humidity from 1by1 hrly T, Td and p ERA5'),
+	     ('e','2m vapour pressure from 1by1 hrly T, Td and p ERA5'),
+	     ('Tw','2m wetbulb temperature from 1by1 hrly T, Td and p ERA5'),
+	     ('T','2m drybulb temperature from 1by1 hrly T ERA5'),
+	     ('Td','2m dewpoint temperature from 1by1 hrly Td ERA5'),
+	     ('DPD','2m dewpoint depression from 1by1 hrly T, Td and p ERA5'),
+	     ('SLP','2m mean_sea level pressure from 1by1 hrly msl ERA5'),
+	     ('P','2m surface pressure from 1by1 hrly sp ERA5'), # does this matter that its p not sp
+	     ('UV',['10 metre U wind component from 1by1 hrly ERA5','10 metre V wind component from 1by1 6hrlyERA5']), # this one might not work
+	     ('WS','10 metre windspeed from 1by1 hrlyERA5'),
+	     ('SST','sea surface temperature from 1by1 hrlyERA5')])
 
     if (DOMAIN == 'land'):
 
@@ -336,14 +380,17 @@ for variable in ["DPD"]:
 
         
         # get hadisdh data and fix - this uses the long name!!!
-        station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox')[0]
-        sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Sampling uncertainty over gridbox')[0]
-        combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Combined uncertainty over gridbox')[0]
+        station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox (2 sigma)')[0]
+        sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Sampling uncertainty over gridbox (2 sigma)')[0]
+        combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Combined uncertainty over gridbox (2 sigma)')[0]
         hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly mean anomaly')[0]
 
     elif (DOMAIN == 'marine'):
 
-        hadisdh_file = "HadISDH.marine{}.{}_BClocalSHIP5by5both_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        if (Ship):
+            hadisdh_file = "HadISDH.marine{}.{}_BClocalSHIP5by5both_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        else:
+            hadisdh_file = "HadISDH.marine{}.{}_BClocal5by5both_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
 	
         VarDict = {'q':'Specific Humidity',
 	           'RH':'Relative Humidity',
@@ -372,62 +419,73 @@ for variable in ["DPD"]:
     # Silly Iris doesn't distinguiss by var_name if the units isn't something it likes - %rh not ok apparently! so we need to guess which field is the complete coverage anomalies, read in and double check
 #    era_cube = iris.load(OTHERDATALOCATION + era_file)[-1]
 #    era_cube = iris.load(OTHERDATALOCATION + era_file)[3]
-    tmp_era_cube = iris.load(OTHERDATALOCATION + era_file)
+#    tmp_era_cube = iris.load(OTHERDATALOCATION + era_file)
+    
+    if (DOMAIN == 'land'):
+        
+        era_cube = iris.load(OTHERDATALOCATION + era_file, LongNameDict[variable]+' land anomalies from 1981-2010')[0]    
+
+    elif (DOMAIN == 'marine'):    
+
+        era_cube = iris.load(OTHERDATALOCATION + era_file, LongNameDict[variable]+' ocean anomalies from 1981-2010')[0]    
     
     mdi = -1e+30
-    Cube_Counts = [len(np.where(tmp_era_cube[i].data > mdi)[0]) for i in np.arange(len(tmp_era_cube))]
-    GetCube = np.where(Cube_Counts == np.max(Cube_Counts))[0]
-#    pdb.set_trace()
-    era_cube = tmp_era_cube[GetCube[0]] # hope that this is anoms not actuals but check for that later
-    tmp_era_cube=[]
 
-    # Now check that there are 72 values present at the north and south pole to see if this is the complete field
-    if (len(np.where(era_cube.data[0,0,:] > mdi)[0]) == 0):
-        print('Wrong ERA field - no data at South Pole')
-        pdb.set_trace()
-
-    if (len(np.where(era_cube.data[0,35,:] > mdi)[0]) == 0):
-        print('Wrong ERA field - no data at North Pole')
-        pdb.set_trace()
-
-    # Now check that there are values below zero to see if this is the anomaly field
-    if (np.min(era_cube.data) > 0.):
-        print('Doesnt look like ERA-Interim anomalies')
-        pdb.set_trace()	
-	
-    # Noe check that there are more than 12 time elements to make sure its not clim or stdev
-    if (len(era_cube.data[:,0,0]) < 24):
-        print('Looks like climatology or stdev field')
-        pdb.set_trace()	
-                                                  
-    #OK = carry on!
-    
-#    pdb.set_trace()                                           
+#    Cube_Counts = [len(np.where(tmp_era_cube[i].data > mdi)[0]) for i in np.arange(len(tmp_era_cube))]
+#    GetCube = np.where(Cube_Counts == np.max(Cube_Counts))[0]
+##    pdb.set_trace()
+#    era_cube = tmp_era_cube[GetCube[0]] # hope that this is anoms not actuals but check for that later
+#    tmp_era_cube=[]
+#
+#    # Now check that there are 72 values present at the north and south pole to see if this is the complete field
+#    if (len(np.where(era_cube.data[0,0,:] > mdi)[0]) == 0):
+#        print('Wrong ERA field - no data at South Pole')
+#        pdb.set_trace()
+#
+#    if (len(np.where(era_cube.data[0,35,:] > mdi)[0]) == 0):
+#        print('Wrong ERA field - no data at North Pole')
+#        pdb.set_trace()
+#
+#    # Now check that there are values below zero to see if this is the anomaly field
+#    if (np.min(era_cube.data) > 0.):
+#        print('Doesnt look like ERA-Interim anomalies')
+#        pdb.set_trace()	
+#	#
+##pp    # Noe check that there are more than 12 time elements to make sure its not clim or stdev
+#    if (len(era_cube.data[:,0,0]) < 24):
+#        print('Looks like climatology or stdev field')
+#        pdb.set_trace()	
+#                                                  
+#    #OK = carry on!
+#    
+    #pdb.set_trace()                                           
     
     # sort the coordinate system
     era_cube.coord('latitude').guess_bounds()
     era_cube.coord('longitude').guess_bounds()
     era_cube.coord('time').guess_bounds()
 
-    # apply land-sea mask
+#    # NOW JUST READ IN ERA5 land or ocean masked data
+#    # apply land-sea mask
+######
+#    # lsm = iris.load(DATALOCATION + "new_coverpercentjul08.nc")[0]
+#    # lsm.data = np.flipud(lsm.data) # flip latitudes for new_coverpercentjul08.nc
+#
+#    lsm = iris.load(OTHERDATALOCATION + "HadCRUT.4.3.0.0.land_fraction.nc")[1]
+#    
+#    if (DOMAIN == 'land'):
+#    
+#        masked_lsm = np.ma.masked_where(lsm.data == 0, lsm.data)
+#    
+#    elif (DOMAIN == 'marine'):#
+#
+#        masked_lsm = np.ma.masked_where(lsm.data == 1, lsm.data)
+#    
+#    
+#    era_cube.data = np.ma.array(era_cube.data, mask = np.array([masked_lsm.mask for i in range(era_cube.data.shape[0])]))#
 
-    # lsm = iris.load(DATALOCATION + "new_coverpercentjul08.nc")[0]
-    # lsm.data = np.flipud(lsm.data) # flip latitudes for new_coverpercentjul08.nc
-
-    lsm = iris.load(OTHERDATALOCATION + "HadCRUT.4.3.0.0.land_fraction.nc")[1]
-    
-    if (DOMAIN == 'land'):
-    
-        masked_lsm = np.ma.masked_where(lsm.data == 0, lsm.data)
-    
-    elif (DOMAIN == 'marine'):
-
-        masked_lsm = np.ma.masked_where(lsm.data == 1, lsm.data)
-    
-    
-    era_cube.data = np.ma.array(era_cube.data, mask = np.array([masked_lsm.mask for i in range(era_cube.data.shape[0])]))
-
-    for region in [global_region, nh_region, tropic_region, sh_region]:
+#    for region in [sh_region]:#
+    for region in [global_region, nh_region, tropic_region, sh_region]:#
 
         print(region.name)
 
@@ -451,7 +509,7 @@ for variable in ["DPD"]:
         weights = iris.analysis.cartography.cosine_latitude_weights(hadisdh_anoms) 
         
         monthly_ts = hadisdh_anoms.collapsed(['longitude', 'latitude'], iris.analysis.MEAN, weights=weights)
-
+        #pdb.set_trace()
         monthly_ts_coverage = monthly_coverage_stdev
 
         # and the rest is long hand
@@ -486,27 +544,42 @@ for variable in ["DPD"]:
 
         annual_ts_coverage = annual_coverage_stdev
 
+        # Add a fix in the case that one month is missin (e.g. April 2015!!!)
+	# At this statg
         for year in range(annual_coverage_stdev.shape[0]):
             annual_times[year] = int(hadisdh_anoms.coord("time").units.name.split()[2][:4]) + year
 
-            annual_ts[year] = np.mean(monthly_ts.data[year*12:(year*12)+12])
-
+            #annual_ts[year] = np.mean(monthly_ts.data[year*12:(year*12)+12])
+            this_year_data = monthly_ts.data[year*12:(year*12)+12]
+            this_year_sample = monthly_ts_sample[year*12:(year*12)+12]
+            this_year_station = monthly_ts_station[year*12:(year*12)+12]
+            if (len(np.where(this_year_data)[0]) >= 11):
+                annual_ts[year] = np.mean(this_year_data[np.where(this_year_data)[0]])
+                sampling_error = this_year_sample[np.where(this_year_data)[0]] * this_year_sample[np.where(this_year_data)[0]]  
+                annual_ts_sample[year] = np.sqrt(np.sum(sampling_error)) / len(np.where(this_year_data)[0])
+                annual_ts_station[year] = np.mean(this_year_station[np.where(this_year_data)[0]])
+                annual_ts_all_combined[year] = np.sqrt(np.sum(annual_ts_coverage[year]**2 + annual_ts_station[year]**2 + annual_ts_sample[year]**2))
+            else:
+                annual_ts[year] = mdi
+                annual_ts_sample[year] = 0.
+                annual_ts_station[year] = 0.
+                annual_ts_all_combined[year] = 0.
+	    
             # sampling error is treated as completely uncorrelated
             # hence error over year is just sqrt(sum of squared errors)/12
             #   Mean is Sum(X_i)/12, so error in Sum(X_i) is sqrt(sum(squares))
             #	  and /12 is just applied to data
 
 
-            sampling_error = monthly_ts_sample[year*12:(year*12)+12] * monthly_ts_sample[year*12:(year*12)+12]  
-
-            annual_ts_sample[year] = np.sqrt(np.sum(sampling_error)) / 12
+            #sampling_error = monthly_ts_sample[year*12:(year*12)+12] * monthly_ts_sample[year*12:(year*12)+12]  
+            #annual_ts_sample[year] = np.sqrt(np.sum(sampling_error)) / 12
 
             # station error is treated as completely correlated
             # hence error over year is just average of errors 
 
-            annual_ts_station[year] = np.mean(monthly_ts_station[year*12:(year*12)+12] )
+            #annual_ts_station[year] = np.mean(monthly_ts_station[year*12:(year*12)+12] )
 
-            annual_ts_all_combined[year] = np.sqrt(np.sum(annual_ts_coverage[year]**2 + annual_ts_station[year]**2 + annual_ts_sample[year]**2))
+            #annual_ts_all_combined[year] = np.sqrt(np.sum(annual_ts_coverage[year]**2 + annual_ts_station[year]**2 + annual_ts_sample[year]**2))
 
 #        simple_outfile_write(DATALOCATION + '{}_{}_ts_monthly.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
 #        full_outfile_write(DATALOCATION + '{}_{}_monthly_full.dat'.format(variable,region.name), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
@@ -515,11 +588,19 @@ for variable in ["DPD"]:
 #        simple_outfile_write(DATALOCATION + '{}_{}_ts_annual.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 #        full_outfile_write(DATALOCATION + '{}_{}_annual_full.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
-        simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_monthly_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
-        full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_monthly_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+        if (DOMAIN == 'marine') & (Ship):
 
+            simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_ts_monthly_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+            full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_monthly_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
 
-        simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_annual_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
-        full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_annual_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+            simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_ts_annual_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+            full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_annual_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
+        else:
+
+            simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_monthly_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+            full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_monthly_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
+
+            simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_ts_annual_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
+            full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}_{}_annual_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,region.name,HADISDH_DATE), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 

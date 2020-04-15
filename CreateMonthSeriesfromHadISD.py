@@ -122,9 +122,13 @@
 #  
 # Changes
 # Now month climatology catch kicks out if there are fewer than 1344 obs - 80% of days with at least 4 obs per day and 15 years of climatology (Feb has 28 days so ((28*4)*0.8) * 15
-# Its also kicked out if there are fewer than 20 years of data with 4 obs on at least 300 days (24000)
+# Its also kicked out if there are fewer than 20 years of data with 4 obs on at least 300 days (24000) - these would have been caught anyway but this is more efficient to catch here early
+# Climatology can be calculated where there are >= 15 years of data rather than > 15 years
 #  
 # Bug fixes
+# 1) reshaping of 20CR SLP arrays has been corrected - this created very small errors within the monthly values
+# 2) RH was being calculated with respect to water in all cases rather than with respect to ice when Tw <= 0
+# 3) Climatology maker checked that there was at least 1 year of data in each decade but this wasn't working properly so more stations passed than should have
 #
 #
 #Version 4 (24 January 2018)
@@ -283,7 +287,7 @@ import ReadNetCDF
 from GetNiceTimes import MakeDaysSince
 
 # RESTART VALUE
-Restarter = '------				#'------'		#'681040'
+Restarter = '------'				#'------'		#'681040'
 
 # Set up initial run choices
 # Start and end years
@@ -310,15 +314,15 @@ INCIDs      = workingdir+'/LISTS_DOCS/isd-history_downloaded18JAN2018_1230.txt'
 INSLP       = workingdir+'/OTHERDATA/'	#20CRJan7605MSLP_yycompos.151.170.240.10.37.8.8.59.nc or 20CRv2cJan19812010_SLP_Jan2018.nc
 
 OUTASC      = workingdir+'/MONTHLIES/ASCII/'
-OUTRAWq     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'q/monthly/raw/'
-OUTRAWe     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'e/monthly/raw/'
-OUTRAWt     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'t/monthly/raw/'
-OUTRAWdpd   = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'dpd/monthly/raw/'
-OUTRAWtd    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'td/monthly/raw/'
-OUTRAWtw    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'tw/monthly/raw/'
-OUTRAWrh    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'rh/monthly/raw/'
-OUTRAWws    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'ws/monthly/raw/'
-OUTRAWslp   = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'slp/monthly/raw/'
+OUTRAWq     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'q/'
+OUTRAWe     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'e/'
+OUTRAWt     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'t/'
+OUTRAWdpd   = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'dpd/'
+OUTRAWtd    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'td/'
+OUTRAWtw    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'tw/'
+OUTRAWrh    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'rh/'
+OUTRAWws    = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'ws/'
+OUTRAWslp   = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyy+'slp/'
 OUTHIST     = workingdir+'/MONTHLIES/HISTORY/'
 OUTNCF      = workingdir+'/MONTHLIES/NETCDF/'
 OUTDITCH    = workingdir+'/LISTS_DOCS/tooshortforHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
@@ -658,6 +662,7 @@ def MakeMonths(TheDataArr,TheDates,TheMDI):
         # This month does not have enough data so we need to ditch the station
         else:
 	
+            #print('Failed to produce climatology')
             #pdb.set_trace()
             return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs # exit with empty / incomplete return arrays
 
@@ -708,10 +713,12 @@ def MakeMonths(TheDataArr,TheDates,TheMDI):
     TheAbsClims = np.reshape(TheAbs,(len(ActYears),12))[clim_points[0]:clim_points[1]+1,:]
     for mm in range(12):
     
-        if (len(TheAbsClims[np.where(TheAbsClims[:,mm] > TheMDI),mm]) < 15):
+        if (len(TheAbsClims[np.where(TheAbsClims[:,mm] > TheMDI)[0],mm]) < 15):
 	
 	# this is bad so fail everything
             TheClims[:] = TheMDI
+            #print('Failed to produce enough absolute values')
+            #pdb.set_trace()
             return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs
             
     return TheAnoms, TheAbs, TheSDs, TheClims, TheClimSDs
@@ -747,6 +754,7 @@ def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObje
     # No need to convert float data using given scale_factor and add_offset to integers - done within writing program (packV = (V-offset)/scale
     # Not sure what this does to float precision though...
     # Change mdi into an integer -999 because these are stored as integers
+    # NOTE THAT THIS CHANGES THE ACTUAL DATA ARRAYS IN THE LIST BECAUSE THE LIST IS JUST A POINTER!!!
     NEWMDI = -999
     for vv in range(len(TheDataList)):
         TheDataList[vv][np.where(TheDataList[vv] == OLDMDI)] = NEWMDI
@@ -1571,15 +1579,15 @@ for st in range(nstations):
                 SLPanoms_mm, SLPabs_mm, 
 		derivedDPDabs_mm,derivedTdabs_mm]
 
-    OutListRAW = dict([('1', OUTRAWrh+outstationid+RAWSUFFIX),
-                  ('3',OUTRAWt+outstationid+RAWSUFFIX),
-                  ('5',OUTRAWtd+outstationid+RAWSUFFIX),
-		  ('9',OUTRAWtw+outstationid+RAWSUFFIX),
-		  ('11',OUTRAWe+outstationid+RAWSUFFIX),
-		  ('13',OUTRAWq+outstationid+RAWSUFFIX),
-		  ('15',OUTRAWws+outstationid+RAWSUFFIX),
-		  ('17',OUTRAWslp+outstationid+RAWSUFFIX),
-		  ('18',OUTRAWdpd+outstationid+RAWSUFFIX)])
+    OutListRAW = dict([('1', OUTRAWrh+'monthly/raw/'+outstationid+RAWSUFFIX),
+                  ('3',OUTRAWt+'monthly/raw/'+outstationid+RAWSUFFIX),
+                  ('5',OUTRAWtd+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('9',OUTRAWtw+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('11',OUTRAWe+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('13',OUTRAWq+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('15',OUTRAWws+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('17',OUTRAWslp+'monthly/raw/'+outstationid+RAWSUFFIX),
+		  ('18',OUTRAWdpd+'monthly/raw/'+outstationid+RAWSUFFIX)])
 
     OutListAll = dict([('0',OUTASC+'RHANOMS/'+stationid+'_RH'+ANOMSUFFIX),
                        ('1',OUTASC+'RHABS/'+stationid+'_RH'+ABSSUFFIX),
@@ -1602,19 +1610,23 @@ for st in range(nstations):
 		       ('18',OUTASC+'derivedDPDABS/'+stationid+'_deDPD'+ABSSUFFIX),
 		       ('19',OUTASC+'derivedTDABS/'+stationid+'_deTd'+ABSSUFFIX)])
 
-        # get mask of qanoms_mm to mask out other variables NOT 100% SURE WE NEED/WANT TO DO THIS
-    qmask = np.where(qanoms_mm == MDI)[0]
+    # get mask of qanoms_mm to mask out other variables NOT 100% SURE WE NEED/WANT TO DO THIS
+    # NOTE THAT NOW THE MDI IS -999 BECAUSE THIS WAS SET WITHIN WriteNetCDF FOR NetCDF output as integers	
+    NEWMDI = -999.
+    qmask = np.where(qanoms_mm == NEWMDI)
     for v,vv in enumerate(DataList):
+
+	# mask to qanoma
+        vv[qmask] = -99.99
   
+        #pdb.set_trace()
+        # change MDI to -9999 and multiply values by 10 - round whole number
+        vv[np.where(vv == NEWMDI)] = -99.99
+
         # reshape to print out a row of 12 months for each year
         vv = np.reshape(vv,(nyrs,12))
   
-        # change MDI to -9999 and multiply values by 10 - round whole number
-        vv[np.where(vv == MDI)] = -9999
-	# mask to qanoma
-        vv[qmask] = -9999
-	
-        vv[np.where(vv > -9999)] = np.round(vv[np.where(vv > -9999)] * 100).astype(int)
+        vv = np.round(vv * 100).astype(int)
 
     # Write to ascii
 
@@ -1630,6 +1642,43 @@ for st in range(nstations):
 # Print out station listing in keep file    
     filee = open(OUTKEEP,'a+')
     filee.write('%11s%8.4f %9.4f %6.1f %2s %29s%8s%4i\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],'MONTHS: ',len(np.where(qanoms_mm > -9999)[0])))
+    filee.close()
+
+# Out put stnlist to each PHA directory
+    filee = open(OUTRAWq+'meta/73'+str(edyear)[2:4]+'q_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWe+'meta/73'+str(edyear)[2:4]+'e_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWt+'meta/73'+str(edyear)[2:4]+'t_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWdpd+'meta/73'+str(edyear)[2:4]+'dpd_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWtd+'meta/73'+str(edyear)[2:4]+'td_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWtw+'meta/73'+str(edyear)[2:4]+'tw_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWrh+'meta/73'+str(edyear)[2:4]+'rh_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWws+'meta/73'+str(edyear)[2:4]+'ws_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
+    filee.close()
+
+    filee = open(OUTRAWslp+'meta/73'+str(edyear)[2:4]+'slp_stnlist.tavg','a+')
+    filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
 print('And we are done!')

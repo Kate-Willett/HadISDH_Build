@@ -20,6 +20,8 @@
 ; Output to netCDF
 ; Make stationstats plot of all uncertainties
 
+; NOTE: ALL UNCs OUTPUT AS 2 SIGMA but ERROR in previous run had STATION_ERR combingin 2 SIGMA ERRORS AND THEN *2 IN ADDITION - SO 4 SIGMA!!!
+; I HAVE CORRECTED THIS IN THE CODE NOW (APR 2020)
  
 ; <references to related published material, e.g. that describes data set>
 ; 
@@ -296,7 +298,7 @@ startee=' ' 	; fix as a station to restart
 
 ; Which year?
 MYstyr = 1973
-MYedyr = 2018
+MYedyr = 2019
 
 ; Which climatology?
 MYclst = 1981	; 1976, 1981
@@ -311,12 +313,12 @@ CLMlab = strmid(strcompress(MYclst,/remove_all),2,2)+strmid(strcompress(MYcled,/
 
 ; Which working file dates?
 nowmon =     'JAN'
-nowyear =    '2019'
+nowyear =    '2020'
 thenmon =    'JAN'
-thenyear =   '2019'
+thenyear =   '2020'
 
 ; Which version?
-version =    '4.1.0.2018f'
+version =    '4.2.0.2019f'
 
 ; NOW READ IN FROM FILE
 ;; Missed adjustment uncertainty which has to be worked out each year
@@ -334,7 +336,7 @@ version =    '4.1.0.2018f'
 
 ; files and directories
 updatedir =  'UPDATE20'+strmid(strcompress(MYedyr,/remove_all),2,2)
-workingdir = '/data/local/hadkw/HADCRUH2/'+updatedir
+workingdir = '/data/users/hadkw/WORKING_HADISDH/'+updatedir
 dirlist =    workingdir+'/LISTS_DOCS/'
 dirhomog =   workingdir+'/MONTHLIES/HOMOG/'
 dirraw =     workingdir+'/MONTHLIES/NETCDF/'
@@ -389,16 +391,19 @@ CASE param OF
       outbads =	    dirlist+'PosthomogPHADPDtd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
       outdat =	    dirhomog+'IDPHANETCDF/TDDIR/'
       outplots =    dirhomog+'STAT_PLOTS/UNCPLOTS/TDDIR/'
-      ; DPD sats are identical to Td supersats because Td is built from T-DPD so no need to look at Td specifically
-      spawn,'cp '+inlistS+' '+outfunniesT
-      ; DPD bads should be identical to Td bads because homog Td is built from T-DPD (and DPD original from raw T-Td)
-      ; But - after creation of DPD some T stations will have had sections removed which would make Td have sections removed
-      ; relative to DPD - so a station could pass DPD but fail Td in terms of having enough months present over the climatology period
-      ; So we paste all DPD bads in and then append additional ones - there may be some duplicates!!!
-      spawn,'cp '+inlistB+' '+outbads
-      openw,99,outbads,/append
-      printf,99,'END OF DPD DERIVED FAILURES',format='(a)'
-      close,99
+      ; ONLY DO THIS IS startee has not been set otherwise it will reset bads list
+      IF (startee EQ ' ') THEN BEGIN
+        ; DPD sats are identical to Td supersats because Td is built from T-DPD so no need to look at Td specifically
+        spawn,'cp '+inlistS+' '+outfunniesT
+        ; DPD bads should be identical to Td bads because homog Td is built from T-DPD (and DPD original from raw T-Td)
+        ; But - after creation of DPD some T stations will have had sections removed which would make Td have sections removed
+        ; relative to DPD - so a station could pass DPD but fail Td in terms of having enough months present over the climatology period
+        ; So we paste all DPD bads in and then append additional ones - there may be some duplicates!!!
+        spawn,'cp '+inlistB+' '+outbads
+        openw,99,outbads,/append
+        printf,99,'END OF DPD DERIVED FAILURES',format='(a)'
+        close,99
+      ENDIF
     ENDELSE
   END
   
@@ -423,9 +428,9 @@ CASE param OF
     inlog =	  dirlist+'HadISDH.landDPD.'+version+'_PHA_'+thenmon+thenyear+'.log'     ;***
     ; If we're doing DPD first then this won't be comppleted
     ;intdp =	  dirhomog+'IDPHANETCDF/TDDIR/' ; for calculating uncertainty in dpd
-    outlist =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
-    outfunniesT = dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
-    outbads =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txtTEST'
+    outlist =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_goodsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+    outfunniesT = dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_satsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
+    outbads =	  dirlist+'PosthomogPHAdpd_anoms'+CLMlab+'_badsHadISDH.'+version+'_'+nowmon+nowyear+'.txt'
     outdat =	  dirhomog+'PHANETCDF/DPDDIR/'
     outplots =	  dirhomog+'STAT_PLOTS/UNCPLOTS/DPDDIR/'
   END
@@ -1066,7 +1071,9 @@ WHILE NOT EOF(5) DO BEGIN
   ;calc station error
     errs = WHERE(stat_obs_err NE mdi AND stat_clims_err NE mdi AND stat_adjs_err NE mdi,counte)
     IF (counte GT 0) THEN station_err(errs) = $
-    (SQRT(((stat_obs_err(errs)/2.)^2)+((stat_clims_err(errs)/2.)^2)+((stat_adjs_err(errs)/2.)^2)))*2
+    (SQRT(((stat_obs_err(errs)/2.)^2)+((stat_clims_err(errs)/2.)^2)+((stat_adjs_err(errs)/2.)^2)))
+; OOOPS - WHY DID I ALSO DOUBLE THE STATION_ERR WHEN IT IS COMPOSED OF 2SIGMA ERRORS ALREADY????
+;    (SQRT(((stat_obs_err(errs)/2.)^2)+((stat_clims_err(errs)/2.)^2)+((stat_adjs_err(errs)/2.)^2)))*2
     ; this gives a 2 sigma uncertainty
 
   ; now output all of this to a netCDF file
@@ -1191,7 +1198,7 @@ WHILE NOT EOF(5) DO BEGIN
     NCDF_ATTPUT,wilma,tabsvar,'valid_min',min_abs
     NCDF_ATTPUT,wilma,tabsvar,'valid_max',max_abs
     NCDF_ATTPUT,wilma,tabsvar,'missing_value',mdi
-    NCDF_ATTPUT,wilma,tunc,'long_name','Monthly mean uncertainties'
+    NCDF_ATTPUT,wilma,tunc,'long_name','Monthly mean uncertainties (2 sigma)'
     NCDF_ATTPUT,wilma,tunc,'units',unitees
     NCDF_ATTPUT,wilma,tunc,'axis','T'
     NCDF_ATTPUT,wilma,tunc,'valid_min',min_unc
@@ -1201,15 +1208,15 @@ WHILE NOT EOF(5) DO BEGIN
     NCDF_ATTPUT,wilma,tadj,'units',unitees
     NCDF_ATTPUT,wilma,tadj,'axis','T'
     NCDF_ATTPUT,wilma,tadj,'missing_value',mdi
-    NCDF_ATTPUT,wilma,tobserr,'long_name','Measurement error estimate'
+    NCDF_ATTPUT,wilma,tobserr,'long_name','Measurement error estimate (2 sigma)'
     NCDF_ATTPUT,wilma,tobserr,'units',unitees
     NCDF_ATTPUT,wilma,tobserr,'axis','T'
     NCDF_ATTPUT,wilma,tobserr,'missing_value',mdi
-    NCDF_ATTPUT,wilma,tadjerr,'long_name','Adjustment error estimate'
+    NCDF_ATTPUT,wilma,tadjerr,'long_name','Adjustment error estimate (2 sigma)'
     NCDF_ATTPUT,wilma,tadjerr,'units',unitees
     NCDF_ATTPUT,wilma,tadjerr,'axis','T'
     NCDF_ATTPUT,wilma,tadjerr,'missing_value',mdi
-    NCDF_ATTPUT,wilma,tclmerr,'long_name','Climatology error estimate'
+    NCDF_ATTPUT,wilma,tclmerr,'long_name','Climatology error estimate (2 sigma)'
     NCDF_ATTPUT,wilma,tclmerr,'units',unitees
     NCDF_ATTPUT,wilma,tclmerr,'axis','T'
     NCDF_ATTPUT,wilma,tclmerr,'missing_value',mdi
