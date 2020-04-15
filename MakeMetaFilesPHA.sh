@@ -1,0 +1,9 @@
+touch ../PHA2015/pha52jgo/data/hadisdh/7319q/meta/7319q_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319e/meta/7319e_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319rh/meta/7319rh_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319t/meta/7319t_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319td/meta/7319td_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319tw/meta/7319tw_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319dpd/meta/7319dpd_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319slp/meta/7319slp_metadata_file.txt
+touch ../PHA2015/pha52jgo/data/hadisdh/7319ws/meta/7319ws_metadata_file.txt
