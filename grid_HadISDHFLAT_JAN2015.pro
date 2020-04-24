@@ -1115,7 +1115,7 @@ NCDF_ATTPUT,wilma,'latitude','standard_name','latitude'
 NCDF_ATTPUT,wilma,'latitude','long_name','latitude'
 NCDF_ATTPUT,wilma,'latitude','units','degrees_north'
 NCDF_ATTPUT,wilma,'latitude','point_spacing','even'
-NCDF_ATTPUT,wilma,'latitude','axis','X'
+NCDF_ATTPUT,wilma,'latitude','axis','Y'
 
 NCDF_ATTPUT,wilma,'longitude','standard_name','longitude'
 NCDF_ATTPUT,wilma,'longitude','long_name','longitude'
