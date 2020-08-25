@@ -389,7 +389,7 @@ DONE T
 85469099999-27.1650 -109.4220   69.2 CI MATAVERI INTL                 NGHBRS:    5 
 
 DONE e
-4484 stations in goods
+4481 stations in goods
 5 no neighbouts
 61901099999-15.9330   -5.6670  436.0 SH ST. HELENA IS.                NGHBRS:    6 
 85469099999-27.1650 -109.4220   69.2 CI MATAVERI INTL                 NGHBRS:    0 
@@ -608,7 +608,7 @@ from each of the goodstations*** files (IDPHA, PHAdpd and PHADPDtd).
 	Blue line = change of resolution
 UpdateGoodLists_LargeAdjRemovals_JAN2017.py
 
-RESULTS 2015:
+RESULTS 2019:
 55 stations removed because of large adjustments - same as 2018	
 Updated station counts are now:
     	IDPHA	PHA	PHADPD	MISSED ADJ UNC
@@ -793,20 +793,28 @@ Can also use PlotTrendMap_JAN2015.py in UPDATE<YYYY>/PROGS/PYTHON/	***PREFERRED*
 
 
 19) PLOT ANNUAL ANOMALY MAPS FOR HADOBS
-/data/users/hadkw/WORKING_HADISDH/UPDATE2016/PROGS/IDL/
-run_annualanommaps.pro
-plot_annualanommaps_FEB2015.pro
-	-> boxfill.pro
-	-> make_key.pro
-	need to update:
-		plot_annualanomaps_FEB2015.pro
-		- edyr
-		- ensure varid points to q_anoms, rh_anoms et
-		run_annualanomaps.pro
-		- version, nowmon, nowyear, thenmon,thenyear, homogtype, param 
-		- ensure filepaths and pointers are up to date
-	Make directories called ANOMS7605_7605 to reflect the use of anoms7605 for producing anomalies relative to 7605 (can choose a different period)
-	Move all maps (images and data grids) into these directories for tidiness
+/data/users/hadkw/WORKING_HADISDH/UPDATE<YYYY>/PROGS/PYTHON/
+PlotAnyMap_JUN2015.py
+        Update year, version, ThenYrMon
+	Choose Domain, Var and any other specific plot settings
+	> module load scitools/default-current (python 3)
+	> python PlotAnyMap_JUN2015.py
+
+# NOW REDUNDANT AS WE HAVE A PYTHON VERSION
+#/data/users/hadkw/WORKING_HADISDH/UPDATE2016/PROGS/IDL/
+#run_annualanommaps.pro
+#plot_annualanommaps_FEB2015.pro
+#	-> boxfill.pro
+#	-> make_key.pro
+#	need to update:
+#		plot_annualanomaps_FEB2015.pro
+#		- edyr
+#		- ensure varid points to q_anoms, rh_anoms et
+#		run_annualanomaps.pro
+#		- version, nowmon, nowyear, thenmon,thenyear, homogtype, param 
+#		- ensure filepaths and pointers are up to date
+#	Make directories called ANOMS7605_7605 to reflect the use of anoms7605 for producing anomalies relative to 7605 (can choose a different period)
+#	Move all maps (images and data grids) into these directories for tidiness
 	
 20) Create the CEDA versions
 /data/users/hadkw/WORKING_HADISDH/UPDATE2016/PRnedtOGS/PYTHON/

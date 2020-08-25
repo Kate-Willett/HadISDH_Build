@@ -134,7 +134,9 @@ YEAREND = '2019'
 DATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/GRIDS/"
 OUTDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/STATISTICS/TIMESERIES/"
 OTHERDATALOCATION = "/data/users/hadkw/WORKING_HADISDH/UPDATE"+YEAREND+"/OTHERDATA/"
-DOMAIN = 'land'
+DOMAIN = 'blend'
+#DOMAIN = 'land'
+#DOMAIN = 'marine'
 
 if (DOMAIN == 'land'):
 
@@ -149,6 +151,12 @@ elif (DOMAIN == 'marine'):
 #    Ship = False # plot ship only data or False plot the ship and buoy
     Ship = True # plot ship only data or False plot the ship and buoy
 
+elif (DOMAIN == 'blend'):
+
+    HADISDH_VER = "1.0.0.2019f"
+    HADISDH_DATE = "JAN2020"
+#    Ship = False # plot ship only data or False plot the ship and buoy
+    Ship = True # plot ship only data or False plot the ship and buoy
 
 class Region(object):
 
@@ -377,7 +385,6 @@ for variable in ["q","RH","T","Td","Tw","e","DPD"]:
             hadisdh_file = "HadISDH.land{}.{}_FLATgridPHA5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
         elif variable in ["Td"]:
             hadisdh_file = "HadISDH.land{}.{}_FLATgridPHADPD5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
-
         
         # get hadisdh data and fix - this uses the long name!!!
         station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Station uncertainty over gridbox (2 sigma)')[0]
@@ -399,13 +406,45 @@ for variable in ["q","RH","T","Td","Tw","e","DPD"]:
 		   'T':'Marine Air Temperature',
 		   'Td':'Dew Point Temperature',
 		   'DPD':'Dew Point Pepression'} # THIS NEEDS CORRECTING IN THE FILES!
-
         
         # get hadisdh data and fix - this uses the long name!!!
         station_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies total observation uncertainty (2 sigma)')[0]
         sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies gridbox sampling uncertainty (2 sigma)')[0]
         combined_error_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies full gridbox uncertainty (2 sigma)')[0]
         hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, 'Monthly Mean '+VarDict[variable]+' Anomalies')[0]
+
+    elif (DOMAIN == 'blend'):
+
+        if (Ship):
+            if variable in ["RH","T","Tw","e","q"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridIDPHABClocalSHIPboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+            elif variable in ["DPD"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridPHABClocalSHIPboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+            elif variable in ["Td"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridPHADPDBClocalSHIPboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+        else:
+            if variable in ["RH","T","Tw","e","q"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridIDPHABClocalboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+            elif variable in ["DPD"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridPHABClocalboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+            elif variable in ["Td"]:
+                hadisdh_file = "HadISDH.blend{}.{}_FLATgridPHADPDBClocalboth5by5_anoms8110_{}_cf.nc".format(variable, HADISDH_VER, HADISDH_DATE)
+	
+        VarDict = {'q':'Specific Humidity',
+	           'RH':'Relative Humidity',
+		   'Tw':'Wet Bulb Temperature',
+		   'e':'Vapor Pressure',
+		   'T':'Air Temperature',
+		   'Td':'Dew Point Temperature',
+		   'DPD':'Dew Point Pepression'} # THIS NEEDS CORRECTING IN THE FILES!
+
+        
+        # get hadisdh data and fix - this uses the long name!!!
+        station_error_cube = iris.load(DATALOCATION + hadisdh_file, VarDict[variable]+' monthly mean anomaly observation uncertainty (2 sigma)')[0]
+        sampling_error_cube = iris.load(DATALOCATION + hadisdh_file, VarDict[variable]+' monthly mean anomaly sampling uncertainty')[0]
+        combined_error_cube = iris.load(DATALOCATION + hadisdh_file, VarDict[variable]+' monthly mean anomaly full uncertainty')[0]
+        hadisdh_anoms_cube = iris.load(DATALOCATION + hadisdh_file, VarDict[variable]+' monthly mean anomalies')[0]
+
 
 
     for cube in [station_error_cube, sampling_error_cube, combined_error_cube, hadisdh_anoms_cube]:
@@ -428,6 +467,10 @@ for variable in ["q","RH","T","Td","Tw","e","DPD"]:
     elif (DOMAIN == 'marine'):    
 
         era_cube = iris.load(OTHERDATALOCATION + era_file, LongNameDict[variable]+' ocean anomalies from 1981-2010')[0]    
+
+    elif (DOMAIN == 'blend'):    
+
+        era_cube = iris.load(OTHERDATALOCATION + era_file, LongNameDict[variable]+' anomalies from 1981-2010')[0]    
     
     mdi = -1e+30
 
@@ -588,7 +631,8 @@ for variable in ["q","RH","T","Td","Tw","e","DPD"]:
 #        simple_outfile_write(DATALOCATION + '{}_{}_ts_annual.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 #        full_outfile_write(DATALOCATION + '{}_{}_annual_full.dat'.format(variable,region.name), annual_times, annual_ts, annual_ts_sample, annual_ts_coverage, annual_ts_station, annual_ts_all_combined)
 
-        if (DOMAIN == 'marine') & (Ship):
+#        if (DOMAIN == 'marine') & (Ship):
+        if (Ship):
 
             simple_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_ts_monthly_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)
             full_outfile_write(OUTDATALOCATION + 'HadISDH.{}{}.{}{}_{}_monthly_full_anoms8110_{}.dat'.format(DOMAIN,variable,HADISDH_VER,'SHIP',region.name,HADISDH_DATE), monthly_times, monthly_ts.data, monthly_ts_sample, monthly_ts_coverage, monthly_ts_station, monthly_ts_all_combined)

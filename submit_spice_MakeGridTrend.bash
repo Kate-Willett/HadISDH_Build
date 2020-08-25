@@ -22,18 +22,25 @@ for var in q rh t td e tw dpd;
 #for var in td;
 #for var in t;
 do
-	typee='IDPHA'
-	if [ $var = 'dpd' ]
-	then   
-	    typee='PHA'
-	    
-	fi
-	
-	if [ $var = 'td' ]
-	then
-	    typee='PHADPD'
-	    
-	fi
+
+	typee='LAND'
+	#typee='MARINE'
+	#typee='MARINESHIP'
+	#typee='BLEND'
+	#typee='BLENDSHIP'
+
+#	typee='IDPHA'
+#	if [ $var = 'dpd' ]
+#	then   
+#	    typee='PHA'
+#	    
+#	fi
+#	
+#	if [ $var = 'td' ]
+#	then
+#	    typee='PHADPD'
+#	    
+#	fi
 
         echo $var $typee
 	

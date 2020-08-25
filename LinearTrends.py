@@ -114,6 +114,17 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 #
+# Version 4 6th Aug 2020
+# ---------
+#  
+# Enhancements
+#  
+# Changes
+#  
+# Bug fixes
+# I had misinterpretted case of AR(1) < 0
+# In this case AR(1) should be set to 0 so it has no impact on deg of freedom - I had set it to trend = MDI
+#
 # Version 3 13th Jan 2020
 # ---------
 #  
@@ -202,7 +213,7 @@
 #************************************************************************
 # Set up python imports
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import sys, os
 from scipy.optimize import curve_fit,fsolve,leastsq
 from scipy import pi,sqrt,exp
@@ -271,7 +282,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     # ADD A CATCH FOR No. Data points < 3 as in KAPLAN
     if (len(gots[0]) == len(TheData)):
         TheSlope[0:7] = TheMDI
-#        print('Fewer than 3 valid data points')
+        print('Fewer than 3 valid data points')
 #        pdb.set_trace()
         return TheSlope
     # Tested
@@ -301,6 +312,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     TheResids = np.ma.masked_equal(np.repeat(TheMDI,len(TheDataMSK)),TheMDI)
     # Get a pointer array to the non-missing data but need to test if there are any missing first
     if (np.ma.count(TheDataMSK) == len(TheData)):
+        print('no missing')
         # then we do not need to faff with the missing data
         # Subtract the predicted values for each time point from the actual values
         TheResids = TheDataMSK - olsres.predict() # if there are missing values then these won't be predicted so we need to fill back in
@@ -308,6 +320,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     
     else:
         # we do need to faff with the missing data
+        print('got a missing')
         MaskofPoints = np.where(np.ma.getmask(TheDataMSK) == False)
         # Subtract the predicted values for each time point from the actual values
         TheResids[MaskofPoints] = TheDataMSK[MaskofPoints] - olsres.predict() # if there are missing values then these won't be predicted so we need to fill back in
@@ -321,11 +334,14 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     #pdb.set_trace()
 
     # ADD A CATCH FOR NEGATIVE AR(1) - as in Kaplan
+    # ERROR - If AR(1) is negative then it should be given a value of 0 so it has no effect on reducing deg of freedom
+    # previously I had set the trends to MDI - IDIOT!!!
     if (Lag1AR < 0.):
-        TheSlope[0:5] = TheMDI
-        TheSlope[6] = TheMDI
+        Lag1AR = 0.
+	#TheSlope[0:5] = TheMDI
+        #TheSlope[6] = TheMDI
 #        print('Negative AR(1)')
-        return TheSlope
+        #return TheSlope
     # Tested
     
     # This is the original number of samples of time NOT INCLUDING MISSING DATA POINTS
@@ -446,7 +462,7 @@ def CI_tINV(sig1SE,pval,DoF):
 def MedianPairwise(TheData,TheMDI,TheSlope): # ,Lowee=Lowee,Highee=Highee):
     ''' Calculates slope from every point to every other point '''
     ''' Outputs the median of those slopes at a rate of unit per time step '''
-    ''' Optionally outputs the 5th and 95th percentiles of those slopes as uncertainty ranges '''
+    ''' Optionally outputs the 2.5th and 97.5th percentiles (95% confidence) of those slopes as uncertainty ranges '''
     ''' If Lowee and/or Highee are set they will come out as changed values '''
     TheSlope=[0.,0.,0.]		# median, 5th adn 95th percentile rate of change per time step
     PairwiseSlopes=[]
@@ -467,7 +483,8 @@ def MedianPairwise(TheData,TheMDI,TheSlope): # ,Lowee=Lowee,Highee=Highee):
         weight=np.sqrt(nData * (nData-1) * ((2*nData)+5) / 18.)
 #	print "No. PW, No. Data Present, Deg Free ",len(PairwiseSlopes),nData, DegofFree
 #	print "WEIGHT ", weight
-        rankL=int(((DegofFree-1.96*weight)/2.))
+        #pdb.set_trace()
+        rankL=int(((DegofFree-1.96*weight)/2.)) # NO -1 because int() floors the data rather than rounding
         rankU=int(((DegofFree+1.96*weight)/2.)+1)
 
 # Checks to make sure the ranks are actually sensible

@@ -47,7 +47,7 @@
 # var = 'dpd'	#'dpd','td','t','tw','e','q','rh'
 #
 ## Which homog type?
-# typee = 'PHA'	#'PHA','IDPHA','DPD', 'RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE','MARINESHIP'
+# typee = 'LAND', 'RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE','MARINESHIP'
 #
 # year1 and year2 are start and end year of trends
 
@@ -331,7 +331,7 @@ def WriteNetCDF(Filename,TheTrendGrids,TheLowBoundGrids,TheUpperBoundGrids,TheSE
 def main(argv):
     # INPUT PARAMETERS AS STRINGS!!!!
     var = 'q'	    # 'q','rh','e','td','tw','t','dpd'
-    typee = 'IDPHA' # 'PHA','IDPHA','PHADPD','RAW','OTHER', 'BLEND', 'MARINE'
+    typee = 'LAND' # 'LAND','RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE', 'MARINESHIP' # domain does not need to be set correctly!!!
     year1 = '1973' # Start year of trend
     year2 = '2018' # End year of trend
     
@@ -372,8 +372,8 @@ def main(argv):
     #****************** LONGER LIFE EDITABLES****************
     # TWEAK ME!!!!
     # Which trend type and confidence interval?
-    #TrendType = 'OLS' # this is in fact with AR(1) correction as in Santer et al., 2008
-    TrendType = 'MP'  # this is median pairwise as in Sen 1968
+    TrendType = 'OLS' # this is in fact with AR(1) correction as in Santer et al., 2008
+    #TrendType = 'MP'  # this is median pairwise as in Sen 1968
 
     ConfIntP = 0.9 # confidence interval p value	
     MissingDataThresh = 0.7 # Proportion of data values that must be present across the trend period
@@ -390,17 +390,21 @@ def main(argv):
     # Which working file dates?
     nowmon   = 'JAN'
     nowyear  = '2020'
-    thenmon  = 'JAN' 
+    thenmon  = 'JAN'
     thenyear = '2020'
 
-    # Which version (if not marine or OTHER???)
-    version = '4.2.0.2019f'
-    #version = '1.0.0.2018f'
-
     # What domain?
-    domain = 'land'
-    #domain = 'marine'
-    #domain = 'blend'
+    if (typee == 'MARINE') | (typee == 'MARINESHIP'):
+        domain = 'marine'
+        version = '1.0.0.2019f'
+    elif (typee == 'BLEND') | (typee == 'BLENDSHIP'):
+        domain = 'blend'
+        version = '1.0.0.2019f'
+    else:
+        domain = 'land'
+        version = '4.2.0.2019f'
+        #domain = 'marine'
+        #domain = 'blend'
 
     # Latitude and Longitude gridbox width and variable names
     latlg = 5.
@@ -465,17 +469,28 @@ def main(argv):
     edtrd = int(year2)
 
     if domain == 'land':
-        fileblurb = 'FLATgrid'+typee+'5by5'
+        DatTyp = 'IDPHA'
+        if (var == 'dpd'):
+            DatTyp = 'PHA'
+        if (var == 'td'):
+            DatTyp = 'PHADPD'
+        fileblurb = 'FLATgrid'+DatTyp+'5by5'
     elif domain == 'marine':
         if (typee == 'MARINE'):
             fileblurb = 'BClocal5by5both'
         elif (typee == 'MARINESHIP'):
             fileblurb = 'BClocalSHIP5by5both'
     elif domain == 'blend':
+        DatTyp = 'IDPHA'
+        if (var == 'dpd'):
+            DatTyp = 'PHA'
+        if (var == 'td'):
+            DatTyp = 'PHADPD'
+
         if (typee == 'BLEND'):
-            fileblurb = 'BClocal5by5both'
+            fileblurb = 'FLATgrid'+DatTyp+'BClocalboth5by5'
         elif (typee == 'BLENDSHIP'):
-            fileblurb = 'BClocalSHIP5by5both'
+            fileblurb = 'FLATgrid'+DatTyp+'BClocalSHIPboth5by5'
 
 #    if (typee == 'OTHER'):
 #        INDIR  = WORKINGDIR+'/OTHERDATA/'
