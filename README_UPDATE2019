@@ -902,6 +902,11 @@ Blog hadisdh.blogspot.com
 Tarball old version files and images (from HadOBS) and put on mass
  /adhoc/users/kate.willett/HADISDH/HadISDH_land_<version>_tarczf
 
+tar -czf HadISDH_land_v4102018f_tarczf /data/landv4102018f/* /images/olderversions/landv4102018f/* HadISDH.land.4.1.0.2018f_update.pdf
+list check
+tar -tvf HadISDH_land_v4102018f_tarczf
+
+moo put -v HadISDH_land_v4102018f_tarczf moose:/adhoc/users/kate.willett/HADISDH/
 
 ;------------------------------------------------------------------
 DETAILS
