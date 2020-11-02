@@ -75,7 +75,7 @@
 # OLS_AR1Corr
 #    TheData - a numpy array of data which can contain missing data
 #    TheMDI - the missing data indicator
-#    ThePvalue: a number between 0 and 1 for the desired confidence interval e.g. 0.9 for 90th pct CI '''
+#    TheConfRange: a number between 0 and 1 for the desired confidence interval e.g. 0.9 for 90th pct CI '''
 #
 # -----------------------
 # HOW TO RUN THE CODE
@@ -100,19 +100,30 @@
 #		the upper bouund of 95th conf
 #
 # OLS_AR1Corr:
-# 	Outputs a 3 element list containing: 
+# 	Outputs a 7 element list containing: 
 #		the trend per 1 time unit, 
 #		the lower bound of 90th conf interval (5th percentile), (obtained using inverse students t CDF) 
 #		the upper bouund of 90th conf interal 995th percentil) (as above)
 #               the 1 sigma standard error
-#               the +/- Confidence Interval for a given p-value (0 to 1)
+#               the +/- Confidence Interval for a given probability range (0 to 1)
 #               the AR(1) correlation of regression residuals
 #               the effective degrees of freedom
+#               the p-value for the trend 
 #
 #
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
+#
+# Version 5 2nd Nov 2020
+# ---------
+#  
+# Enhancements
+# Now outputs the p-value for the OLS trend following Alexei Kaplan's IDL code
+#  
+# Changes
+#  
+# Bug fixes
 #
 # Version 4 6th Aug 2020
 # ---------
@@ -133,6 +144,7 @@
 # This has been checked against Alexei Kaplan's IDL code and found to match to the first three decimal places at least.
 #  
 # Changes
+# This now refuses to fit an OLS trend if > 50% of data are missing (it was 100% of data missing)
 #  
 # Bug fixes
 #
@@ -234,12 +246,12 @@ import pandas as pd
 # Subroutines
 #************************************************************************
 # OLS_AR1Corr
-def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
+def OLS_AR1Corr(TheData,TheMDI,TheConfRange): # ,Lowee=Lowee,Highee=Highee):
     ''' Calculates the linear trend using Ordinary Least Squares regression '''
     ''' Can cope with specified missing data indicator TheMDI '''
     ''' TheData: a numpy array of single time series data  - can have missing data = TheMDI'''
     ''' TheMDI: a number used to identify missing data (not NaN) '''
-    ''' ThePvalue: a number between 0 and 1 for the desired confidence interval e.g. 0.9 for 90th pct CI '''
+    ''' TheConfRange: a number between 0 and 1 for the desired confidence interval e.g. 0.9 for 90th pct CI '''
     ''' TheSlope[0]: Outputs the slope at a rate of unit per time step '''
     ''' TheSlope[1:3]: Outputs the 5th and 95th pctile standard error confidence intervals 
         (90pct confidence intervals) around the slope corrected for AR(1) correlation '''
@@ -247,6 +259,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     ''' TheSlope[4]: Outputs the +/- Confidence Interval for the given p-value '''
     ''' TheSlope[5]: Outputs the AR(1) correlation of regression residuals '''
     ''' TheSlope[6]: Outputs the effective degrees of freedom '''
+    ''' TheSlope[7]: Outputs the p-value of the trend using two-sided students t test - can we reject H0 of no trend '''
     ''' Santer et al., 2008 - methodology '''
     ''' If Lowee and/or Highee are set they will come out as changed values '''
     ''' THis is intended to be identical to Alexey Kaplans IDL code which is almost identical to Samter et al '''
@@ -259,9 +272,9 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     '''      If the effective Deg of Freedom < 3 then Inf or NaN are returned '''
     ''' Something else about the regression residuals using indices but I don't understand '''
 
-    # Check Pvalue
-    if ((ThePvalue < 0.) | (ThePvalue > 1.)):
-        raise Exception("invalid p-value - should be between 0 and 1")    
+    # Check the desired confidence range is between 0-1
+    if ((TheConfRange < 0.) | (TheConfRange > 1.)):
+        raise Exception("invalid confidnece range - should be between 0 and 1")    
 
     # Set up empty list for returning the output values
     #    - slope per unit time,
@@ -271,18 +284,18 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     #    - The +/- confidence interval for the given p value
     #    - AR(1) correlation in the residuals
     #    - the effective degrees of freedom
-    #    - 
-    TheSlope=np.array([0.,0.,0.,0.,0.,0.,0.])		# median, 5th adn 95th percentile rate of change per time step
+    #    - the p-value for the trend
+    TheSlope=np.array([0.,0.,0.,0.,0.,0.,0.,0.])		
 
     # Convert the data to a pandas dataframe?
     # First set any missing values to NaNs
     TheDataNANs = np.copy(TheData) # copying just to be safe
     gots = np.where(TheDataNANs == TheMDI)
 
-    # ADD A CATCH FOR No. Data points < 3 as in KAPLAN
-    if (len(gots[0]) == len(TheData)):
-        TheSlope[0:7] = TheMDI
-        print('Fewer than 3 valid data points')
+    # ADD A CATCH FOR No. Data points < 3 as in KAPLAN (actually I'm setting it to 50% missing!!!
+    if ((float(len(gots[0]))/float(len(TheData))) > 0.5):
+        TheSlope[0:8] = TheMDI
+        print('Fewer than 50% valid data points')
 #        pdb.set_trace()
         return TheSlope
     # Tested
@@ -357,6 +370,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
     # ADD A CATCH FOR nEFF < 3 as in KAPLAN
     if (nEFF < 3):
         TheSlope[1:6] = TheMDI
+        TheSlope[7] = TheMDI
 #        print('Fewer than 3 effective degrees of freedom: ',nEFF)
         return TheSlope
     # Tested
@@ -379,13 +393,19 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
 #    print('Decade Original 1 sigma standard error: ',np.round(s_1sigORIG*120,4))
 #    print('Decade Effective 1 sigma standard error: ',np.round(s_1sig*120,4))
     #pdb.set_trace()
+
+#   Now calculate the p-value to test whether the H0 (no trend) is rejected (if p-value < 0.05)
+    t_students_2tail = TheSlope[0] / s_1sig
+    integration_lev = (nEFF - 2.0) / ((nEFF - 2.0) + t_students_2tail**2.)
+    TheSlope[7] = betainc((nEFF - 2.0)/2., 0.5, integration_lev)
+#    pdb.set_trace()
     
     # Now find the 90th percentile confidence intervals by integrating the area under the assumed curve
     # and populate TheSlope array with the lower and upper bound 
     # I INCORRECTLY assumed that this is slope - 2*s_1sig and slope + 2*s_1sig - this would actually be 95pct confidence intervals approximately
     # This uses the inverse of students t CDF (quantile function) using the bisection method of the incomplete beta function (scipy.special.betainc)
     # When later the slope may be multiplied to get decadal trend the standard errors should be multiplied likewise
-    ConfInt = CI_tINV(s_1sig, ThePvalue, nEFF)
+    ConfInt = CI_tINV(s_1sig, TheConfRange, nEFF)
     TheSlope[4] = ConfInt
 #    print('Confidence interval for the p-value ', ThePvalue,' :',np.round(ConfInt*120,4))
     TheSlope[1] = TheSlope[0] - ConfInt
@@ -398,7 +418,7 @@ def OLS_AR1Corr(TheData,TheMDI,ThePvalue): # ,Lowee=Lowee,Highee=Highee):
 
 #***********************************************************************
 # CI_tINV
-def CI_tINV(sig1SE,pval,DoF):
+def CI_tINV(sig1SE,plev,DoF):
     ''' Calculates the +/- confidence interval of a given p-value (e.g. 90th pct 0.9 or 95th pct 0.95)
         around the estimated value (e.g., mean or linear trend '''
     ''' e.g., p = 0.9 therefore we expect 90% of the likely values of the linear trend to lie within this bound
@@ -408,12 +428,12 @@ def CI_tINV(sig1SE,pval,DoF):
     ''' The inverse student's t CDF (quantile function) is used with the bisection method (incomplete beta function)
          to estimate the area under the curve '''
     ''' sig1SE = 1 sigma standard error '''
-    ''' pval = 0.9 or 0.95 or 0.99 - a desired probability level of which we want to bound the estimated trend to capture the 
+    ''' plev = 0.9 or 0.95 or 0.99 - a desired probability level of which we want to bound the estimated trend to capture the 
         true trend - this becomes 0.5*pval/2.0 '''
     ''' DoF = degrees of freedom (NOTE when used with AR(1) correction this should be the effective deg of freedom) - this becomes DoF - 2 '''
     
     # Set up working values
-    Working_pval = 0.5 + pval / 2.0
+    Working_plev = 0.5 + plev / 2.0
     Reduced_DoF = DoF - 2
     
     # Halve Degrees of Freedom
@@ -426,7 +446,7 @@ def CI_tINV(sig1SE,pval,DoF):
     x1 = 0.
     x2 = 1.0
     
-    fv = 2.0 * (1.0 - Working_pval)
+    fv = 2.0 * (1.0 - Working_plev)
     
     # Compute the incomplete beta integral of the HalfReduced_DoF and 0.5 between 0 and x1 (0) 
     f1 = betainc(HalfReduced_DoF, 0.5, x1) - fv
