@@ -65,15 +65,23 @@
 # HOW TO RUN THE CODE
 # -----------------------
 # Make sure all of the EDITABLES are correct
-# module load scitools/experimental-current
+# module load scitools/default-current
 # python MakeAreaAvgTS.py
 #
-# may later set up for command line choices: --var <var> --domain <domain>
-# var can be q, RH, e, T, Td, Tw, DPD
-# domain can be land, marine, marineship, blend, blendship, erainterim, era5
-#
-# if you want era5 data masked to HadISDH then set MaskIt = True internally
+# NOT ANYMORE: if you want era5 data masked to HadISDH then set MaskIt = True internally
 # if you want different years or regions then reset internally
+
+#> module load scitools/default-current
+#> python MakeGridTrends --var <var> --typee <type> --year1 <yyyy> --year2 <yyyy>
+#
+## Which variable?
+# var = 'dpd'	#'dpd','td','t','tw','e','q','rh'
+#
+## Which homog type?
+# typee = 'LAND', 'RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE','MARINESHIP', 'ERA5','EAR5MASK','ERA5LAND','ERA5MARINE','ERA5LANDMASK','ERA5MARINEMASK'
+#
+# year1 and year2 are start and end year of trends
+
 #
 # -----------------------
 # OUTPUT
@@ -89,6 +97,18 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 # 
+# Version 2 (5 November 2020)
+# ---------
+#  
+# Enhancements
+# Now runs from command line
+# Now works with ERA5 anoms and masks if desired.
+#  
+# Changes
+#  
+# Bug fixes
+#  
+#
 # Version 1 (15 April 2019)
 # ---------
 #  
@@ -107,7 +127,7 @@
 from datetime import datetime
 import numpy as np
 from matplotlib.dates import date2num,num2date
-import sys, os
+import sys, os, getopt
 from scipy.optimize import curve_fit,fsolve,leastsq
 from scipy import pi,sqrt,exp
 from scipy.special import erf
@@ -124,177 +144,181 @@ from ReadNetCDF import GetGrid4
 from ReadNetCDF import GetGrid4Slice
 from GetNiceTimes import MakeDaysSince
 
-# set up variables
-# EDITABLES set up directories and filenames
-mdi =        -1e+30
+## set up variables
+## EDITABLES set up directories and filenames
+#mdi =        -1e+30
+#
+## *** CHOOSE CANDIDATE set up values
+#styr =       1973	# 1850, 1973, 1950, 1880, 1979
+#edyr =       2019	# 
+#climst =     1981	# 1976 or 1981
+#climed =     2010	# 2005 or 2010
+#
+## *** CHOOSE READ IN DATE ***
+#thenmon =     'JAN'
+#thenyear =    '2020'
+#
+## *** CHOOSE PRINT OUT DATE ***
+#nowmon =     'JAN'
+#nowyear =    '2020'
+#
+## *** CHOOSE PARAMETER ***
+#param =      'e'	#'dpd','td','t','tw','e','q','rh','w','evap'
+#
+## *** CHOOSE TYPE OF DATA ***
+#homogtype =  'MARINEship'	#'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA-Interim', 'ERA5'
+#
+## *** CHOOSE VERSION IF HadISDH ***
+#version =    '1.0.0.2019f' # 3.0.0.3016p 1.0.0.2016p
+##version =    '4.2.0.2019f' # 3.0.0.3016p 1.0.0.2016p
+#
+## *** CHOOSE WORKING DIRECTORY ***
+#workingdir = 'UPDATE'+str(edyr)
+#
+## *** CHOOSE WHETHER TO MASK WITH HadISDH IF NOT HadISDH ***
+## IF mask=True then you will need version, thenmon, thenyear to be correct
+#mask = False     	# default = 'False', if 'True' then mask to HadISDH equivalent
+## MASKFILE (HadISDH set up values)
+#mstyr =       1973	# 1850, 1973, 1950, 1880
+#medyr =       2019	# 2013, 2011
+#mclimst =     1981	# could be 1976 or 1981
+#mclimed =     2010	# could be 2005 or 2010#
+#
+## *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
+#domain =     'marine'	# 'land','marine','blend'#
+#
+## *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
+#isanom =     True	# 'false' for actual values, 'true' for anomalies
+#
+## *** Might add a renormalisation section later ***
+## renorm = 'false'
+#
+## SEt up area average masks
+#MaskDict = dict([('G',[-70.,70.]),
+#                 ('NH',[20.,70.]),
+#		 ('T',[-20.,20.]),
+#		 ('SH',[-70.,-20.])])
+#
+##*******************************************************
+#CLMlab =     str(climst)[2:4]+str(climed)[2:4]
+#climchoice = 'anoms'+CLMlab # 'anoms8110'
+#
+#MCLMlab =     str(mclimst)[2:4]+str(mclimed)[2:4]
+#mclimchoice = 'anoms'+MCLMlab # 'anoms8110'
+#
+#print('Year choice: ',styr,edyr, climst, climed)
+#
+#if ((mask == True) & (mclimchoice != climchoice)):
+#    print('Oy - your climatology periods are different between your candidate and mask!')
+#    print( 'Type c for continue or fix it!')
+#    pdb.set_trace()#
+#
+## Latitude and longitude gridbox width
+#latlg = 5.	#5., 4.
+#lonlg = 5. 	#5., 4.
+#  
+#indir =   '/data/users/hadkw/WORKING_HADISDH/'+workingdir
+#    
+#ParamDict = dict([('q',['q','q2m','g/kg']),
+#                  ('rh',['RH','rh2m','%rh']),
+#		  ('t',['T','t2m','deg C']),
+#		  ('td',['Td','td2m','deg C']),
+#		  ('tw',['Tw','tw2m','deg C']),
+#		  ('e',['e','e2m','hPa']),
+#		  ('dpd',['DPD','dpd2m','deg C']),
+#		  ('evap',['q','evap','cm w.e.'])])#
+#
+## Dictionary for looking up variable standard (not actually always standard!!!) names for netCDF output of variables
+#StandardNameDict = dict([('q','specific_humidity'),
+#             ('rh','relative_humidity'),
+#	     ('e','vapour_pressure'),
+#	     ('tw','wetbulb_temperature'),
+#	     ('t','drybulb_temperature'),
+#	     ('td','dewpoint_temperature'),
+#	     ('dpd','dewpoint depression'),
+#	     ('evap','evaporation')])#
+#
+## Dictionary for looking up variable long names for netCDF output of variables
+#LongNameDict = dict([('q','specific_humidity'),
+#             ('rh','2m relative humidity '),
+#	     ('e','2m vapour_pressure '),
+#	     ('tw','2m wetbulb_temperature '),
+#	     ('t','2m drybulb_temperature '),
+#	     ('td','2m dewpoint_temperature '),
+#	     ('dpd','2m dewpoint depression '),
+#	     ('evap','evaporation from 1by1 ')])
+#
+#unitees = ParamDict[param][2]
+#varname = param#
+#
+#if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'):
+#    infile = indir+'/OTHERDATA/'+ParamDict[param][1]+'_5by5_monthly_anoms1981-2010_'+homogtype+'_data_1979'+str(edyr)+'.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/'+ParamDict[param][1]+'_5by5_monthly_anoms1981-2010_'+homogtype+'_areaTS_1979'+str(edyr)
+#    # reset varname for ERA
+#    varname = ParamDict[param][1]
+#elif (homogtype == 'MARINE'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'MARINEship'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'ID'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'PHA'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHA5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHA5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'DPD'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHADPD5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHADPD5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'RAW'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridRAW5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridRAW5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'BLEND'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
+#elif (homogtype == 'BLENDship'):
+#    infile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
+#    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)#
+#
+#if (domain == 'land'):
+#    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'
+#if (domain == 'marine'):
+#    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'
+#if (domain == 'blend'):
+#    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'#
+#
+#inlandcover = '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'#
+#
+#if (mask == True):
+#    outfile = outfile+'_MASK'#
+#
+#if (isanom == False):
+#    outfile = outfile+'_ABS'
+#
+#
+## Time and dimension variables
+#nyrs =     (edyr+1)-styr
+#nmons =    nyrs*12
+#stlt =     -90+(latlg/2.)
+#stln =     -180+(lonlg/2.)
+#nlats =    int(180/latlg)
+#nlons =    int(360/lonlg)#
+#
+#mnyrs =     (medyr+1)-mstyr
+#mnmons =    mnyrs*12#
+#
+## Get pointers for pulling out the matching time slice of masked data
+#mskstpt = (styr - mstyr) * 12
+#mskedpt = mnmons
+#
+#lats = (np.arange(nlats)*latlg) + stlt
+#lons = (np.arange(nlons)*lonlg) + stln
 
-# *** CHOOSE CANDIDATE set up values
-styr =       1973	# 1850, 1973, 1950, 1880, 1979
-edyr =       2019	# 
-climst =     1981	# 1976 or 1981
-climed =     2010	# 2005 or 2010
 
-# *** CHOOSE READ IN DATE ***
-thenmon =     'JAN'
-thenyear =    '2020'
+mdi = -1e30 # missing data indicator
 
-# *** CHOOSE PRINT OUT DATE ***
-nowmon =     'JAN'
-nowyear =    '2020'
-
-# *** CHOOSE PARAMETER ***
-param =      'e'	#'dpd','td','t','tw','e','q','rh','w','evap'
-
-# *** CHOOSE TYPE OF DATA ***
-homogtype =  'MARINEship'	#'PHA','ID','DPD', 'RAW', 'OTHER', 'BLEND','BLENDship','MARINE','MARINEship','ERA-Interim', 'ERA5'
-
-# *** CHOOSE VERSION IF HadISDH ***
-version =    '1.0.0.2019f' # 3.0.0.3016p 1.0.0.2016p
-#version =    '4.2.0.2019f' # 3.0.0.3016p 1.0.0.2016p
-
-# *** CHOOSE WORKING DIRECTORY ***
-workingdir = 'UPDATE'+str(edyr)
-
-# *** CHOOSE WHETHER TO MASK WITH HadISDH IF NOT HadISDH ***
-# IF mask=True then you will need version, thenmon, thenyear to be correct
-mask = False     	# default = 'False', if 'True' then mask to HadISDH equivalent
-# MASKFILE (HadISDH set up values)
-mstyr =       1973	# 1850, 1973, 1950, 1880
-medyr =       2019	# 2013, 2011
-mclimst =     1981	# could be 1976 or 1981
-mclimed =     2010	# could be 2005 or 2010
-
-# *** CHOOSE WHETHER TO SUB-SELECT A DOMAIN IF NOT HADISDH ***
-domain =     'marine'	# 'land','marine','blend'
-
-# *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
-isanom =     True	# 'false' for actual values, 'true' for anomalies
-
-# *** Might add a renormalisation section later ***
-# renorm = 'false'
-
-# SEt up area average masks
-MaskDict = dict([('G',[-70.,70.]),
-                 ('NH',[20.,70.]),
-		 ('T',[-20.,20.]),
-		 ('SH',[-70.,-20.])])
-
-#*******************************************************
-CLMlab =     str(climst)[2:4]+str(climed)[2:4]
-climchoice = 'anoms'+CLMlab # 'anoms8110'
-
-MCLMlab =     str(mclimst)[2:4]+str(mclimed)[2:4]
-mclimchoice = 'anoms'+MCLMlab # 'anoms8110'
-
-print('Year choice: ',styr,edyr, climst, climed)
-
-if ((mask == True) & (mclimchoice != climchoice)):
-    print('Oy - your climatology periods are different between your candidate and mask!')
-    print( 'Type c for continue or fix it!')
-    pdb.set_trace()
-
-# Latitude and longitude gridbox width
-latlg = 5.	#5., 4.
-lonlg = 5. 	#5., 4.
-  
-indir =   '/data/users/hadkw/WORKING_HADISDH/'+workingdir
-    
-ParamDict = dict([('q',['q','q2m','g/kg']),
-                  ('rh',['RH','rh2m','%rh']),
-		  ('t',['T','t2m','deg C']),
-		  ('td',['Td','td2m','deg C']),
-		  ('tw',['Tw','tw2m','deg C']),
-		  ('e',['e','e2m','hPa']),
-		  ('dpd',['DPD','dpd2m','deg C']),
-		  ('evap',['q','evap','cm w.e.'])])
-
-# Dictionary for looking up variable standard (not actually always standard!!!) names for netCDF output of variables
-StandardNameDict = dict([('q','specific_humidity'),
-             ('rh','relative_humidity'),
-	     ('e','vapour_pressure'),
-	     ('tw','wetbulb_temperature'),
-	     ('t','drybulb_temperature'),
-	     ('td','dewpoint_temperature'),
-	     ('dpd','dewpoint depression'),
-	     ('evap','evaporation')])
-
-# Dictionary for looking up variable long names for netCDF output of variables
-LongNameDict = dict([('q','specific_humidity'),
-             ('rh','2m relative humidity '),
-	     ('e','2m vapour_pressure '),
-	     ('tw','2m wetbulb_temperature '),
-	     ('t','2m drybulb_temperature '),
-	     ('td','2m dewpoint_temperature '),
-	     ('dpd','2m dewpoint depression '),
-	     ('evap','evaporation from 1by1 ')])
-
-unitees = ParamDict[param][2]
-varname = param
-
-if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'):
-    infile = indir+'/OTHERDATA/'+ParamDict[param][1]+'_5by5_monthly_anoms1981-2010_'+homogtype+'_data_1979'+str(edyr)+'.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/'+ParamDict[param][1]+'_5by5_monthly_anoms1981-2010_'+homogtype+'_areaTS_1979'+str(edyr)
-    # reset varname for ERA
-    varname = ParamDict[param][1]
-elif (homogtype == 'MARINE'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'MARINEship'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'ID'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'PHA'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHA5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHA5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'DPD'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHADPD5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridPHADPD5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'RAW'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridRAW5by5_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridRAW5by5_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'BLEND'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocal5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-elif (homogtype == 'BLENDship'):
-    infile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+thenmon+thenyear+'_cf.nc'
-    outfile = indir+'/STATISTICS/TIMESERIES/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_anoms8110_'+nowmon+nowyear+'_areaTS_'+str(styr)+str(edyr)
-
-if (domain == 'land'):
-    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.land'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'
-if (domain == 'marine'):
-    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.marine'+ParamDict[param][0]+'.'+version+'_BClocalSHIP5by5both_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'
-if (domain == 'blend'):
-    maskfile = indir+'/STATISTICS/GRIDS/HadISDH.blend'+ParamDict[param][0]+'.'+version+'_FLATgridIDPHA5by5_'+mclimchoice+'_'+thenmon+thenyear+'_cf.nc'
-
-inlandcover = '/data/users/hadkw/WORKING_HADISDH/'+workingdir+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'
-
-if (mask == True):
-    outfile = outfile+'_MASK'
-
-if (isanom == False):
-    outfile = outfile+'_ABS'
-
-
-# Time and dimension variables
-nyrs =     (edyr+1)-styr
-nmons =    nyrs*12
-stlt =     -90+(latlg/2.)
-stln =     -180+(lonlg/2.)
-nlats =    int(180/latlg)
-nlons =    int(360/lonlg)
-
-mnyrs =     (medyr+1)-mstyr
-mnmons =    mnyrs*12
-
-# Get pointers for pulling out the matching time slice of masked data
-mskstpt = (styr - mstyr) * 12
-mskedpt = mnmons
-
-lats = (np.arange(nlats)*latlg) + stlt
-lons = (np.arange(nlons)*lonlg) + stln
-
+#
 ############################################################################
 # SUBROUTINES #
 ############################################################################
@@ -606,155 +630,407 @@ def WriteText(Filename,TheGArray,TheNHArray,TheTArray,TheSHArray,TheTimes,TheStY
 ############################################################################
 # MAIN #
 ############################################################################
-# read in files
-LatInfo = ['latitude'] 
-LonInfo = ['longitude'] 
+def main(argv):
+    # INPUT PARAMETERS AS STRINGS!!!!
+    var = 'q'	    # 'q','rh','e','td','tw','t','dpd'
+    typee = 'LAND' # 'LAND','RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE', 'MARINESHIP' # domain does not need to be set correctly!!!
+    # can also be 'ERA5' 'ERA5LAND','ERA5MARINE' 'ERA5MARINEMASK' ERA5LANDMASK'
+    year1 = '1973' # Start year of trend
+    year2 = '2018' # End year of trend
+    
+    try:
+        opts, args = getopt.getopt(argv, "hi:",
+	                           ["var=","typee=","year1=","year2="])
+    except getopt.GetoptError:
+        print('Usage (as strings) MakeGridTrends.py --var <q> --typee <IDPHA> --year1 <1973> --year2 <2018>')
+        sys.exit(2)
 
-if (isanom == True):
-    if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'):
-        if (domain == 'land'):
-            ReadInfo = [varname+'_anoms_land','time']
-            outfile = outfile+'_land'
-        if (domain == 'marine'):
-            ReadInfo = [varname+'_anoms_ocean','time']
-            outfile = outfile+'_marine'
+    for opt, arg in opts:
+        if opt == "--var":
+            try:
+                var = arg
+            except:
+                sys.exit("Failed: var not a string")
+        elif opt == "--typee":
+            try:
+                typee = arg
+            except:
+                sys.exit("Failed: typee not a string")
+        elif opt == "--year1":
+            try:
+                year1 = arg
+            except:
+                sys.exit("Failed: year1 not an integer")
+        elif opt == "--year2":
+            try:
+                year2 = arg
+            except:
+                sys.exit("Failed: year2 not an integer")
+
+    assert year1 != -999 and year2 != -999, "Year not specified."
+
+    print(var,typee,year1, year2)
+
+    #****************** LONGER LIFE EDITABLES****************
+    # TWEAK ME!!!!
+    # Which start/end year of the complete dataset?
+    styr = 1973 # 1973
+    edyr = 2019
+
+    # *** CHOOSE WHETHER TO WORK WITH ANOMALIES OR ACTUALS - COULD ADD RENORMALISATION IF DESIRED ***
+    isanom =     True	# 'false' for actual values, 'true' for anomalies
+
+    # Which climatology period to work with?
+    climST = str(1981)	    #1976 or 1981
+    climED = str(2010)	    #2005 or 2010
+    climBIT = 'anoms'+climST[2:4]+climED[2:4]
+
+    # Which working file dates?
+    nowmon   = 'JAN'
+    nowyear  = '2020'
+    thenmon  = 'JAN'
+    thenyear = '2020'
+
+    # What domain?
+    if (typee == 'MARINE') | (typee == 'MARINESHIP') | (typee == 'ERA5MARINE') | (typee == 'ERA5MARINEMASK'):
+        domain = 'marine'
+        version = '1.0.0.2019f'
+    elif (typee == 'BLEND') | (typee == 'BLENDSHIP') | (typee == 'ERA5') | (typee == 'ERA5MASK'):
+        domain = 'blend'
+        version = '1.0.0.2019f'
     else:
-        ReadInfo = [varname+'_anoms','time']
-else:
-    if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'): 
-        if (domain == 'land'):
-            ReadInfo = [varname+'_land','time']
-            outfile = outfile+'_land'
-        if (domain == 'marine'):
-            ReadInfo = [varname+'_ocean','time']
-            outfile = outfile+'_land'
+        domain = 'land'
+        version = '4.2.0.2019f'
+
+    # Set up the trend years
+    sttrd = int(year1)
+    edtrd = int(year2)
+
+    # Latitude and Longitude gridbox width and variable names
+    latlg = 5.
+    lonlg = 5.
+    #latlg = 1.
+    #lonlg = 1.
+    LatInfo = ['latitude'] 
+    LonInfo = ['longitude'] 
+
+    # SEt up area average masks
+    MaskDict = dict([('G',[-70.,70.]),
+                 ('NH',[20.,70.]),
+		 ('T',[-20.,20.]),
+		 ('SH',[-70.,-20.])])
+
+    # Time and dimension variables
+#    nyrs =     (edyr+1)-styr
+#    nmons =    nyrs*12
+    nyrs =     (edtrd+1)-sttrd
+    nmons =    nyrs*12
+    stlt =     -90+(latlg/2.)
+    stln =     -180+(lonlg/2.)
+    nlats =    int(180/latlg)
+    nlons =    int(360/lonlg)
+
+    lats = (np.arange(nlats)*latlg) + stlt
+    lons = (np.arange(nlons)*lonlg) + stln
+
+    WORKINGDIR = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+str(edyr)[2:4]
+
+    indir  = WORKINGDIR+'/STATISTICS/GRIDS/'
+    outdir = WORKINGDIR+'/STATISTICS/TIMESERIES/'
+    
+    # If we're working with ERA5 then set INDIR to OTHERDATA
+    if (typee.find('ERA5') >= 0):
+
+        indir  = WORKINGDIR+'/OTHERDATA/'
+        indirH  = WORKINGDIR+'/STATISTICS/GRIDS/'
+
+    # END OF EDITABLES**********************************************************
+
+    # Dictionaries for filename and other things
+    ParamDict = dict([('q',['q','q2m','g/kg']),
+	      ('rh',['RH','rh2m','%rh']),
+	      ('t',['T','t2m','deg C']),
+	      ('td',['Td','td2m','deg C']),
+	      ('tw',['Tw','tw2m','deg C']),
+	      ('e',['e','e2m','hPa']),
+	      ('dpd',['DPD','dpd2m','deg C']),
+	      ('evap',['q','evap','cm w.e.'])])
+
+    # Dictionary for looking up variable standard (not actually always standard!!!) names for netCDF output of variables
+    NameDict = dict([('q',['specific_humidity',' decadal trend in specific humidity anomaly ('+climST+' to '+climED+' base period)']),
+	 ('rh',['relative_humidity',' decadal trend in relative humidity anomaly ('+climST+' to '+climED+' base period)']),
+	 ('e',['vapour_pressure',' decadal trend in vapour pressure anomaly ('+climST+' to '+climED+' base period)']),
+	 ('tw',['wetbulb_temperature',' decadal trend in wetbulb temperature anomaly ('+climST+' to '+climED+' base period)']),
+	 ('t',['drybulb_temperature',' decadal trend in dry bulb temperature anomaly ('+climST+' to '+climED+' base period)']),
+	 ('td',['dewpoint_temperature',' decadal trend in dew point temperature anomaly ('+climST+' to '+climED+' base period)']),
+	 ('dpd',['dewpoint depression',' decadal trend in dew point depression anomaly ('+climST+' to '+climED+' base period)']),
+	 ('evap',['evaporation',' decadal trend in evaporation anomaly ('+climST+' to '+climED+' base period)'])])
+
+#    unitees = ParamDict[param][2]
+#    varname = param
+    unitees = ParamDict[var][2]
+    varname = var
+
+    if domain == 'land':
+        DatTyp = 'IDPHA'
+        if (var == 'dpd'):
+            DatTyp = 'PHA'
+        if (var == 'td'):
+            DatTyp = 'PHADPD'
+        fileblurb = 'FLATgrid'+DatTyp+'5by5'
+    elif domain == 'marine':
+        if (typee == 'MARINE'):
+            fileblurb = 'BClocal5by5both'
+        elif (typee == 'MARINESHIP') | (typee == 'ERA5MARINEMASK') | (typee == 'ERA5MARINE'):
+            fileblurb = 'BClocalSHIP5by5both'
+    elif domain == 'blend':
+        DatTyp = 'IDPHA'
+        if (var == 'dpd'):
+            DatTyp = 'PHA'
+        if (var == 'td'):
+            DatTyp = 'PHADPD'
+
+        if (typee == 'BLEND'):
+            fileblurb = 'FLATgrid'+DatTyp+'BClocalboth5by5'
+        elif (typee == 'BLENDSHIP') | (typee == 'ERA5MASK') | (typee == 'ERA5'):
+            fileblurb = 'FLATgrid'+DatTyp+'BClocalSHIPboth5by5'
+
+    inlandcover = WORKINGDIR+'/OTHERDATA/HadCRUT.4.3.0.0.land_fraction.nc'
+
+#    infile = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_cf'
+    infile = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+    outfile = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_areaTS_'+str(sttrd)+str(edtrd)	#70S-70N
+
+    if (typee.find('ERA5') >= 0):
+
+        infile = var+'2m_monthly_5by5_ERA5_1979'+str(edyr)
+        outfile = var+'2m_monthly_5by5_ERA5_'+climBIT+'_areaTS_'+str(sttrd)+str(edtrd)	#70S-70N
+
+#        infileH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_cf'
+        infileH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+        outfileH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_areaTS_'+str(sttrd)+str(edtrd)	#70S-70N
+# Removed the nowmonnowyear thenmonthenyear bits
+#        infile = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+#        outfile = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+nowmon+nowyear+'_areaTS_'+str(sttrd)+str(edtrd)	#70S-70N
+
+    if (isanom == False):
+        
+        outfile = outfile+'_ABS'
+
+    # Get Data
+    if (typee.find('ERA') >= 0):
+        styrh = np.copy(styr)
+        styr = 1979
+
+        if (isanom == True):	
+            if (domain == 'land'):
+                ReadInfo = [var+'2m_anoms_land','time']
+                outfile = outfile+'_land'
+            if (domain == 'marine'):
+                ReadInfo = [var+'2m_anoms_ocean','time']
+                outfile = outfile+'_marine'
+            if (domain == 'blend'):
+                ReadInfo = [var+'2m_anoms','time']
+
+            ReadInfoH = [var+'_anoms','time']
+   
+        else:
+           
+            ReadInfo = [var+'2m','time']
+            ReadInfoH = [var+'_abs','time']
+       
     else:
-        ReadInfo = [varname+'_abs','time']
+      
+        if (isanom == True):	
+            
+            ReadInfo = [var+'_anoms','time']
 
-print('Reading in the data for :',homogtype)
-TmpVals,Latitudes,Longitudes = GetGrid4(infile,ReadInfo,LatInfo,LonInfo)
+        else:
 
-# Seperate out data and times
-TheData = TmpVals[0]
-Times = TmpVals[1]
-TmpVals = []
+            ReadInfo = [var+'_abs','time']
 
-# Check the mdis = IDL output netCDF differs from Python output
-bads = np.where(TheData < -10000)
-if (len(bads[0]) > 0):
-    TheData[bads] = mdi
-
-# Now if we're masking then read in the mask for the time slice of ERA-Interim
-if (mask == True): 
-
-    SliceInfo = dict([('TimeSlice',[mskstpt,mskedpt]),
-           		 ('LatSlice',[0,nlats]),
-           		 ('LonSlice',[0,nlons])]) 
-	
-    if (isanom == True):
-        ReadInfo = [param+'_anoms']
-    else:
-        ReadInfo = [param+'_abs']
-
-    print('Reading in the mask data for :',homogtype)
-    TmpVals,Latitudes,Longitudes = GetGrid4Slice(maskfile,ReadInfo,SliceInfo,LatInfo,LonInfo)
+## read in files
+#LatInfo = ['latitude'] 
+#LonInfo = ['longitude'] 
+#
+#if (isanom == True):
+#    if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'):
+#        if (domain == 'land'):
+#            ReadInfo = [varname+'_anoms_land','time']
+#            outfile = outfile+'_land'
+#        if (domain == 'marine'):
+#            ReadInfo = [varname+'_anoms_ocean','time']
+#            outfile = outfile+'_marine'
+#    else:
+#        ReadInfo = [varname+'_anoms','time']
+#else:
+#    if (homogtype == 'ERA-Interim') | (homogtype == 'ERA5'): 
+#        if (domain == 'land'):
+#            ReadInfo = [varname+'_land','time']
+#            outfile = outfile+'_land'
+#        if (domain == 'marine'):
+#            ReadInfo = [varname+'_ocean','time']
+#            outfile = outfile+'_land'
+#    else:
+#        ReadInfo = [varname+'_abs','time']#
+#
+    print('Reading in the data for :',typee)
+#print('Reading in the data for :',homogtype)
+#    TmpVals,Latitudes,Longitudes = GetGrid4(infile,ReadInfo,LatInfo,LonInfo)
+    TmpVals,Latitudes,Longitudes = GetGrid4(indir+infile+'.nc',ReadInfo,LatInfo,LonInfo)
 
     # Seperate out data and times
-    MSKTheData = TmpVals
-#    MSKTimes = TmpVals[1]
+    TheData = TmpVals[0]
+    Times = TmpVals[1]
     TmpVals = []
-  
+
     # Check the mdis = IDL output netCDF differs from Python output
-    bads = np.where(MSKTheData < -10000)
-    if (len(bads[0]) > 0):
-        MSKTheData[bads] = mdi
-  
-    # mask out points in candidate that do not have data in the mask
-    bads = np.where(MSKTheData <= mdi)
-#    pdb.set_trace()
+    bads = np.where(TheData < -10000)
     if (len(bads[0]) > 0):
         TheData[bads] = mdi
+
+    # If we're masking ERA then read in HadISDH
+    if (typee.find('MASK') >= 0):
     
-#  # make anomalies from the monthlies if you want to be precise about anomalising with same coverage as HadISDH
-#  newq_values=make_array(nlons,nlats,nmons,/float,value=mdi)
-#  FOR ltt=0,nlats-1 DO BEGIN
-#    FOR lnn=0,nlons-1 DO BEGIN
-#      subarr=REFORM(q_values(lnn,ltt,*),12,nyrs)
-#      FOR mm=0,11 DO BEGIN
-#        gots=WHERE(subarr(mm,*) NE mdi,count)
-#	 climsub=subarr(mm,mclimst-styr:mclimst-styr)
-#	 gotsC=WHERE(climsub NE mdi,countC)
-#	 IF (countC GE 15) THEN subarr(mm,gots)=subarr(mm,gots)-MEAN(climsub(gotsC)) ELSE subarr(mm,*)=mdi
-#      ENDFOR
-#      newq_values(lnn,ltt,*)=REFORM(subarr,nmons)
-#    ENDFOR
-#  ENDFOR
-#  #stop
-#  q_values=newq_values
+        print('Masking ERA5')
+        outfile = outfile+'_mask'
+        TmpValsH,LatitudesH,LongitudesH = GetGrid4(indirH+infileH+'.nc',ReadInfoH,LatInfo,LonInfo)
 
-# make spatial area masks - set anything greater than 70 deg lat to mdi
+        # Seperate out data and times
+        TheDataH = TmpValsH[0]
+        TimesH = TmpValsH[1]
+        TmpValsH = []
 
-global_mask = np.zeros((nlats,nlons),dtype = float)
-global_mask.fill(1)
-nhem_mask = np.copy(global_mask)
-shem_mask = np.copy(global_mask)
-trop_mask = np.copy(global_mask)
+        # Check the mdis = IDL output netCDF differs from Python output
+        bads = np.where(TheDataH < -10000)
+        if (len(bads[0]) > 0):
+            TheDataH[bads] = mdi
+    	
+        # Make HadISDH start in the same years
+        TheDataH = TheDataH[(styr-styrh)*12:((edyr-styrh) + 1)*12,:,:]
+    	
+        # Now mask the ERA data with HadISDH missing data
+        TheData[np.where(TheDataH == mdi)] = mdi
 
-for deg in range(nlats):
-    if (lats[deg] < MaskDict['G'][0]) | (lats[deg] > MaskDict['G'][1]):
-        global_mask[deg,:] = mdi
-    if (lats[deg] < MaskDict['NH'][0]) | (lats[deg] > MaskDict['NH'][1]):
-        nhem_mask[deg,:] = mdi
-    if (lats[deg] < MaskDict['T'][0]) | (lats[deg] > MaskDict['T'][1]):
-        trop_mask[deg,:] = mdi
-    if (lats[deg] < MaskDict['SH'][0]) | (lats[deg] > MaskDict['SH'][1]):
-        shem_mask[deg,:] = mdi
+## Now if we're masking then read in the mask for the time slice of ERA-Interim
+#if (mask == True): 
+#
+#    SliceInfo = dict([('TimeSlice',[mskstpt,mskedpt]),
+#           		 ('LatSlice',[0,nlats]),
+#           		 ('LonSlice',[0,nlons])]) 
+#	
+#    if (isanom == True):
+#        ReadInfo = [param+'_anoms']
+#    else:
+#        ReadInfo = [param+'_abs']#
+#
+        print('Reading in the mask data for :',typee)
+#    print('Reading in the mask data for :',homogtype)
+#    TmpVals,Latitudes,Longitudes = GetGrid4Slice(maskfile,ReadInfo,SliceInfo,LatInfo,LonInfo)
+#
+#    # Seperate out data and times
+#    MSKTheData = TmpVals
+##    MSKTimes = TmpVals[1]
+#    TmpVals = []
+#  
+#    # Check the mdis = IDL output netCDF differs from Python output
+#    bads = np.where(MSKTheData < -10000)
+#    if (len(bads[0]) > 0):
+#        MSKTheData[bads] = mdi
+#  
+#    # mask out points in candidate that do not have data in the mask
+#    bads = np.where(MSKTheData <= mdi)
+##    pdb.set_trace()
+#    if (len(bads[0]) > 0):
+#        TheData[bads] = mdi
+    
+##  # make anomalies from the monthlies if you want to be precise about anomalising with same coverage as HadISDH
+##  newq_values=make_array(nlons,nlats,nmons,/float,value=mdi)
+##  FOR ltt=0,nlats-1 DO BEGIN
+##    FOR lnn=0,nlons-1 DO BEGIN
+##      subarr=REFORM(q_values(lnn,ltt,*),12,nyrs)
+##      FOR mm=0,11 DO BEGIN
+##        gots=WHERE(subarr(mm,*) NE mdi,count)
+##	 climsub=subarr(mm,mclimst-styr:mclimst-styr)
+##	 gotsC=WHERE(climsub NE mdi,countC)
+##	 IF (countC GE 15) THEN subarr(mm,gots)=subarr(mm,gots)-MEAN(climsub(gotsC)) ELSE subarr(mm,*)=mdi
+##      ENDFOR
+##      newq_values(lnn,ltt,*)=REFORM(subarr,nmons)
+##    ENDFOR
+##  ENDFOR
+##  #stop
+##  q_values=newq_values
 
-global_mask_3d = np.repeat(global_mask[np.newaxis,:,:],nmons, axis = 0)
-nhem_mask_3d = np.repeat(nhem_mask[np.newaxis,:,:],nmons, axis = 0)
-shem_mask_3d = np.repeat(shem_mask[np.newaxis,:,:],nmons, axis = 0)
-trop_mask_3d = np.repeat(trop_mask[np.newaxis,:,:],nmons, axis = 0)
+    # make spatial area masks - set anything greater than 70 deg lat to mdi
 
-#CoverTS = np.empty(nmons,dtype = float)
-#CoverTS.fill(mdi)
-#glob_avg_ts,CoverTS = AreaMean(TheData,lats,global_mask_3d,CoverTS)
-glob_avg_ts = AreaMean(TheData,lats,global_mask_3d)
-print(len(glob_avg_ts),np.max(glob_avg_ts),np.min(glob_avg_ts))
+    global_mask = np.zeros((nlats,nlons),dtype = float)
+    global_mask.fill(1)
+    nhem_mask = np.copy(global_mask)
+    shem_mask = np.copy(global_mask)
+    trop_mask = np.copy(global_mask)
+
+    for deg in range(nlats):
+        if (lats[deg] < MaskDict['G'][0]) | (lats[deg] > MaskDict['G'][1]):
+            global_mask[deg,:] = mdi
+        if (lats[deg] < MaskDict['NH'][0]) | (lats[deg] > MaskDict['NH'][1]):
+            nhem_mask[deg,:] = mdi
+        if (lats[deg] < MaskDict['T'][0]) | (lats[deg] > MaskDict['T'][1]):
+            trop_mask[deg,:] = mdi
+        if (lats[deg] < MaskDict['SH'][0]) | (lats[deg] > MaskDict['SH'][1]):
+            shem_mask[deg,:] = mdi
+
+    global_mask_3d = np.repeat(global_mask[np.newaxis,:,:],nmons, axis = 0)
+    nhem_mask_3d = np.repeat(nhem_mask[np.newaxis,:,:],nmons, axis = 0)
+    shem_mask_3d = np.repeat(shem_mask[np.newaxis,:,:],nmons, axis = 0)
+    trop_mask_3d = np.repeat(trop_mask[np.newaxis,:,:],nmons, axis = 0)
+
+##CoverTS = np.empty(nmons,dtype = float)
+##CoverTS.fill(mdi)
+##glob_avg_ts,CoverTS = AreaMean(TheData,lats,global_mask_3d,CoverTS)
+    glob_avg_ts = AreaMean(TheData,lats,global_mask_3d)
+    print(len(glob_avg_ts),np.max(glob_avg_ts),np.min(glob_avg_ts))
 #pdb.set_trace()
 
-nhem_avg_ts = AreaMean(TheData,lats,nhem_mask_3d)
-print(len(nhem_avg_ts),np.max(nhem_avg_ts),np.min(nhem_avg_ts))
+    nhem_avg_ts = AreaMean(TheData,lats,nhem_mask_3d)
+    print(len(nhem_avg_ts),np.max(nhem_avg_ts),np.min(nhem_avg_ts))
 
-trop_avg_ts = AreaMean(TheData,lats,trop_mask_3d)
-print(len(trop_avg_ts),np.max(trop_avg_ts),np.min(trop_avg_ts))
+    trop_avg_ts = AreaMean(TheData,lats,trop_mask_3d)
+    print(len(trop_avg_ts),np.max(trop_avg_ts),np.min(trop_avg_ts))
 
-shem_avg_ts = AreaMean(TheData,lats,shem_mask_3d)
-print(len(shem_avg_ts),np.max(shem_avg_ts),np.min(shem_avg_ts))
+    shem_avg_ts = AreaMean(TheData,lats,shem_mask_3d)
+    print(len(shem_avg_ts),np.max(shem_avg_ts),np.min(shem_avg_ts))
   
-# save to file as netCDF and .dat
+    # save to file as netCDF and .dat
 
-WriteNetCDF(outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr, climst, climed, ParamDict[param][0], StandardNameDict[param], LongNameDict[param], unitees, MaskDict)
-WriteText(outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr)
+#    WriteNetCDF(outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr, climst, climed, ParamDict[param][0], StandardNameDict[param], LongNameDict[param], unitees, MaskDict)
+    WriteNetCDF(outdir+outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr, climST, climED, ParamDict[var][0], NameDict[var][0], NameDict[var][1], unitees, MaskDict)
+#    WriteText(outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr)
+    WriteText(outdir+outfile,glob_avg_ts,nhem_avg_ts,trop_avg_ts,shem_avg_ts,Times,styr, edyr)
 
-# Note if any of the series have missing data because at these large scales they should not
-if (len(np.where(glob_avg_ts <= mdi)[0]) > 0):
+    # Note if any of the series have missing data because at these large scales they should not
+    if (len(np.where(glob_avg_ts <= mdi)[0]) > 0):
     
-    print('Missing months for Global average: ',len(np.where(glob_avg_ts <= mdi)[0]))
-    pdb.set_trace()
+        print('Missing months for Global average: ',len(np.where(glob_avg_ts <= mdi)[0]))
+        pdb.set_trace()
 
-if (len(np.where(nhem_avg_ts <= mdi)[0]) > 0):
+    if (len(np.where(nhem_avg_ts <= mdi)[0]) > 0):
+     
+        print('Missing months for NHemi average: ',len(np.where(nhem_avg_ts <= mdi)[0]))
+        pdb.set_trace()
+
+    if (len(np.where(trop_avg_ts <= mdi)[0]) > 0):
     
-    print('Missing months for NHemi average: ',len(np.where(nhem_avg_ts <= mdi)[0]))
-    pdb.set_trace()
+        print('Missing months for Tropics average: ',len(np.where(trop_avg_ts <= mdi)[0]))
+        pdb.set_trace()
 
-if (len(np.where(trop_avg_ts <= mdi)[0]) > 0):
+    if (len(np.where(shem_avg_ts <= mdi)[0]) > 0):
     
-    print('Missing months for Tropics average: ',len(np.where(trop_avg_ts <= mdi)[0]))
-    pdb.set_trace()
+        print('Missing months for Shemi average: ',len(np.where(shem_avg_ts <= mdi)[0]))
+        pdb.set_trace()
 
-if (len(np.where(shem_avg_ts <= mdi)[0]) > 0):
+    print('And we are done!')
+
+if __name__ == '__main__':
     
-    print('Missing months for Shemi average: ',len(np.where(shem_avg_ts <= mdi)[0]))
-    pdb.set_trace()
+    main(sys.argv[1:])
 
-print('And we are done!')

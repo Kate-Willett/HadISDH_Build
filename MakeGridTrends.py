@@ -47,7 +47,7 @@
 # var = 'dpd'	#'dpd','td','t','tw','e','q','rh'
 #
 ## Which homog type?
-# typee = 'LAND', 'RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE','MARINESHIP'
+# typee = 'LAND', 'RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE','MARINESHIP', 'ERA5','EAR5MASK','ERA5LAND','ERA5MARINE','ERA5LANDMASK','ERA5MARINEMASK'
 #
 # year1 and year2 are start and end year of trends
 
@@ -68,6 +68,17 @@
 # -----------------------
 # VERSION/RELEASE NOTES
 # -----------------------
+#
+# Version 4 (5 November 2020)
+# ---------
+#  
+# Enhancements
+# Now works with ERA5 and maybe ERA-Interim
+#
+# Changes
+# No longer has nowmon, thenmon, nowyear, thenyear in filename read ins so won't work on pre2020 HadISDH.
+# 
+# Bug fixes
 #
 # Version 3 (15 January 2020)
 # ---------
@@ -332,6 +343,7 @@ def main(argv):
     # INPUT PARAMETERS AS STRINGS!!!!
     var = 'q'	    # 'q','rh','e','td','tw','t','dpd'
     typee = 'LAND' # 'LAND','RAW','OTHER', 'BLEND', 'BLENDSHIP', 'MARINE', 'MARINESHIP' # domain does not need to be set correctly!!!
+    # can also be 'ERA5' 'ERA5LAND','ERA5MARINE' 'ERA5MARINEMASK' ERA5LANDMASK'
     year1 = '1973' # Start year of trend
     year2 = '2018' # End year of trend
     
@@ -394,17 +406,15 @@ def main(argv):
     thenyear = '2020'
 
     # What domain?
-    if (typee == 'MARINE') | (typee == 'MARINESHIP'):
+    if (typee == 'MARINE') | (typee == 'MARINESHIP') | (typee == 'ERA5MARINE') | (typee == 'ERA5MARINEMASK'):
         domain = 'marine'
         version = '1.0.0.2019f'
-    elif (typee == 'BLEND') | (typee == 'BLENDSHIP'):
+    elif (typee == 'BLEND') | (typee == 'BLENDSHIP') | (typee == 'ERA5') | (typee == 'ERA5MASK'):
         domain = 'blend'
         version = '1.0.0.2019f'
     else:
         domain = 'land'
         version = '4.2.0.2019f'
-        #domain = 'marine'
-        #domain = 'blend'
 
     # Latitude and Longitude gridbox width and variable names
     latlg = 5.
@@ -431,6 +441,12 @@ def main(argv):
 
     INDIR  = WORKINGDIR+'/STATISTICS/GRIDS/'
     OUTDIR = WORKINGDIR+'/STATISTICS/TRENDS/'
+    
+    # If we're working with ERA5 then set INDIR to OTHERDATA
+    if (typee.find('ERA5') >= 0):
+
+        INDIR  = WORKINGDIR+'/OTHERDATA/'
+        INDIRH  = WORKINGDIR+'/STATISTICS/GRIDS/'
 
     # END OF EDITABLES**********************************************************
 
@@ -478,7 +494,7 @@ def main(argv):
     elif domain == 'marine':
         if (typee == 'MARINE'):
             fileblurb = 'BClocal5by5both'
-        elif (typee == 'MARINESHIP'):
+        elif (typee == 'MARINESHIP') | (typee == 'ERA5MARINEMASK') | (typee == 'ERA5MARINE'):
             fileblurb = 'BClocalSHIP5by5both'
     elif domain == 'blend':
         DatTyp = 'IDPHA'
@@ -489,7 +505,7 @@ def main(argv):
 
         if (typee == 'BLEND'):
             fileblurb = 'FLATgrid'+DatTyp+'BClocalboth5by5'
-        elif (typee == 'BLENDSHIP'):
+        elif (typee == 'BLENDSHIP') | (typee == 'ERA5MASK') | (typee == 'ERA5'):
             fileblurb = 'FLATgrid'+DatTyp+'BClocalSHIPboth5by5'
 
 #    if (typee == 'OTHER'):
@@ -499,21 +515,38 @@ def main(argv):
 #        INDIR  = '/project/hadobs2/hadisdh/marine/ICOADS.3.0.0/'
 #        OUTDIR = '/data/users/hadkw/WORKING_HADISDH/MARINE/DATA/'
 
-    if ((typee != 'OTHER') | (typee != 'ERA5') | (typee != 'ERA-Interim')):
+#    INFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_cf'
+    INFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+    OUTFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
 
-        INFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
-        OUTFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+nowmon+nowyear+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
+    if (typee.find('ERA5') >= 0):
 
-# Need to add stuff for OTHER!!!
+        INFILE = var+'2m_monthly_5by5_ERA5_1979'+str(edyr)
+        OUTFILE = var+'2m_monthly_5by5_ERA5_'+climBIT+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
+
+#        INFILEH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_cf'
+        INFILEH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+        OUTFILEH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
+# Removed the nowmonnowyear thenmonthenyear bits
+#        INFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
+#        OUTFILE = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+nowmon+nowyear+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
 
     # Get Data
-    if (typee == 'ERA-Interim') | (typee == 'ERA5'):
+    if (typee.find('ERA') >= 0):
+        styrh = np.copy(styr)
+        styr = 1979
+	
         if (domain == 'land'):
-            ReadInfo = [var+'_anoms_land','time']
-            OUTFILE = outfile+'_land'
+            ReadInfo = [var+'2m_anoms_land','time']
+            OUTFILE = OUTFILE+'_land'
         if (domain == 'marine'):
-            ReadInfo = [var+'_anoms_ocean','time']
-            OUTFILE = outfile+'_marine'
+            ReadInfo = [var+'2m_anoms_ocean','time']
+            OUTFILE = OUTFILE+'_marine'
+        if (domain == 'blend'):
+            ReadInfo = [var+'2m_anoms','time']
+
+        ReadInfoH = [var+'_anoms','time']
+   
     else:
         ReadInfo = [var+'_anoms','time']
 
@@ -521,7 +554,7 @@ def main(argv):
     TmpVals,Latitudes,Longitudes = GetGrid4(INDIR+INFILE+'.nc',ReadInfo,LatInfo,LonInfo)
     # Check that data have been read in
     #pdb.set_trace()
-
+    
     # Seperate out data and times
     TheData = TmpVals[0]
     Times = TmpVals[1]
@@ -531,7 +564,30 @@ def main(argv):
     bads = np.where(TheData < -10000)
     if (len(bads[0]) > 0):
         TheData[bads] = MDI
-        
+
+    # If we're masking ERA then read in HadISDH
+    if (typee.find('MASK') >= 0):
+    
+        print('Masking ERA5')
+        OUTFILE = OUTFILE+'_mask'
+        TmpValsH,LatitudesH,LongitudesH = GetGrid4(INDIRH+INFILEH+'.nc',ReadInfoH,LatInfo,LonInfo)
+
+        # Seperate out data and times
+        TheDataH = TmpValsH[0]
+        TimesH = TmpValsH[1]
+        TmpValsH = []
+
+        # Check the mdis = IDL output netCDF differs from Python output
+        bads = np.where(TheDataH < -10000)
+        if (len(bads[0]) > 0):
+            TheDataH[bads] = MDI
+	    
+	# Make HadISDH start in the same years
+        TheDataH = TheDataH[(styr-styrh)*12:((edyr-styrh) + 1)*12,:,:]
+	    
+	# Now mask the ERA data with HadISDH missing data
+        TheData[np.where(TheDataH == MDI)] = MDI
+
     # Calculate trends
     TrendGrids,LowBoundGrids,UpperBoundGrids,SE1sigGrids = GetTrends(TheData,styr,edyr,sttrd,edtrd,TrendType,ConfIntP,MDI,MissingDataThresh)
     
