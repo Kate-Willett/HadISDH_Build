@@ -27,6 +27,10 @@
 
 ; Write out gridding results min/max of each var
 
+; NB - THERE IS AN ERROR WHEN COMBINING UNCS THAT MAKES THEM TOO SMALL. I HAD THOUGHT THAT THE *2 WAS WRONG AND MADE THEM TOO LARGE
+; BUT I'D MISSED THE FACT THAT I HAD ALSO DIVIDED BY 2. TO CONVERT FROM 2SIGMA to 1SIGMA and BACK AGAIN. 2019 UNCS WOULD BE TWO SMALL>
+; NOW CORRECTED BUT THIS CODE IS DEFUNCT
+
 ; 
 ; -----------------------
 ; LIST OF MODULES
@@ -965,14 +969,20 @@ FOR tt =              0,nmons-1 DO BEGIN
   subarr1 =           q_staterr(*,*,tt) ; already 2 sigma
   subarr2 =           q_samperr(*,*,tt) ; already 2 sigma
   gots =              WHERE(subarr1 NE mdi AND subarr2 NE mdi,count)
-  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2))) ; 2 sigma errors!!!!!
+;  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2))) ; 2 sigma errors!!!!!
 ; ERROR - THESE SHOULD NOT BE *2 AS THEY ARE ALREADY 2 SIGMA ERRORS!!!
 ;  combarr(gots) =     (SQRT(((subarr1(gots)/2.)^2)+((subarr2(gots)/2.)^2)))*2. ; 2 sigma errors!!!!!
+; ACTUALLY THE ABOVE WAS CORRECT BUT POINTLESS - I DIVIDED BY 2 and THEN *2 - SO 2019 UNCS WILL HAVE BEEN TOO SMALL!!!!
+  combarr(gots) =     (SQRT((subarr1(gots)^2)+(subarr2(gots)^2))) ; 2 sigma errors!!!!!
   q_comberr(*,*,tt) = combarr
 ENDFOR
 ;stop
 
 ;write to netCDF file
+*** MAKE THIS CF COMPLIANT - https://cfconventions.org/compliance-checker.html
+any units=standard should be units = 1
+remove missing_value and use _FillValue instead
+only use standard standard_names (not month!!!) - should then be 1.6?
 openw,19,outresults,/append
 printf,19,' '
 printf,19,'PARAMETER ',param,' ', homogtype
