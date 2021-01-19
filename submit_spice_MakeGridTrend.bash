@@ -12,22 +12,28 @@
 # ************************************************************************
 # START
 
-year=2000
+year=1979
 end=2019
 
 echo "Running trends between ${year} and ${end} inclusive"
 
 #while [ $year -le $end ];
-for var in q rh t td e tw dpd;
+#for var in q rh t td e tw dpd;
+for var in q rh t;
 #for var in td;
 #for var in t;
 do
 
-	typee='LAND'
+	#typee='LAND'
 	#typee='MARINE'
 	#typee='MARINESHIP'
 	#typee='BLEND'
 	#typee='BLENDSHIP'
+	typee='ERA5'
+	#typee='ERA5LAND'
+	#typee='ERA5LANDMASK'
+	#typee='ERA5MARINE'
+	#typee='ERA5MARINEMASK'
 
 #	typee='IDPHA'
 #	if [ $var = 'dpd' ]

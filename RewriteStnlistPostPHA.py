@@ -68,6 +68,15 @@
 # VERSION/RELEASE NOTES
 # -----------------------
 #
+# Version 3 (22 October 2020)
+# ---------
+#  
+# Enhancements
+# Now can work without any annual update to the code - reads from F1_HadISDHBuildConfig.txt
+#  
+# Changes
+#  
+# Bug fixes
 # 
 # Version 2 (17 February 2020)
 # ---------
@@ -122,45 +131,73 @@ from subprocess import call
 
 # Variables
 # Set up initial run choices
-# End year - CHECK
+styr       = 1973
 edyr       = 2019
 
-# Working file month and year - CHECK
-nowmon     = 'JAN'
-nowyear    = '2020'
+# Dataset version if HardWire = 1
+versiondots    = '4.2.0.2019f'
+version    = 'v420_2019f'
 
-# Dataset version - CHECK THE VERSION
-version    = '4.2.0.2019f'
+if (HardWire == 0):
+    
+    #' Read in the config file to get all of the info
+    with open('F1_HadISDHBuildConfig.txt') as f:
+        
+	ConfigDict = dict(x.rstrip().split('=', 1) for x in f)
+	versiondots = ConfigDict['VersionDots']
+	hadisdversiondots = ConfigDict['HadISDVersionDots']
+	styr = ConfigDict['StartYear']
+	edyr = ConfigDict['EndYear']
+    
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
-workingdir = '/data/users/hadkw/WORKING_HADISDH/UPDATE20'+updateyear
-phadir     = workingdir+'/PROGS/PHA2015/pha52jgo/data/hadisdh/73'+updateyear
+workingdir = '/scratch/hadkw/UPDATE20'+updateyear
+phadir     = workingdir+'/pha52jgo/data/hadisdh/'
+
+varlist = ['dpd','t','q','e','rh','tw','td']
 
 # PHA Run string - CHECK THE DATETIME STRING DPD, T, Q, E, RH, TW, TD
-# from PHA2015/phav52jgo/data/hadisdh/
-# > ls 731*/output/P*
-PHAID = ['2002171753','2002171753','2002171753','2002171753','2002171753','2002171753','2002171753']
+# from phav52jgo/data/hadisdh/
+# > ls /out<var>put/P*
+# This now searches for the string for each variable and appends to a list
+PHAID = []
+for var in varlist:
+    
+    # This should pull out the PHA... filename as a string
+    WholeName = glob.glob(phadir+var+"/output/PHAv52j*")[0].split('/')[2]
+    PHAID.append(WholeName[22:32])
+    
+# Should create something like this - number strings are YYMMDDHHMM and may differ if PHA is run at different times for each var
+#PHAID = ['2002171753','2002171753','2002171753','2002171753','2002171753','2002171753','2002171753']
 
 # In Filepaths - CHECK THE NUMBER OF input_not_stnlist IS CORRECT
 # from PHA2015/phav52jgo/data/hadisdh/
-# > ls 731*/corr/m*
-BadFiles   = [[phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist',
-               phadir+'dpd/corr/meta.73'+updateyear+'dpd.tavg.r00.'+PHAID[0]+'.2.input_not_stnlist'],
-              [phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist',
-	      phadir+'t/corr/meta.73'+updateyear+'t.tavg.r00.'+PHAID[1]+'.2.input_not_stnlist'],
-              [phadir+'q/corr/meta.73'+updateyear+'q.tavg.r00.'+PHAID[2]+'.1.input_not_stnlist'],
-              [phadir+'e/corr/meta.73'+updateyear+'e.tavg.r00.'+PHAID[3]+'.1.input_not_stnlist'],
-              [phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.1.input_not_stnlist',
-               phadir+'rh/corr/meta.73'+updateyear+'rh.tavg.r00.'+PHAID[4]+'.2.input_not_stnlist'],
-	      [phadir+'tw/corr/meta.73'+updateyear+'tw.tavg.r00.'+PHAID[5]+'.1.input_not_stnlist'],
-              [phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist']]#,
-              # phadir+'td/corr/meta.73'+updateyear+'td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
+# > ls <var>/corr/m*
+# Each year there may be 1, 2 or more input_not_stnlist files and I'm not sure why
+# glob.glob is a useful way of finding these
+BadFiles = []
+for var in varlist:
 
-InAll       = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_JAN'+nowyear+'.txt' 
+    # This appends a list to the BadFiles list so we have lists of lists in varlist order
+    BadFiles.append(glob.glob(phadir+var+"/corr/meta*input_not_stnlist"))
+# Should look something like this
+BadFiles   = [[phadir+'dpd/corr/meta.dpd.tavg.r00.'+PHAID[0]+'.1.input_not_stnlist',
+               phadir+'dpd/corr/meta.dpd.tavg.r00.'+PHAID[0]+'.2.input_not_stnlist'],
+              [phadir+'t/corr/meta.t.tavg.r00.'+PHAID[1]+'.1.input_not_stnlist',
+	      phadir+'t/corr/meta.t.tavg.r00.'+PHAID[1]+'.2.input_not_stnlist'],
+              [phadir+'q/corr/meta.q.tavg.r00.'+PHAID[2]+'.1.input_not_stnlist'],
+              [phadir+'e/corr/meta.e.tavg.r00.'+PHAID[3]+'.1.input_not_stnlist'],
+              [phadir+'rh/corr/meta.rh.tavg.r00.'+PHAID[4]+'.1.input_not_stnlist',
+               phadir+'rh/corr/meta.rh.tavg.r00.'+PHAID[4]+'.2.input_not_stnlist'],
+	      [phadir+'tw/corr/meta.tw.tavg.r00.'+PHAID[5]+'.1.input_not_stnlist'],
+              [phadir+'td/corr/meta.td.tavg.r00.'+PHAID[6]+'.1.input_not_stnlist']]#,
+              # phadir+'td/corr/meta.td.tavg.r00.'+PHAID[6]+'.2.input_not_stnlist']]
+
+InAll       = workingdir+'/LISTS_DOCS/goodforHadISDH.'+versiondots+'.txt' 
 
 # Out Filepaths
-OutIDPHAall = workingdir+'/LISTS_DOCS/goodforHadISDH.'+version+'_IDPHAall_JAN'+nowyear+'.txt'
+OutIDPHAall = workingdir+'/LISTS_DOCS/goodforHadISDH.'+versiondots+'_IDPHAall.txt'
 OutTdBad    = phadir+'td/corr/badlist.txt'
 
 # Variables

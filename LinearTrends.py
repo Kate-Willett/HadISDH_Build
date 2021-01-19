@@ -50,7 +50,6 @@
 # -----------------------
 # Inbuilt: (may not all be required actually)
 # import numpy as np
-# import matplotlib.pyplot as plt
 # import sys, os
 # from scipy.optimize import curve_fit,fsolve,leastsq
 # from scipy import pi,sqrt,exp
@@ -225,7 +224,7 @@
 #************************************************************************
 # Set up python imports
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import sys, os
 from scipy.optimize import curve_fit,fsolve,leastsq
 from scipy import pi,sqrt,exp

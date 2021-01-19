@@ -51,11 +51,14 @@
 #
 # year1 and year2 are start and end year of trends
 
+
 # You can also run this from spice
 # edit submit_spice_MakeGridTrend.bash as desired
 # FIRST SET UP THE PYTHON ENVIRONMENT WHERE YOU ARE RUNNING FROM!!!
 # module load scitools/default-current
 # ./submit_spice_MakeGridTrend.bash
+#
+# SEEMS TO BE ISSUES WITH OLS TRENDS THOUGH - statsmodels package not there!!!
 #
 # See 'EDITABLES' for setting longer life things like version, dataset years etc.
 # 
@@ -138,6 +141,11 @@ from netCDF4 import Dataset
 from LinearTrends import OLS_AR1Corr
 from LinearTrends import MedianPairwise
 from ReadNetCDF import GetGrid4
+
+# Working version
+lversion = '4.2.0.2019f' # land
+mversion = '1.0.0.2019f' # marine
+bversion = '1.0.0.2019f' # blend#
 
 #*******************************************************
 # SUBROUTINES
@@ -391,7 +399,9 @@ def main(argv):
     MissingDataThresh = 0.7 # Proportion of data values that must be present across the trend period
 
     # Which start/end year of the complete dataset?
-    styr = 1973 # 1973
+    styr = 1973 
+    # 1979 start date for ERA5 is accounted for later
+    stera = 1979
     edyr = 2019
 
     # Which climatology period to work with?
@@ -399,6 +409,7 @@ def main(argv):
     climED = str(2010)	    #2005 or 2010
     climBIT = 'anoms'+climST[2:4]+climED[2:4]
 
+    # GOING TO DITCH THIS IN THE FUTURE
     # Which working file dates?
     nowmon   = 'JAN'
     nowyear  = '2020'
@@ -408,13 +419,13 @@ def main(argv):
     # What domain?
     if (typee == 'MARINE') | (typee == 'MARINESHIP') | (typee == 'ERA5MARINE') | (typee == 'ERA5MARINEMASK'):
         domain = 'marine'
-        version = '1.0.0.2019f'
+        version = mversion
     elif (typee == 'BLEND') | (typee == 'BLENDSHIP') | (typee == 'ERA5') | (typee == 'ERA5MASK'):
         domain = 'blend'
-        version = '1.0.0.2019f'
+        version = bversion
     else:
         domain = 'land'
-        version = '4.2.0.2019f'
+        version = lversion
 
     # Latitude and Longitude gridbox width and variable names
     latlg = 5.
@@ -522,7 +533,7 @@ def main(argv):
     if (typee.find('ERA5') >= 0):
 
         INFILE = var+'2m_monthly_5by5_ERA5_1979'+str(edyr)
-        OUTFILE = var+'2m_monthly_5by5_ERA5_'+climBIT+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
+        OUTFILE = var+'2m_monthly_5by5_'+typee+'_'+climBIT+'_'+TrendType+'trends_'+str(sttrd)+str(edtrd)	#70S-70N
 
 #        INFILEH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_cf'
         INFILEH = 'HadISDH.'+domain+ParamDict[var][0]+'.'+version+'_'+fileblurb+'_'+climBIT+'_'+thenmon+thenyear+'_cf'
@@ -534,7 +545,7 @@ def main(argv):
     # Get Data
     if (typee.find('ERA') >= 0):
         styrh = np.copy(styr)
-        styr = 1979
+        styr = stera
 	
         if (domain == 'land'):
             ReadInfo = [var+'2m_anoms_land','time']

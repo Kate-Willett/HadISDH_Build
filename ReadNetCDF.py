@@ -244,7 +244,7 @@ def GetGrid4(FileName,
     # Set up python imports
     import numpy as np
     import scipy.stats
-    from scipy.io import netcdf
+    #from scipy.io import netcdf
     #from netCDF4 import Dataset  
     import netCDF4 as nc4  
     import pdb # pdb.set_trace() or c

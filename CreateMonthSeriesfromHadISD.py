@@ -39,8 +39,8 @@
 # First, month hour averages are taken for each hour of the day - there must be at least 15 days present for each hour within the month
 # Then the month average is made from the month hour averages. There must be at least 4 month hour averages with at least 1 in each tercile 00 to 07,
 # 08 to 15, 16 to 23
-# There must also be at least one year in each decade of climatology 76-85, 86-95, 96-05 - CHANGE TO 81-90, 91-00, 01-10
-# There must be at least 15 years of T and Td (tests RH) within the 1976-2005 climatology period for each month present for the station to be kept
+# There must also be at least one year in each decade of climatology 81-90, 91-00, 01-10
+# There must be at least 15 years of T and Td (tests RH) within the 1981-2010 climatology period for each month present for the station to be kept
 #
 # <references to related published material, e.g. that describes data set>
 # 
