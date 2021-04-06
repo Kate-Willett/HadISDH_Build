@@ -136,6 +136,7 @@ import struct
 import pdb
 import numpy as np
 from subprocess import call
+import glob
 
 # Variables
 # Set up initial run choices
@@ -153,18 +154,18 @@ if (HardWire == 0):
     #' Read in the config file to get all of the info
     with open('F1_HadISDHBuildConfig.txt') as f:
         
-	ConfigDict = dict(x.rstrip().split('=', 1) for x in f)
-	versiondots = ConfigDict['VersionDots']
-	hadisdversiondots = ConfigDict['HadISDVersionDots']
-	styr = ConfigDict['StartYear']
-	edyr = ConfigDict['EndYear']
+        ConfigDict = dict(x.rstrip().split('=', 1) for x in f)
+        versiondots = ConfigDict['VersionDots']
+        hadisdversiondots = ConfigDict['HadISDVersionDots']
+        styr = ConfigDict['StartYear']
+        edyr = ConfigDict['EndYear']
     
 
 # Set up file locations
 updateyear = str(edyr)[2:4]
 workingdir = '/scratch/hadkw/UPDATE20'+updateyear
-phadir     = workingdir+'/pha52jgo/data/hadisdh/'
-OUTPUTLOG   = '/scratch/hadkw/OutputLogFile'+version+'.txt'
+phadir = '/scratch/hadkw/pha52jgo/data/hadisdh/'
+OUTPUTLOG = workingdir+'/LISTS_DOCS/OutputLogFile'+versiondots+'.txt'
 
 varlist = ['dpd','t','q','e','rh','tw','td']
 
@@ -176,9 +177,9 @@ PHAID = []
 for var in varlist:
     
     # This should pull out the PHA... filename as a string
-    WholeName = glob.glob(phadir+var+"/output/PHAv52j*")[0].split('/')[2]
-    PHAID.append(WholeName[22:32])
-    
+    TimeStampPHA = glob.glob(phadir+var+"/output/PHAv52j*")[0].split('.')[4]
+    PHAID.append(TimeStampPHA)
+
 # Should create something like this - number strings are YYMMDDHHMM and may differ if PHA is run at different times for each var
 #PHAID = ['2002171753','2002171753','2002171753','2002171753','2002171753','2002171753','2002171753']
 
@@ -322,14 +323,7 @@ for vv, var in enumerate(VarLoop): # vv is a number, var is the element of VarLo
     filee = open(OUTPUTLOG,'a+')
     filee.write('%s%s%s%i\n' % ('FAILEDCORR_',var,'=',nBADstations))
     filee.close()
-    
-    # Write out 'bad' stations to OutputLogFile and number
-    filee = open(OUTPUTLOG,'a+')
-    filee.write('%s%s%i\n' % (var,'_Not_Enough_PHA_Neighbours_Station_Count=',nBADstations))
-    filee.close()
-    
-    #KATE - WHY DO WE NEED BOTH OF THE ABOVE? THEY LOOK THE SAME?
-    
+        
     # If var is DPD or T then add the BAD lists to ALLBAD - then sort for unique values
     if var == 'DPD' or var == 'T':
         ALLBADStationListWMO = np.append(ALLBADStationListWMO,BADStationListWMO)

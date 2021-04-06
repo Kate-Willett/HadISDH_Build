@@ -316,22 +316,23 @@ from math import sqrt,pi
 import struct
 import pdb
 import netCDF4 as nc4
-from subprocess import check_output
+from subprocess import check_output, call
+import glob
 
 import CalcHums 
 import ReadNetCDF
 from GetNiceTimes import MakeDaysSince
 
 # RESTART VALUE
-RestartValue = '------'				#'------'		#'681040'
+RestartValue = '-----------' #'-----------'				#'------'		#'681040'
 
 # Anomalies or absolutes to PHA?
 PHAActuals = True # True for outputting actuals to PHA, False to output Anomalies to PHA
 
 # Start and end years if HardWire = 1
 isdstyear = 1931 # start year of HadISD dataset
-styear       = 1973
-edyear       = 2019
+styear = 1973
+edyear = 2019
 
 # Dataset version if HardWire = 1
 versiondots    = '4.2.0.2019f'
@@ -349,11 +350,11 @@ if (HardWire == 0):
     #' Read in the config file to get all of the info
     with open('F1_HadISDHBuildConfig.txt') as f:
         
-	ConfigDict = dict(x.rstrip().split('=', 1) for x in f)
-	versiondots = ConfigDict['VersionDots']
-	hadisdversiondots = ConfigDict['HadISDVersionDots']
-	styear = ConfigDict['StartYear']
-	edyear = ConfigDict['EndYear']
+        ConfigDict = dict(x.rstrip().split('=', 1) for x in f)
+        versiondots = ConfigDict['VersionDots']
+        hadisdversiondots = ConfigDict['HadISDVersionDots']
+        styear = int(ConfigDict['StartYear'])
+        edyear = int(ConfigDict['EndYear'])
     
 # Climatology start and end years
 clims = [1981,2010]
@@ -363,7 +364,10 @@ updateyy  = str(edyear)[2:4]
 updateyyyy  = str(edyear)
 workingdir  = '/scratch/hadkw/UPDATE'+updateyyyy
 
-INDIR       = workingdir+'/HADISDTMP/'
+# Hope this stays teh same. May need to change this when we go to monthly updating
+# Could use glob.glob with wildcard for the date bit...
+#INDIR       = workingdir+'/HADISDTMP/hadisd.'+hadisdversiondots+'_19310101-'+str(edyear+1)+'0101_'
+INDIR       = workingdir+'/HADISDTMP/hadisd.'+hadisdversiondots+'_19310101-'+str(edyear+1)+'0201_'
 
 OUTASC      = workingdir+'/MONTHLIES/ASCII/'
 OUTRAWq     = workingdir+'/pha52jgo/data/hadisdh/q/'
@@ -391,7 +395,7 @@ INSLP       = workingdir+'/OTHERDATA/'	#20CRJan7605MSLP_yycompos.151.170.240.10.
 
 OUTDITCH    = workingdir+'/LISTS_DOCS/tooshortforHadISDH.'+versiondots+'.txt'
 OUTKEEP     = workingdir+'/LISTS_DOCS/goodforHadISDH.'+versiondots+'.txt'
-OUTPUTLOG   = '/scratch/hadkw/OutputLogFile'+version+'.txt'
+OUTPUTLOG   = workingdir+'/LISTS_DOCS/OutputLogFile'+versiondots+'.txt'
 
 # Set up variables
 MDI = -1e+30
@@ -534,8 +538,11 @@ def GetHadISD(TheFilee,TheHTimes,TheMDI):
     # Read the time, t, td, slp and ws (and obs source) data from the netcdf file
     ncf = nc4.Dataset(TheFilee,'r')
     tims = np.copy(ncf.variables['time'][:]).astype(int) # hours wince 1931, 1, 1, 00:00 - these are doubles so convert to integer
-    # Now find the start of the period we're interested and only copy that data
-    StartPoint = np.where(tims >= TheHTimes[0])[0]
+    # Now find the period we're interested and only copy that data
+    # Note that we may be reading HadISD that has data after our period of interest (monthly updates) so need to be specific
+    #StartPoint = np.where(tims >= TheHTimes[0])[0]
+    StartPoint = np.where((tims >= TheHTimes[0]) & (tims <= TheHTimes[-1]) )[0]
+#    pdb.set_trace()
 
     # Catch station if there is no data in desired period and return with empty arrays
     if (len(StartPoint) == 0):
@@ -802,9 +809,9 @@ def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObje
     ''' Convert variables using the obtained scale_factor and add_offset: stored_var=int((var-offset)/scale) '''
     ''' Write to file, set up given dimensions, looping through all potential variables and their attributes, and then the provided dictionary of global attributes '''
 
-    # Attributes and things common to all vars
-    add_offset = -100.0 # storedval=int((var-offset)/scale)
-    scale_factor = 0.01
+#    # Attributes and things common to all vars
+#    add_offset = -100.0 # storedval=int((var-offset)/scale)
+#    scale_factor = 0.01
     
     # Sort out date/times to write out
     TimPoints,TimBounds = MakeDaysSince(TheStYr,1,TheEdYr,12,'month',Return_Boundaries = True)
@@ -824,11 +831,11 @@ def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObje
 	
     # No need to convert float data using given scale_factor and add_offset to integers - done within writing program (packV = (V-offset)/scale
     # Not sure what this does to float precision though...
-    # Change mdi into an integer -999 because these are stored as integers
-    # NOTE THAT THIS CHANGES THE ACTUAL DATA ARRAYS IN THE LIST BECAUSE THE LIST IS JUST A POINTER!!!
-    NEWMDI = -999
-    for vv in range(len(TheDataList)):
-        TheDataList[vv][np.where(TheDataList[vv] == OLDMDI)] = NEWMDI
+#    # Change mdi into an integer -999 because these are stored as integers
+#    # NOTE THAT THIS CHANGES THE ACTUAL DATA ARRAYS IN THE LIST BECAUSE THE LIST IS JUST A POINTER!!!
+#    NEWMDI = -999
+#    for vv in range(len(TheDataList)):
+#        TheDataList[vv][np.where(TheDataList[vv] == OLDMDI)] = NEWMDI
 
     # Create a new netCDF file - have tried zlib=True,least_significant_digit=3 (and 1) - no difference
     ncfw = nc4.Dataset(FileName,'w',format='NETCDF4_CLASSIC') # need to try NETCDF4 and also play with compression but test this first
@@ -951,7 +958,8 @@ def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObje
 
         # NOt 100% sure this works in a loop with overwriting
 	# initiate variable with name, type and dimensions
-        MyVar = ncfw.createVariable(AttrObject[vv]['var_name'],AttrObject[vv]['var_type'],AttrObject[vv]['var_dims'],fill_value = NEWMDI)
+#        MyVar = ncfw.createVariable(AttrObject[vv]['var_name'],AttrObject[vv]['var_type'],AttrObject[vv]['var_dims'],fill_value = NEWMDI)
+        MyVar = ncfw.createVariable(AttrObject[vv]['var_name'],AttrObject[vv]['var_type'],AttrObject[vv]['var_dims'],fill_value = OLDMDI)
         
 	# Apply any other attributes
         if ('long_name' in AttrObject[vv]):
@@ -960,8 +968,8 @@ def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObje
         if ('units' in AttrObject[vv]):
             MyVar.units = AttrObject[vv]['units']
 
-        MyVar.add_offset = add_offset
-        MyVar.scale_factor = scale_factor
+#        MyVar.add_offset = add_offset
+#        MyVar.scale_factor = scale_factor
 
         if ('valid_min' in AttrObject[vv]):
             MyVar.valid_min = AttrObject[vv]['valid_min']
@@ -1081,10 +1089,10 @@ nstations       = len(StationListWMO)
 for st in range(nstations):
 
 # check if restart necessary
-    if RestartValue != '------' and RestartValue != StationListWMO[st]:
+    if RestartValue != '-----------' and RestartValue != StationListWMO[st]+StationListWBAN[st]:
         continue
 
-    RestartValue     = '------'
+    RestartValue     = '-----------'
 
     stationid = StationListWMO[st]+'-'+StationListWBAN[st]	# New ISD will have different filenames
     outstationid = StationListWMO[st]+StationListWBAN[st]	# New ISD will have different filenames
@@ -1092,8 +1100,11 @@ for st in range(nstations):
     print('Working on ',stationid)
 
 # Find the CID from the ish-history file
+# INCIDs is a wildcard file path as the date of download changes each time.
     GotCID = 0
-    with open (INCIDs, 'rt') as myfile:
+    FilNameWild = glob.glob(INCIDs)
+#    with open (FilNameWild[0], 'rt') as myfile:
+    with open (FilNameWild[0], 'r', errors='ignore') as myfile: # ignore to cope with umlaut : found for 999999-27516 Jan 2021
         
         for line in myfile:
 	
@@ -1115,7 +1126,10 @@ for st in range(nstations):
 # open the file, extract HadISDH time period data for times, t, td, slp and ws and station sources----------------------------------------------------------
 
     filee = INDIR+stationid+'.nc'
+    # Need to gunzip then gzip
+    call(['gunzip',filee+'.gz'])
     fulltemp_arr,fulldewp_arr,fullws_arr,fullslp_arr,tims,obssource = GetHadISD(filee,isd_full_times,MDI)
+    call(['gzip',filee])
     
     # Catch failure from no data in desired time period
     if (len(fulltemp_arr[np.where(fulltemp_arr > MDI)[0]]) == 0):
@@ -1334,300 +1348,266 @@ for st in range(nstations):
     		     ('long_name','month of year')])]
 
     # Attribute list for variables
-    AttrList=[dict([('var_type','i4'),
+    AttrList=[dict([('var_type','f4'),
 	            ('var_name','rh_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) relative humidity monthly mean anomaly'),
 	            ('units','%rh')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','rh_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) relative humidity monthly mean'),
 	            ('units','%rh')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','rh_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) relative humidity monthly standard deviations'),
 	            ('units','%rh')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','rh_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) relative humidity monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','%rh')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','rh_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) relative humidity monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','%rh')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','t_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) air temperature monthly mean anomaly'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','t_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) air temperature monthly mean'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','t_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) air temperature monthly standard deviations'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','t_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) air temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','t_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) air temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','td_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint temperature monthly mean anomaly'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','td_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint temperature monthly mean'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','td_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint temperature monthly standard deviations'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','td_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) dewpoint temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','td_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) dewpoint temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','dpd_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint depression monthly mean anomaly'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','dpd_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint depression monthly mean'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','dpd_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) dewpoint depression monthly standard deviations'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','dpd_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) dewpoint depression monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','dpd_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) dewpoint depression monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','tw_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) wetbulb temperature monthly mean anomaly'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','tw_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) wetbulb temperature monthly mean'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','tw_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) wetbulb temperature monthly standard deviations'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','tw_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) wetbulb temperature monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','tw_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) wetbulb temperature monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','e_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) vapour pressure monthly mean anomaly'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','e_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) vapour pressure monthly mean'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','e_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) vapour pressure monthly standard deviations'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','e_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) vapour pressure monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','e_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) vapour pressure monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','q_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) specific humidity monthly mean anomaly'),
 	            ('units','g/kg')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','q_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) specific humidity monthly mean'),
 	            ('units','g/kg')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','q_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) specific humidity monthly standard deviations'),
 	            ('units','g/kg')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','q_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) specific humidity monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','g/kg')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','q_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) specific humidity monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','g/kg')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','ws_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~10m) wind speed monthly mean anomaly'),
 	            ('units','m/s')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','ws_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~10m) wind speed monthly mean'),
 	            ('units','m/s')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','ws_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~10m) wind speed monthly standard deviations'),
 	            ('units','m/s')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','ws_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~10m) wind speed monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','m/s')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','ws_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~10m) wind speed monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','m/s')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','slp_anoms'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) station level pressure monthly mean anomaly'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','slp_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) station level pressure monthly mean'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','slp_std'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) station level pressure monthly standard deviations'),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','slp_clims'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) station level pressure monthly climatology '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','slp_climSDs'),
 		    ('var_dims',('month',)), 
 	            ('long_name','near surface (~2m) station level pressure monthly climatological standard deviation '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','hPa')]), 
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','20CRstation_Pclim'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) 20CRv2c station level pressure monthly climatological mean '+str(clims[0])+'-'+str(clims[1])),
 	            ('units','hPa')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','de_dpd_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) derived (T-Td) dewpoint depression monthly mean'),
 	            ('units','deg C')]),
-              dict([('var_type','i4'),
+              dict([('var_type','f4'),
 	            ('var_name','de_td_abs'),
 		    ('var_dims',('time',)), 
 	            ('long_name','near surface (~2m) derived dewpoint temperature (T-DPD) monthly mean'),
 	            ('units','deg C')])]  
 
-    Institution = 'Met Office Hadley Centre (UK), \
-               National Centres for Environmental Information (USA)'
-    History = 'See Willett et al., (2014) REFERENCE for more information. \
-           See www.metoffice.gov.uk/hadobs/hadisdh/ for more information and related data and figures. \
-           Follow @metofficeHadOBS to keep up to date with Met Office Hadley Centre HadOBS dataset developements. \
-           See hadisdh.blogspot.co.uk for HadISDH updates, bug fixes and explorations.'
-# Non-commercial license
-    Licence = 'HadISDH is distributed under the Non-Commercial Government Licence: \
-           http://www.nationalarchives.gov.uk/doc/non-commercial-government-licence/non-commercial-government-licence.htm. \
-           The data are freely available for any non-comercial use with attribution to the data providers. Please cite \
-           Willett et al.,(2014) and Smith et al., (2011) with a link to the REFERENCES provided in the REFERENCE attribute.'
-# Open Government License
-#Licence = 'HadISDH is distributed under the Open Government Licence: \
-#           http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/. \
-#           The data are freely available for use with attribution to the data providers. Please cite \
-#           Willett et al.,(2014) with a link to the REFERENCE provided in the REFERENCE attribute.'
-    Project = 'HadOBS: Met Office Hadley Centre Climate Monitoring Data-product www.metoffice.gov.uk/hadobs'
-    Processing_level = 'Hourly station data selected for length and continuity, quality controlled, averaged to monthly means.'
-    Acknowledgement = 'Kate Willett and Robert Dunn were supported by the Joint UK BEIS/Defra \
-                  NOAA ESRL 20CRv2c are used in the processing of HadISDH.'
-# THIS BIT NEEDS EDITING EVERY YEAR **************************
-    Source = 'HadISD.'+hadisdversiondots+' (Dunn et al. 2016) from the National Centres for Environmental Information \
-          International Surface Database (ISD): www.ncdc.noaa.gov/isd'
-    Comment = 'Where station is a composite the station id refers to the primary source used in the timestep and may not apply to all elements'
-    References = 'Willett, K. M., Dunn, R. J. H., Thorne, P. W., Bell, S., de Podesta, M., Parker, D. E., \
-              Jones, P. D. and Williams, Jr., C. N.: HadISDH land surface multi-variable humidity and temperature record for climate monitoring, \
-              Clim. Past, 10, 1983-2006, doi:10.5194/cp-10-1983-2014, 2014, \
-	      Smith, A., N. Lott, and R. Vose, 2011: The Integrated Surface Database: Recent \
-	      Developments and Partnerships. Bulletin of the American Meteorological Society, \
-	      92, 704-708, doi:10.1175/2011BAMS3015.1'
-    Creator_name = 'Kate Willett'
-    Creator_email = 'kate.willett@metoffice.gov.uk'
-    Conventions = 'CF-1.6'
-    netCDF_type = 'NETCDF4_CLASSIC'
+    GlobAttrObjectList = dict([['File_created',dt.datetime.strftime(dt.datetime.now(), '%Y-%m-%d %H:%M:%S')], # Is there a call for time stamping?
+			          ['Description','HadISDH monthly mean land surface raw data'],
+			          ['Title','HadISDH monthly mean land surface raw climate monitoring product'], 
+			          ['Institution', ConfigDict['Institution']],
+			          ['History', ConfigDict['History']], 
+			          ['Licence', ConfigDict['NCLicence']],
+			          ['Project', ConfigDict['Project']],
+			          ['Processing_level', ConfigDict['Processing_level']],
+			          ['Acknowledgement', ConfigDict['Acknowledgement']],
+			          ['Source', 'HadISD '+hadisdversiondots+' '+ConfigDict['Source']],
+			          ['Comment',''],
+			          ['References', ConfigDict['References']],
+			          ['Creator_name', ConfigDict['Creator_name']],
+			          ['Creator_email', ConfigDict['Creator_email']],
+			          ['Version', versiondots],
+			          ['doi',''], # This needs to be filled in
+			          ['Conventions', ConfigDict['Conventions']],
+			          ['netCDF_type', ConfigDict['netCDF_type']]]) 
 
-    GlobAttrObjectList=dict([['File_created',dt.datetime.strftime(dt.datetime.now(), '%Y-%m-%d %H:%M:%S')], # Is there a call for time stamping?
-			     ['Description','HadISDH monthly mean land surface raw data'],
-			     ['Title','HadISDH monthly mean land surface raw climate monitoring product'], 
-			     ['Institution',Institution],
-			     ['History','See http://catalogue.ceda.ac.uk/uuid/251474c7b09449d8b9e7aeaf1461858f for more information and related data.'], 
-			     ['Licence',Licence],
-			     ['Project', Project],
-			     ['Processing_level',Processing_level],
-			     ['Acknowledgement',Acknowledgement],
-			     ['Source',Source],
-			     ['Comment',''],
-			     ['References',References],
-			     ['Creator_name',Creator_name],
-			     ['Creator_email',Creator_email],
-			     ['Version',versiondots],
-			     ['doi',''], # This needs to be filled in
-			     ['Conventions',Conventions],
-			     ['netCDF_type',netCDF_type]]) 
 
 # Write out monthly data to netCDH
     WriteNetCDF(OUTNCF+stationid+NCSUFFIX,styear,edyear,clims,DataList,DimList,AttrList,GlobAttrObjectList,MDI)
@@ -1698,8 +1678,9 @@ for st in range(nstations):
 
     # get mask of qanoms_mm to mask out other variables NOT 100% SURE WE NEED/WANT TO DO THIS
     # NOTE THAT NOW THE MDI IS -999 BECAUSE THIS WAS SET WITHIN WriteNetCDF FOR NetCDF output as integers	
-    NEWMDI = -999.
-    qmask = np.where(qanoms_mm == NEWMDI)
+#    NEWMDI = -999.
+#    qmask = np.where(qanoms_mm == NEWMDI)
+    qmask = np.where(qanoms_mm == MDI)
     for v,vv in enumerate(DataList):
 
 	# mask to qanoma
@@ -1707,7 +1688,8 @@ for st in range(nstations):
   
         #pdb.set_trace()
         # change MDI to -9999 and multiply values by 10 - round whole number
-        vv[np.where(vv == NEWMDI)] = -99.99
+#        vv[np.where(vv == NEWMDI)] = -99.99
+        vv[np.where(vv == MDI)] = -99.99
 
         # reshape to print out a row of 12 months for each year
         vv = np.reshape(vv,(nyrs,12))
@@ -1727,43 +1709,44 @@ for st in range(nstations):
 
 # Print out station listing in keep file    
     filee = open(OUTKEEP,'a+')
-    filee.write('%11s%8.4f %9.4f %6.1f %2s %29s%8s%4i\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],'MONTHS: ',len(np.where(qanoms_mm > -9999)[0])))
+    filee.write('%11s%8.4f %9.4f %6.1f %2s %29s%8s%4i\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st],'MONTHS: ',len(np.where(qanoms_mm > -99.99)[0])))
+# NOTE usihng -99.99 here. The above loop changes MDI to -99.99 within the DataList so qanoms_mm now has MDI=-99.99 but for some reason the reshape and *100 doesn't happen in place?
     filee.close()
 
 # Out put stnlist to each PHA directory
-    filee = open(OUTRAWq+'meta/73'+str(edyear)[2:4]+'q_stnlist.tavg','a+')
+    filee = open(OUTRAWq+'meta/q_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWe+'meta/73'+str(edyear)[2:4]+'e_stnlist.tavg','a+')
+    filee = open(OUTRAWe+'meta/e_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWt+'meta/73'+str(edyear)[2:4]+'t_stnlist.tavg','a+')
+    filee = open(OUTRAWt+'meta/t_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWdpd+'meta/73'+str(edyear)[2:4]+'dpd_stnlist.tavg','a+')
+    filee = open(OUTRAWdpd+'meta/dpd_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWtd+'meta/73'+str(edyear)[2:4]+'td_stnlist.tavg','a+')
+    filee = open(OUTRAWtd+'meta/td_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWtw+'meta/73'+str(edyear)[2:4]+'tw_stnlist.tavg','a+')
+    filee = open(OUTRAWtw+'meta/tw_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWrh+'meta/73'+str(edyear)[2:4]+'rh_stnlist.tavg','a+')
+    filee = open(OUTRAWrh+'meta/rh_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWws+'meta/73'+str(edyear)[2:4]+'ws_stnlist.tavg','a+')
+    filee = open(OUTRAWws+'meta/ws_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 
-    filee = open(OUTRAWslp+'meta/73'+str(edyear)[2:4]+'slp_stnlist.tavg','a+')
+    filee = open(OUTRAWslp+'meta/slp_stnlist.tavg','a+')
     filee.write('%11s%7.2f%10.2f        %5i %2s %29s\n' % (outstationid,StationListLat[st],StationListLon[st],StationListElev[st],StationListCID[st],StationListName[st]))
     filee.close()
 

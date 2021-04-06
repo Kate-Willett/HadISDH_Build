@@ -9,8 +9,6 @@ echo $StartYear # This should be 1973
 echo $EndYear # This should be 2019 or later
 echo $Version # This should be 4.2.0.2019f or later
 echo $VersionDots # This should be 4.2.0.2019f or later
-echo $HadISDVersionDots # This should be 4.2.0.2019f or later
-echo $HadISDVersion # This should be 4.2.0.2019f or later
 
 WorkDir="UPDATE"$EndYear
 MyDir="/scratch/hadkw/"
