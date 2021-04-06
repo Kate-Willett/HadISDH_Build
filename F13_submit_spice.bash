@@ -10,18 +10,18 @@
 # START
 
 for var in q rh t td e tw dpd;
-#for var in q rh t;
+#for var in td;
 
 do
 
        typee='IDPHA'
-       if [ $var = 'dpd' ]
+       if [ "$var" == "dpd" ];
        then   
 	   typee='PHA'
 	   
        fi
        
-       if [ $var = 'td' ]
+       if [ "$var" == "td" ];
        then
 	   typee='PHADPD'
 	   
@@ -39,8 +39,10 @@ do
         echo "#SBATCH --time=120" >> ${spice_script}
         echo "#SBATCH --qos=normal" >> ${spice_script}
 
-        echo module load scitools/default-current
+        echo "module load scitools/default-current" >> ${spice_script}
+        echo "export MPLBACKEND='Agg'" >> ${spice_script}
         echo "python F13_GridHadISDHFLAT.py --var ${var} --typee ${typee}" >> ${spice_script}
+        echo "unset MPLBACKEND" >> ${spice_script}        
         
         sbatch ${spice_script}       
 

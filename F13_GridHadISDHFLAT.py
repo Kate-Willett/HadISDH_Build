@@ -90,21 +90,26 @@
 # ---------
 #  
 # Enhancements
-# Double checked uncertainty calculations and they are quantitatively the same as for the marine code but expressed differently so I have changed the code to match that for the marine.
+# Double checked uncertainty calculations and they are quantitatively the same as for the marine code 
+# but expressed differently so I have changed the code to match that for the marine.
 #  
 # Changes
 # Now Python 3
 # Using pythong gridbox_sampling_uncertainty.py rather than IDL code (as used for the marine data)
 # gridbox_sampling_uncertainty.py uses HadCRUT.4.3.0.0.land_fraction.py to select land boxes
-# gridbox_sampling_uncertainty.py sets rbar to 0.8 if there are missing values rather than the 0.1 previously which was far too low. 0.8 is about mid-range for rbar
+# gridbox_sampling_uncertainty.py sets rbar to 0.8 if there are missing values rather than the 0.1 previously which 
+# was far too low. 0.8 is about mid-range for rbar
 # Sampling uncertainty is very slightly different order 0.001 in a few places
-# We now use the mean number of stations contributing to the gridbox rather than the maximum - this is smaller so will result in slightly larger sampling uncertainty.
-# Combining uncertainty over gridbox now uses actual numer of stations for that month rather than total over time period for that gridbox
-# so new gridbox uncs are LARGER than IDL ones where there are fewer stations contributing to the gridbox compared to the total.
+# We now use the mean number of stations contributing to the gridbox rather than the maximum - this is smaller so 
+# will result in slightly larger sampling uncertainty, especially in gridboxes with very few stations LARGER UNCERTAINTIES
+# Combining uncertainty over gridbox now uses actual numer of stations for that month rather than total over time 
+# period for that gridbox so new gridbox uncs are LARGER than IDL ones where there are fewer 
+# stations contributing to the gridbox compared to the total. LARGER UNCERTAINTIES
 #  
 # Bug fixes
 # In 2019 I reduced the combined uncertainties because I had thought that *2 made them 4 sigma. I hadn;t noticed the /2 in the equation. So, while the original
 # equation of sqrt((staterr/2)^2 + (samperr/2)^2)*2 was pointless it was right and 2019 would have had combined uncertainty that was too small - now corrected!!!
+# LARGER UNCERTAINTIES - BY *2
 #
 #
 # Version 5 (29 March 2018)
@@ -261,7 +266,11 @@ if (HardWire == 0):
     styear = ConfigDict['StartYear']
     edyear = ConfigDict['EndYear']
 
-# Note that ConfigDict is still held in memory and contains all the Global Attribute Elements for the output NetCDF File
+# AttribDict held in memory to probide global attribute text later
+#' Read in the attribute file to get all of the info
+with open('F1_HadISDHBuildAttributes.txt') as f:
+    
+    AttribDict = dict(x.rstrip().split('=', 1) for x in f)
 
 # NOT CODED THIS FUNCTIONALITY YET
 ## Are we working with homogenised actuals (True) or anomalies (False)?
@@ -282,7 +291,7 @@ OUTDIRLIST = workingdir+'/LISTS_DOCS/GriddingResults_'+versiondots+'_anoms'+CLMl
 OUTDIRDAT = workingdir+'/STATISTICS/GRIDS/' 
 
 # File for output stats but also for reading in missed adjustment uncertainties
-OUTPUTLOG = '/scratch/hadkw/OutputLogFile'+versiondots+'.txt'
+OUTPUTLOG = workingdir+'/LISTS_DOCS/OutputLogFile'+versiondots+'.txt'
 
 # Set up variables
 MDI = -1e+30
@@ -701,8 +710,8 @@ def main(argv):
 		# SQRT(sum(vals^2)) / N
 		# THis is sort of annoying as I was hoping to reduce the uncertainties but great because I didn't mess up in the first place.
 		# These are masked arrays so this should work with missing data - all uncertainties are given actual missing data mask too
-		# NOTE THAT THIS DIFFERS FROM IDL BECAUSE THE ERROR WAAAAAAAAAAAAAAAAAAAAAS DIMINISHED BY DIVIDING BY TOTAL NUMBER OF STATIONS OVER PERIOD 
-		# RATHER THAN ACTUAL NUMBER OF STATIONS FOR THAT MONTH - SO NEW UNCS WILL BE LARGER WHHHHHHHHHHHHHHHHHHHHHERE THERE ARE FEWER STATIONS.
+		# NOTE THAT THIS DIFFERS FROM IDL BECAUSE THE ERROR WAS DIMINISHED BY DIVIDING BY TOTAL NUMBER OF STATIONS OVER PERIOD 
+		# RATHER THAN ACTUAL NUMBER OF STATIONS FOR THAT MONTH - SO NEW UNCS WILL BE LARGER WHHERE THERE ARE FEWER STATIONS.
                 GBstaterr[:,lt,ln] = npm.sqrt(npm.sum(npm.power(TMPstaterr,2.),axis=0)) / npm.count(TMPanoms,axis=0)
                 GBobserr[:,lt,ln] = npm.sqrt(npm.sum(npm.power(TMPobserr,2.),axis=0)) / npm.count(TMPobserr,axis=0)
                 GBclmerr[:,lt,ln] = npm.sqrt(npm.sum(npm.power(TMPclmerr,2.),axis=0)) / npm.count(TMPclmerr,axis=0)
@@ -891,21 +900,21 @@ def main(argv):
     GlobAttrObjectList = dict([['File_created',datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')], # Is there a call for time stamping?
 			       ['Description','HadISDH monthly mean land surface homogenised data'],
 			       ['Title','HadISDH monthly mean land surface climate monitoring product'], 
-			       ['Institution', ConfigDict['Institution']],
-			       ['History', ConfigDict['History']], 
-			       ['Licence', ConfigDict['OGLicence']],
-			       ['Project', ConfigDict['Project']],
-			       ['Processing_level', ConfigDict['Processing_level']],
-			       ['Acknowledgement', ConfigDict['Acknowledgement']],
-			       ['Source', 'HadISD '+hadisdversiondots+' '+ConfigDict['Source']],
+			       ['Institution', AttribDict['Institution']],
+			       ['History', AttribDict['History']], 
+			       ['Licence', AttribDict['OGLicence']],
+			       ['Project', AttribDict['Project']],
+			       ['Processing_level', AttribDict['Processing_level']],
+			       ['Acknowledgement', AttribDict['Acknowledgement']],
+			       ['Source', 'HadISD '+hadisdversiondots+' '+AttribDict['Source']],
 			       ['Comment',''],
-			       ['References', ConfigDict['References']],
-			       ['Creator_name', ConfigDict['Creator_name']],
-			       ['Creator_email', ConfigDict['Creator_email']],
+			       ['References', AttribDict['References']],
+			       ['Creator_name', AttribDict['Creator_name']],
+			       ['Creator_email', AttribDict['Creator_email']],
 			       ['Version', versiondots],
 			       ['doi',''], # This needs to be filled in
-			       ['Conventions', ConfigDict['Conventions']],
-			       ['netCDF_type', ConfigDict['netCDF_type']]]) 
+			       ['Conventions', AttribDict['Conventions']],
+			       ['netCDF_type', AttribDict['netCDF_type']]]) 
 
     # Write out monthly data to netCDF
     WriteNetCDF(OutFile+'.nc',styear,edyear,[MYclst,MYcled],Lats, Lons, LatBounds, LonBounds, DataList,DimList,AttrList,GlobAttrObjectList,MDI)

@@ -202,14 +202,14 @@ else:
 # Set up directories locations
 updateyy  = str(edyear)[2:4]
 updateyyyy  = str(edyear)
-#workingdir  = '/scratch/hadkw/UPDATE'+updateyyyy
-workingdir  = '/data/users/hadkw/WORKING_HADISDH/UPDATE'+updateyyyy
+workingdir  = '/scratch/hadkw/UPDATE'+updateyyyy
+#workingdir  = '/data/users/hadkw/WORKING_HADISDH/UPDATE'+updateyyyy
 
 OUTPLOTDIR   = workingdir+'/IMAGES/BUILD/'
 
 # Set up filenames
 INDIR = workingdir+'/LISTS_DOCS/'
-OUTPUTLOG  = '/scratch/hadkw/OutputLogFile'+versiondots+'.txt'
+OUTPUTLOG  = workingdir+'/LISTS_DOCS/OutputLogFile'+versiondots+'.txt'
 #OUTSTATS   = workingdir+'/LISTS_DOCS/Adjs_Stats.'+versiondots+'.txt'  
 
 # Set up variables
@@ -268,10 +268,11 @@ def GetAdjustmentArrays(INFIL, MCount, SCount, HType, WMOList, WBANList):
     GAdj_Mags_Accum = [] # grow this array on the fly
     GAdj_Mags_Act   = []
     GAdj_WMOs       = []
+    GAdj_WBANs      = []
 
-    # Gunzip PHA output file
+#    # Gunzip PHA output file
     print(INFIL)
-    call(['gunzip',INFIL+'.gz'])
+#    call(['gunzip',INFIL+'.gz'])
 
     # loop through station by station to get all of the adjustments and locations
     for st in range(SCount):
@@ -340,6 +341,7 @@ def GetAdjustmentArrays(INFIL, MCount, SCount, HType, WMOList, WBANList):
             GAdj_Mags_Accum.append(Adj)
             AdjVals.append(Adj)
             GAdj_WMOs.append(WMOList[st])
+            GAdj_WBANs.append(WBANList[st])
 	    
 	    # Now get the actual adjustments from AdjVals
             if (rec == 0):
@@ -354,10 +356,10 @@ def GetAdjustmentArrays(INFIL, MCount, SCount, HType, WMOList, WBANList):
 #        pdb.set_trace()	
 # Good for IDPHA
 
-    # gzip PHA output file for tidiness
-    call(['gzip',INFIL])
+#    # gzip PHA output file for tidiness
+#    call(['gzip',INFIL])
 
-    return GAdj_Locs, GAdj_Mags_Accum, GAdj_Mags_Act, GAdj_WMOs
+    return GAdj_Locs, GAdj_Mags_Accum, GAdj_Mags_Act, GAdj_WMOs, GAdj_WBANs
 
 #******************************************************************
 # GETHIST
@@ -483,7 +485,7 @@ def GetNewMiddle(GHistAdjMagsAct, GXarr, BinSz, GMeanAdj, GMaxFreq):
 
 #***********************************************************
 # OUTPUTSTATS
-def OutPutStats(OUTLOG, OUTADJS, GAdj_Mags_Act, GDiffValsArr, GAdj_WMOs, GVar, HType, SCount):
+def OutPutStats(OUTLOG, OUTADJS, GAdj_Mags_Act, GDiffValsArr, GAdj_WMOs, GAdj_WBANs, GVar, HType, SCount):
     ' Write out statistics to OUTPUTLOG and OUTADJS '
     ' Inputs: '
     ' OUTLOG = string filepath and name for OUTPUTLOG '
@@ -491,6 +493,7 @@ def OutPutStats(OUTLOG, OUTADJS, GAdj_Mags_Act, GDiffValsArr, GAdj_WMOs, GVar, H
     ' GAdj_Mags_Act = float array of all adjustment magnitudes ' 
     ' GDiffValsArr = float array of missing adjustments '
     ' GAdj_WMOs = string array of WMO IDs for each of GAdj_Mags_Act '
+    ' GAdj_WBANs = string array of WBAN IDs for each of GAdj_Mags_Act '
     ' GVar = string varname '
     ' HType = string homogtype '
     ' SCount = integer number of stations '
@@ -527,7 +530,7 @@ def OutPutStats(OUTLOG, OUTADJS, GAdj_Mags_Act, GDiffValsArr, GAdj_WMOs, GVar, H
     for i, AdjVal in enumerate(Sorted_Adj_Mags_Act):
 
         stradj = '% 7.2f' % AdjVal
-        filee.write('%s%s%s\n' % (GAdj_WMOs[OrderAdj[i]],' ', stradj))
+        filee.write('%s%s%s%s\n' % (GAdj_WMOs[OrderAdj[i]],GAdj_WBANs[OrderAdj[i]],' ', stradj))
 
     filee.close()
 
@@ -616,17 +619,16 @@ def main(argv):
     
     # Now set up files 
     var2   = ParamDict[var][0]	#'DPD','RH','Td','T','Tw','e','q
-#    INSTATLIST   = INDIR+'goodforHadISDH.'+versiondots+'_'+homogtype+var+KL+'.txt'
-    INSTATLIST   = INDIR+'goodforHadISDH.'+versiondots+'_'+homogtype+var+'_JAN2020'+KL+'.txt'
-#    INADJLIST    = INDIR+'HadISDH.land'+var2+'.'+versiondots+'_'+homogtype+'.log' 
+    INSTATLIST   = INDIR+'goodforHadISDH.'+versiondots+'_'+homogtype+var+KL+'.txt'
+#    INSTATLIST   = INDIR+'goodforHadISDH.'+versiondots+'_'+homogtype+var+'_JAN2020'+KL+'.txt'
     # T IDPHA is Merged with PHA so homogtype is now IDPHAMG
     if (var == 't'):
  
         homogtype = homogtype+'MG'    
     
-    INADJLIST    = INDIR+'HadISDH.land'+var2+'.'+versiondots+'_'+homogtype+'_JAN2020.log' 
-    OUTPLOTS = OUTPLOTDIR+'HadISDH.land'+var2+'.'+versiondots+'_adjspread_'+homogtype+'_test'
-    OUTADJS  = INDIR+'Largest_Adjs_land'+var2+'.'+versiondots+'_'+homogtype+'_test.txt'  
+    INADJLIST    = INDIR+'HadISDH.land'+var2+'.'+versiondots+'_'+homogtype+'.log' 
+    OUTPLOTS = OUTPLOTDIR+'HadISDH.land'+var2+'.'+versiondots+'_adjspread_'+homogtype
+    OUTADJS  = INDIR+'Largest_Adjs_land'+var2+'.'+versiondots+'_'+homogtype+'.txt'  
 
     # read in station list
     MyTypes          = ["|U6","|U5","float","float","float","|U4","|U30","|U7","int"]
@@ -648,7 +650,7 @@ def main(argv):
 #    int_mons = indgen(nmons)
 
     # Read in adjustments into arrays
-    Adj_Locs, Adj_Mags_Accum, Adj_Mags_Act, Adj_WMOs = GetAdjustmentArrays(INADJLIST, nmons, nstations, homogtype, StationListWMO, StationListWBAN)
+    Adj_Locs, Adj_Mags_Accum, Adj_Mags_Act, Adj_WMOs, Adj_WBANs = GetAdjustmentArrays(INADJLIST, nmons, nstations, homogtype, StationListWMO, StationListWBAN)
 
 
 # Calculate the required statistics
@@ -694,6 +696,13 @@ def main(argv):
         GaussCurveOLD = Gaussian(Xarr,bvo[0],bvo[1],bvo[2])
 	
     else:
+
+        # Add dip info to log file
+        if (PlotOnly == False): # then we're getting all the stats
+            
+            filee = open(OUTPUTLOG,'a+')
+            filee.write('%s%s%s%s\n' % (var,'_',homogtype,'_DIP_FOUND=False'))
+            filee.close()
     
         bv, covar = curve_fit(Gaussian,Xarr,NewHistAdjMagsAct,p0=[MaxFreq,MeanAdj,StdAdj])
         GaussCurve = Gaussian(Xarr,bv[0],bv[1],bv[2])
@@ -740,7 +749,7 @@ def main(argv):
 # OUtput these stats if PlotOnly = False
     if (PlotOnly == False):
     
-        OutPutStats(OUTPUTLOG, OUTADJS, Adj_Mags_Act, DiffValsArr, Adj_WMOs, var, homogtype, nstations)
+        OutPutStats(OUTPUTLOG, OUTADJS, Adj_Mags_Act, DiffValsArr, Adj_WMOs, Adj_WBANs, var, homogtype, nstations)
 
 # Make the Plots
 

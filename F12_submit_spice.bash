@@ -9,19 +9,20 @@
 # ************************************************************************
 # START
 
-for var in q rh t td e tw dpd;
-#for var in q rh t;
+for var in t rh dpd q td e tw;
+# NEED A SLEEP COMMAND FOR t, rh and dpd so that they are run in order and not simultaneously
+#for var in td;
 
 do
 
        typee='IDPHA'
-       if [ $var = 'dpd' ]
+       if [ "$var" == "dpd" ];
        then   
 	   typee='PHA'
 	   
        fi
        
-       if [ $var = 'td' ]
+       if [ "$var" == "td" ];
        then
 	   typee='PHADPD'
 	   
@@ -39,11 +40,19 @@ do
         echo "#SBATCH --time=120" >> ${spice_script}
         echo "#SBATCH --qos=normal" >> ${spice_script}
 
-        echo module load scitools/default-current
+        echo "module load scitools/default-current" >> ${spice_script}
+        echo "export MPLBACKEND='Agg'" >> ${spice_script}
         echo "python F12_CreateHomogNCDFStUnc.py --var ${var} --typee ${typee} --runtype all" >> ${spice_script}
+        echo "unset MPLBACKEND" >> ${spice_script}        
         
         sbatch ${spice_script}       
 
     echo "Submitted ${var}"
+
+    if [ "$var" == "t" ] || [ "$var" == "dpd" ] || [ "$var" == "rh" ];
+    then
+        echo "Sleeping for 90 minutes"
+	sleep 90m
+    fi
 
 done

@@ -9,26 +9,29 @@
 # ************************************************************************
 # START
 
-for var in q rh t td e tw dpd;
-#for var in q rh t;
+# Essential run:
+for var in td 
+
 
 do
 
-        echo $var #$typee
+        typee='PHADPD'
+
+        echo $var $typee
 	
 	# separate file for each job
-        spice_script=spice_MissingAdjUnc_${var}.bash
+        spice_script=spice_F9OutputPHAASCIIPLOT_${var}.bash
         
         echo "#!/bin/bash -l" > ${spice_script}
-        echo "#SBATCH --mem=1G" >> ${spice_script}
+        echo "#SBATCH --mem=5G" >> ${spice_script}
         echo "#SBATCH --ntasks=1" >> ${spice_script}
-        echo "#SBATCH --output=/scratch/hadkw/slurm_logs/F10_MissingAdjInc_AdjPlots_${var}.txt" >> ${spice_script}
-        echo "#SBATCH --time=10" >> ${spice_script}
+        echo "#SBATCH --output=/scratch/hadkw/slurm_logs/F9_OutputPHAASCIIPLOT_${var}.txt" >> ${spice_script}
+        echo "#SBATCH --time=120" >> ${spice_script}
         echo "#SBATCH --qos=normal" >> ${spice_script}
 
         echo "module load scitools/default-current" >> ${spice_script}
         echo "export MPLBACKEND='Agg'" >> ${spice_script}
-        echo "python F10_MissingAdjUnc_AdjPlots.py --var ${var}" >> ${spice_script}
+        echo "python F7_9_OutputPHAASCIIPLOT.py --var ${var} --typee ${typee} --runtype all" >> ${spice_script}
         echo "unset MPLBACKEND" >> ${spice_script}        
         
         sbatch ${spice_script}       

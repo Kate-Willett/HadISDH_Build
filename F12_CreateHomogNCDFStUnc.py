@@ -278,7 +278,11 @@ if (HardWire == 0):
     styear = ConfigDict['StartYear']
     edyear = ConfigDict['EndYear']
 
-# ConfigDict held in memory to probide global attribute text later
+# AttribDict held in memory to probide global attribute text later
+#' Read in the attribute file to get all of the info
+with open('F1_HadISDHBuildAttributes.txt') as f:
+    
+    AttribDict = dict(x.rstrip().split('=', 1) for x in f)
 
 # NOT CODED THIS FUNCTIONALITY YET
 ## Are we working with homogenised actuals (True) or anomalies (False)?
@@ -300,7 +304,7 @@ OUTDIRLIST = workingdir+'/LISTS_DOCS/'
 OUTDIRHOM = workingdir+'/MONTHLIES/HOMOG/' # this will then be PHANETCDF or IDPHANETCDF
 OUTDIRPLOTS = workingdir+'/MONTHLIES/HOMOG/STAT_PLOTS/UNCPLOTS/' 
 # File for output stats but also for reading in missed adjustment uncertainties
-OUTPUTLOG = '/scratch/hadkw/OutputLogFile'+versiondots+'.txt'
+OUTPUTLOG = workingdir+'/LISTS_DOCS/OutputLogFile'+versiondots+'.txt'
 
 # Set up variables
 MDI = -1e+30
@@ -351,7 +355,6 @@ def MakeDaysSince(TheStYr,TheStMon,TheEdYr,TheEdMon):
 def WriteNetCDF(FileName,TheStYr,TheEdYr,TheClims,TheDataList,DimObject,AttrObject,GlobAttrObject,TheMDI):
     ''' WRites NetCDF4 '''
     ''' Sort out the date/times to write out and time bounds '''
-    ''' Convert variables using the obtained scale_factor and add_offset: stored_var=int((var-offset)/scale) '''
     ''' Write to file, set up given dimensions, looping through all potential variables and their attributes, and then the provided dictionary of global attributes '''
 
 #    # Attributes and things common to all vars
@@ -607,10 +610,10 @@ def main(argv):
 
     homsuffix = '_'+typee+'adj.txt'
 
-#    # Special case for Td    
-#    if (typee == 'PHADPD'):
-#
-#        homsuffix = '_PHAadj.txt'
+    # Special case for Td    
+    if (typee == 'PHADPD'):
+
+        homsuffix = '_PHAadj.txt'
 #        OutDat = OUTDIRHOM+'IDPHANETCDF/'+ParamDict[var][3]+'DIR/'
 #        # I'm not copying over from DPD anymote
 
@@ -1054,8 +1057,8 @@ def main(argv):
 #*******************************************************************
         
 	# read in log and find adjustment uncertainties - apply
-        # Gunzip PHA output file
-        call(['gunzip',InLog+'.gz'])
+#        # Gunzip PHA output file
+#        call(['gunzip',InLog+'.gz'])
 
         # find homog adj for this station and append to array 
         if (homogtype == 'PHA'):
@@ -1118,8 +1121,8 @@ def main(argv):
 #        print('Check read in and processing of adjustment and error')
 #        pdb.set_trace()
 	
-	# gzip PHA output file for tidiness
-        call(['gzip',InLog])
+#	# gzip PHA output file for tidiness
+#        call(['gzip',InLog])
 
         # add in the flat adjustment error for missed adjustments derived from teh missing middle
         # combine in quadtrature and multiply by 2 to give a 2 sigma error
@@ -1150,8 +1153,8 @@ def main(argv):
         # File has to be present or we wouldn't be working on it
         ncf = nc4.Dataset(INDIRP+StationListID[st][0:6]+'-'+StationListID[st][6:11]+'_hummonthQC.nc','r')
         # Monthly standard deviation of all hourly values going into the monthly actual value
-        stat_sds = npm.array(ncf.variables[ParamDict[var][6]+'_std'][:]) # do we need to release the pointer?
-#        stat_sds = npm.array(ncf.variables[var+'_std'][:]) # do we need to release the pointer?
+#        stat_sds = npm.array(ncf.variables[ParamDict[var][6]+'_std'][:]) # do we need to release the pointer?
+        stat_sds = npm.array(ncf.variables[var+'_std'][:]) # do we need to release the pointer?
         ncf.close()
 
         # Use masked arrays with new MDI
@@ -1264,21 +1267,21 @@ def main(argv):
         GlobAttrObjectList = dict([['File_created',datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')], # Is there a call for time stamping?
 			          ['Description','HadISDH monthly mean land surface homogenised data'],
 			          ['Title','HadISDH monthly mean land surface climate monitoring product'], 
-			          ['Institution', ConfigDict['Institution']],
-			          ['History', ConfigDict['History']], 
-			          ['Licence', ConfigDict['NCLicence']],
-			          ['Project', ConfigDict['Project']],
-			          ['Processing_level', ConfigDict['Processing_level']],
-			          ['Acknowledgement', ConfigDict['Acknowledgement']],
-			          ['Source', 'HadISD '+hadisdversiondots+' '+ConfigDict['Source']],
+			          ['Institution', AttribDict['Institution']],
+			          ['History', AttribDict['History']], 
+			          ['Licence', AttribDict['NCLicence']],
+			          ['Project', AttribDict['Project']],
+			          ['Processing_level', AttribDict['Processing_level']],
+			          ['Acknowledgement', AttribDict['Acknowledgement']],
+			          ['Source', 'HadISD '+hadisdversiondots+' '+AttribDict['Source']],
 			          ['Comment',''],
-			          ['References', ConfigDict['References']],
-			          ['Creator_name', ConfigDict['Creator_name']],
-			          ['Creator_email', ConfigDict['Creator_email']],
+			          ['References', AttribDict['References']],
+			          ['Creator_name', AttribDict['Creator_name']],
+			          ['Creator_email', AttribDict['Creator_email']],
 			          ['Version', versiondots],
 			          ['doi',''], # This needs to be filled in
-			          ['Conventions', ConfigDict['Conventions']],
-			          ['netCDF_type', ConfigDict['netCDF_type']]]) 
+			          ['Conventions', AttribDict['Conventions']],
+			          ['netCDF_type', AttribDict['netCDF_type']]]) 
 
         # Write out monthly data to netCDH
         WriteNetCDF(OutDat+StationListID[st]+DatSuffix,styear,edyear,[MYclst,MYcled],DataList,DimList,AttrList,GlobAttrObjectList,MDI)
